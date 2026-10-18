@@ -26,6 +26,7 @@ cp -R "$ADAPTER_OUT/MediaRemoteAdapter.framework" "$APP/Contents/Frameworks/"
 cp "$ADAPTER_OUT/MediaRemoteAdapterTestClient" "$APP/Contents/MacOS/"
 cp "$ADAPTER_OUT/mediaremote-adapter.pl" "$APP/Contents/Resources/"
 cp "$ROOT/Vendor/mediaremote-adapter/LICENSE" "$APP/Contents/Resources/MediaRemoteAdapter-LICENSE.txt"
+cp -R "$ROOT/Resources/Fonts" "$APP/Contents/Resources/Fonts"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

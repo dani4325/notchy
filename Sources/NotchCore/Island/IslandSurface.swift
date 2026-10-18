@@ -47,6 +47,11 @@ struct IslandBody: View {
                 } else {
                     LinearGradient(colors: [.black, appearance.panel], startPoint: .top, endPoint: .bottom)
                 }
+                if let decoration = appearance.theme.decoration {
+                    ThemeDecorationView(decoration: decoration, layout: layout, appearance: appearance)
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .clipped()
+                }
                 EllipticalGradient(
                     colors: [.black, .black.opacity(0.6), .black.opacity(0)],
                     center: .top,

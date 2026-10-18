@@ -77,6 +77,11 @@ struct IslandLayout: Equatable {
             + 3 * textSpacing + progressHeight + progressGap
     }
 
+    var nixieHeight: CGFloat {
+        let line = timeSize * Self.lineHeightFactor
+        return min(line * 1.4, line + max(artworkSide - textBlockHeight, 0))
+    }
+
     var topBlendHeight: CGFloat { unit * Self.topBlendRatio }
     var topBlendWidth: CGFloat { stem.width * Self.topBlendWidthRatio }
 

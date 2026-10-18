@@ -17,6 +17,7 @@ struct IslandView: View {
             IslandSurface(model: model, appearance: appearance, showOutline: showOutline)
                 .frame(width: size.width, height: size.height)
 
+            Group {
             switch model.state {
             case .expanded:
                 expandedContent
@@ -31,6 +32,14 @@ struct IslandView: View {
             case .collapsed:
                 EmptyView()
             }
+            }
+            .modifier(SignatureOpening(
+                kind: model.openAnimation,
+                trigger: model.openCount,
+                isEnabled: policy.playsSignatureOpening,
+                layout: model.layout,
+                appearance: appearance
+            ))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.themeAppearance, appearance)

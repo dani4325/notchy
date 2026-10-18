@@ -135,6 +135,9 @@ final class IslandPanelController {
 
         setPanelFrame(panel.frame.union(targetFrame))
         let animation = animated ? policy.shapeAnimation(expanding: isGrowing) : nil
+        if target == .expanded, animated {
+            model.openCount += 1
+        }
         withAnimation(animation) {
             model.state = target
         }

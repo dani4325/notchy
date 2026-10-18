@@ -6,6 +6,9 @@ struct ThemeEditorView: View {
     let theme: Theme
 
     var body: some View {
+        if editor.store.isBuiltIn(theme.id) {
+            builtInBanner
+        }
         Form {
             Section("Nombre") {
                 TextField("Nombre del tema", text: editor.binding(\.name, fallback: ""))
@@ -16,16 +19,81 @@ struct ThemeEditorView: View {
             ShapeSection(editor: editor)
             Section("Apertura y efectos") {
                 Picker("Animación de apertura", selection: editor.binding(\.openAnimation, fallback: .spring)) {
-                    Text("Muelle").tag(OpenAnimation.spring)
-                    Text("Rebote").tag(OpenAnimation.bouncy)
-                    Text("Suave").tag(OpenAnimation.smooth)
-                    Text("Fundido").tag(OpenAnimation.fade)
+                    ForEach(OpenAnimation.allCases, id: \.self) { animation in
+                        Text(animation.label).tag(animation)
+                    }
+                }
+                Picker("Detalles", selection: editor.binding(\.decoration, fallback: nil)) {
+                    Text("Ninguno").tag(ThemeDecoration?.none)
+                    ForEach(ThemeDecoration.allCases, id: \.self) { decoration in
+                        Text(decoration.label).tag(ThemeDecoration?.some(decoration))
+                    }
                 }
                 LabeledSlider("Brillo de la carátula", value: editor.binding(\.effects.glow, fallback: 0), range: 0...1)
                 LabeledSlider("Borde", value: editor.binding(\.effects.borderWidth, fallback: 0), range: 0...3, unit: "pt")
             }
         }
         .formStyle(.grouped)
+        .disabled(editor.store.isBuiltIn(theme.id))
+    }
+
+    private var builtInBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "lock.fill")
+                .foregroundStyle(NotchyStyle.accent)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Plantilla incluida")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("Duplícala para añadir tu propia imagen, GIF o vídeo del anime y ajustarla a tu gusto.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("Duplicar y personalizar") { editor.duplicate(themeID: theme.id) }
+                .buttonStyle(.borderedProminent)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .background(NotchyStyle.accent.opacity(0.08))
+    }
+}
+
+extension OpenAnimation {
+    var label: String {
+        switch self {
+        case .spring: "Muelle"
+        case .bouncy: "Rebote"
+        case .smooth: "Suave"
+        case .fade: "Fundido"
+        case .glitch: "Glitch"
+        case .gate: "Portón"
+        case .menacing: "ゴゴゴ"
+        case .slash: "Tajo"
+        case .orbit: "Órbitas"
+        }
+    }
+}
+
+extension ThemeDecoration {
+    var label: String {
+        switch self {
+        case .nixieTerminal: "Nixie y terminal"
+        case .wallPlating: "Metal y remaches"
+        case .menacing: "Rayas amenazantes"
+        case .reiatsu: "Aura y tajo"
+        case .orbits: "Órbitas y estrellas"
+        case .cracks: "Grietas"
+        case .tacticalGrid: "Rejilla táctica"
+        case .clovers: "Tréboles"
+        case .cursedWisps: "Volutas de energía"
+        case .sawTeeth: "Dientes de sierra"
+        case .transmutation: "Círculo geométrico"
+        case .petals: "Florecillas"
+        case .waves: "Olas"
+        case .spiral: "Espiral"
+        case .stationery: "Papel de carta"
+        case .psychicRings: "Anillos psíquicos"
+        }
     }
 }
 

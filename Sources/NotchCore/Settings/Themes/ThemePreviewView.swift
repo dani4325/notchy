@@ -38,8 +38,11 @@ struct ThemePreviewView: View {
         let size = model.currentSize
         let layout = model.layout
 
+        let policy = MotionPolicy(reduceMotion: model.reduceMotion, openAnimation: theme.openAnimation)
+
         return ZStack(alignment: .top) {
             IslandSurface(model: model, appearance: appearance, showOutline: false)
+            Group {
             if model.isExpanded {
                 ExpandedMusicView(
                     layout: layout,
@@ -52,6 +55,11 @@ struct ThemePreviewView: View {
                 .padding(.top, layout.stem.height)
                 .transition(.opacity)
             }
+            }
+            .modifier(SignatureOpening(
+                kind: theme.openAnimation, trigger: model.openCount, isEnabled: policy.playsSignatureOpening,
+                layout: layout, appearance: appearance
+            ))
             if model.isExpanded, theme.background != nil {
                 framingSurface(bodySize: layout.bodyRect.size)
                     .padding(.top, layout.stem.height)

@@ -25,7 +25,8 @@ struct ThemeStoreTests {
     @Test func seedsTheDefaultThemeOnFirstLaunch() {
         let store = makeStore()
 
-        #expect(store.themes.map(\.id) == [Theme.notchyDefault.id])
+        #expect(store.themes.first?.id == Theme.notchyDefault.id)
+        #expect(store.themes.filter { !store.isBuiltIn($0.id) }.map(\.id) == [Theme.notchyDefault.id])
         #expect(store.activeTheme.id == Theme.notchyDefault.id)
         #expect(FileManager.default.fileExists(atPath: store.folder(for: Theme.notchyDefault.id).appendingPathComponent("theme.json").path))
     }
@@ -53,7 +54,7 @@ struct ThemeStoreTests {
         #expect(copy.name == "Notchy (copia)")
         let media = try #require(copy.background?.media)
         #expect(FileManager.default.fileExists(atPath: store.mediaURL(themeID: copy.id, media: media).path))
-        #expect(store.themes.count == 2)
+        #expect(store.themes.filter { !store.isBuiltIn($0.id) }.count == 2)
     }
 
     @Test func deletingTheActiveThemeActivatesAnother() throws {

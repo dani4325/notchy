@@ -106,7 +106,32 @@ public struct ThemeShape: Codable, Equatable, Sendable {
 }
 
 public enum OpenAnimation: String, Codable, CaseIterable, Sendable {
-    case spring, bouncy, smooth, fade
+    case spring, bouncy, smooth, fade, glitch, gate, menacing, slash, orbit
+}
+
+public enum ThemeEmblem: String, Codable, CaseIterable, Sendable {
+    case nixieTube, crossedBlades, menacingGlyph, katana, astrolabe
+    case coffeeCup, tacticalMap, grimoire, sealedFinger, chainsaw, pocketWatch
+    case staffAndFlowers, strawHat, kunai, typewriter, percentMeter
+}
+
+public enum ThemeDecoration: String, Codable, CaseIterable, Sendable {
+    case nixieTerminal
+    case wallPlating
+    case menacing
+    case reiatsu
+    case orbits
+    case cracks
+    case tacticalGrid
+    case clovers
+    case cursedWisps
+    case sawTeeth
+    case transmutation
+    case petals
+    case waves
+    case spiral
+    case stationery
+    case psychicRings
 }
 
 public struct ThemeEffects: Codable, Equatable, Sendable {
@@ -178,10 +203,14 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
     public var openAnimation: OpenAnimation
     public var effects: ThemeEffects
     public var background: ThemeBackground?
+    public var decoration: ThemeDecoration?
+    public var emblem: ThemeEmblem?
 
     public init(
         id: String, name: String, palette: ThemePalette, typography: ThemeTypography, shape: ThemeShape,
-        openAnimation: OpenAnimation, effects: ThemeEffects, background: ThemeBackground?
+        openAnimation: OpenAnimation, effects: ThemeEffects, background: ThemeBackground?,
+        decoration: ThemeDecoration? = nil,
+        emblem: ThemeEmblem? = nil
     ) {
         self.id = id
         self.name = name
@@ -191,10 +220,12 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
         self.openAnimation = openAnimation
         self.effects = effects
         self.background = background
+        self.decoration = decoration
+        self.emblem = emblem
     }
 
     private enum CodingKeys: String, CodingKey {
-        case schemaVersion, id, name, palette, typography, shape, openAnimation, effects, background
+        case schemaVersion, id, name, palette, typography, shape, openAnimation, effects, background, decoration, emblem
     }
 
     public init(from decoder: Decoder) throws {
@@ -205,9 +236,11 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
         palette = try container.decodeIfPresent(ThemePalette.self, forKey: .palette) ?? fallback.palette
         typography = try container.decodeIfPresent(ThemeTypography.self, forKey: .typography) ?? fallback.typography
         shape = try container.decodeIfPresent(ThemeShape.self, forKey: .shape) ?? fallback.shape
-        openAnimation = try container.decodeIfPresent(OpenAnimation.self, forKey: .openAnimation) ?? fallback.openAnimation
+        openAnimation = (try? container.decodeIfPresent(OpenAnimation.self, forKey: .openAnimation)) ?? fallback.openAnimation
         effects = try container.decodeIfPresent(ThemeEffects.self, forKey: .effects) ?? fallback.effects
         background = try container.decodeIfPresent(ThemeBackground.self, forKey: .background)
+        decoration = try? container.decodeIfPresent(ThemeDecoration.self, forKey: .decoration)
+        emblem = try? container.decodeIfPresent(ThemeEmblem.self, forKey: .emblem)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -221,6 +254,8 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
         try container.encode(openAnimation, forKey: .openAnimation)
         try container.encode(effects, forKey: .effects)
         try container.encodeIfPresent(background, forKey: .background)
+        try container.encodeIfPresent(decoration, forKey: .decoration)
+        try container.encodeIfPresent(emblem, forKey: .emblem)
     }
 
     public func sanitized() -> Theme {

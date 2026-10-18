@@ -250,6 +250,7 @@ public final class ThemeEditorModel {
             try? await Task.sleep(for: .milliseconds(250))
             guard let self else { return }
             self.previewModel.reduceMotion = policy.reduceMotion
+            self.previewModel.openCount += 1
             withAnimation(policy.shapeAnimation(expanding: true)) {
                 self.previewModel.state = .expanded
             }

@@ -25,6 +25,7 @@ final class IslandModel {
     var state = IslandState.collapsed
     var reduceMotion = false
     var openAnimation = OpenAnimation.spring
+    var openCount = 0
     var shapeStyle = ThemeShape.standard
     private static let minimumWing: CGFloat = 40
     private static let wingPadding: CGFloat = 8

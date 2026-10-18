@@ -87,15 +87,25 @@ private struct ProgressRow: View {
             }
             .frame(height: layout.progressHeight)
 
-            HStack {
-                Text(Self.format(position))
-                Spacer(minLength: 0)
-                if let duration = info.duration {
-                    Text("-" + Self.format(max(duration - position, 0)))
+            if appearance.theme.decoration == .nixieTerminal {
+                HStack {
+                    NixieReadoutView(text: Self.format(position), height: layout.nixieHeight, glow: appearance.secondary)
+                    Spacer(minLength: 0)
+                    if let duration = info.duration {
+                        NixieReadoutView(text: "-" + Self.format(max(duration - position, 0)), height: layout.nixieHeight, glow: appearance.secondary)
+                    }
                 }
+            } else {
+                HStack {
+                    Text(Self.format(position))
+                    Spacer(minLength: 0)
+                    if let duration = info.duration {
+                        Text("-" + Self.format(max(duration - position, 0)))
+                    }
+                }
+                .font(appearance.numericFont(layout.timeSize))
+                .foregroundStyle(appearance.text.opacity(0.72))
             }
-            .font(appearance.numericFont(layout.timeSize))
-            .foregroundStyle(appearance.text.opacity(0.72))
         }
         .accessibilityElement(children: .ignore)
         .accessibilityValue(Self.format(position))

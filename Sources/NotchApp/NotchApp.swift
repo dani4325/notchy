@@ -59,6 +59,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if let fonts = FontRegistry.bundledFontsDirectory {
+            FontRegistry.register(directory: fonts)
+        }
         nowPlaying.start()
         accessibility.start()
         wings.start()

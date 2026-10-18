@@ -12,7 +12,8 @@ struct ThemeGalleryView: View {
                             theme: theme,
                             appearance: ThemeAppearance.resolve(theme, in: editor.store),
                             isSelected: editor.draft?.id == theme.id,
-                            isActive: editor.store.activeThemeID == theme.id
+                            isActive: editor.store.activeThemeID == theme.id,
+                            isBuiltIn: editor.store.isBuiltIn(theme.id)
                         )
                         .onTapGesture { editor.select(themeID: theme.id) }
                         .contextMenu {
@@ -24,6 +25,7 @@ struct ThemeGalleryView: View {
                             Button("Exportar…") { editor.exportTheme(themeID: theme.id) }
                             Divider()
                             Button("Eliminar", role: .destructive) { editor.delete(themeID: theme.id) }
+                                .disabled(editor.store.isBuiltIn(theme.id))
                         }
                     }
                 }
@@ -50,6 +52,7 @@ private struct ThemeCard: View {
     let appearance: ThemeAppearance
     let isSelected: Bool
     let isActive: Bool
+    let isBuiltIn: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -77,9 +80,14 @@ private struct ThemeCard: View {
 
             HStack {
                 Text(theme.name)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.custom(theme.typography.family ?? "", size: 12).weight(.semibold))
                     .lineLimit(1)
                 Spacer()
+                if isBuiltIn {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.secondary)
+                }
                 if isActive {
                     Text("EN USO")
                         .font(.system(size: 9, weight: .heavy, design: .monospaced))

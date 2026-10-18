@@ -7,6 +7,20 @@ struct IdleContentView: View {
 
     var body: some View {
         HStack(spacing: layout.columnGap) {
+            if appearance.theme.decoration == .nixieTerminal {
+                NixieReadoutView(text: Self.divergence, height: layout.artworkSide * 0.5, glow: appearance.secondary)
+            } else {
+                placeholder
+            }
+            details
+        }
+        .padding(.horizontal, layout.padding)
+        .frame(width: layout.size.width, height: layout.bodyHeight)
+    }
+
+    private static let divergence = "1.048596"
+
+    private var placeholder: some View {
             RoundedRectangle(cornerRadius: layout.artworkCorner, style: .continuous)
                 .strokeBorder(
                     appearance.accent.opacity(0.6),
@@ -14,11 +28,17 @@ struct IdleContentView: View {
                 )
                 .frame(width: layout.artworkSide, height: layout.artworkSide)
                 .overlay {
-                    Image(systemName: "music.note")
-                        .font(.system(size: layout.artworkSide * 0.3, weight: .semibold))
-                        .foregroundStyle(appearance.accent)
+                    if let emblem = appearance.theme.emblem {
+                        EmblemView(emblem: emblem, size: layout.artworkSide * 0.72, appearance: appearance)
+                    } else {
+                        Image(systemName: "music.note")
+                            .font(.system(size: layout.artworkSide * 0.3, weight: .semibold))
+                            .foregroundStyle(appearance.accent)
+                    }
                 }
+    }
 
+    private var details: some View {
             VStack(alignment: .leading, spacing: layout.textSpacing) {
                 Text("NADA SONANDO")
                     .font(appearance.labelFont(layout.labelSize))
@@ -35,8 +55,5 @@ struct IdleContentView: View {
             }
             .shadow(color: appearance.textShadow, radius: layout.unit * 0.08)
             .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.horizontal, layout.padding)
-        .frame(width: layout.size.width, height: layout.bodyHeight)
     }
 }

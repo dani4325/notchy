@@ -42,7 +42,27 @@ struct PanelPreviewRenderTests {
         }
     }
 
-    private func render(name: String, notch: CGSize, theme: Theme, background: MediaSource?) throws {
+    @Test func renderAnimeTemplates() throws {
+        FontRegistry.register(directory: RepoPaths.fonts)
+        try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+        let notch = IslandLayout.referenceNotch
+        let playing = NowPlayingInfo(
+            title: "Opening de la temporada", artist: "Artista de ejemplo", album: nil, duration: 245,
+            elapsed: 83, timestamp: .now, playbackRate: 0, isPlaying: false, appBundleID: "", artworkData: nil
+        )
+
+        for theme in Theme.builtIns {
+            let slug = theme.id.replacingOccurrences(of: "builtin-", with: "")
+            try render(name: "plantilla-\(slug)", notch: notch, theme: theme, background: nil, info: playing)
+            try render(name: "plantilla-\(slug)-apertura", notch: notch, theme: theme, background: nil, info: playing, openingProgress: 0.35)
+        }
+        try render(name: "plantilla-steins-gate-reposo", notch: notch, theme: .steinsGate, background: nil, info: nil)
+    }
+
+    private func render(
+        name: String, notch: CGSize, theme: Theme, background: MediaSource?,
+        info: NowPlayingInfo? = PanelPreviewRenderTests.info, openingProgress: Double? = nil
+    ) throws {
         let model = IslandModel(kind: .notch, collapsedSize: notch, stripHeight: notch.height)
         model.shapeStyle = theme.shape
         model.state = .expanded
@@ -55,8 +75,25 @@ struct PanelPreviewRenderTests {
             Color(white: 0.93).frame(height: notch.height)
             ZStack(alignment: .top) {
                 IslandSurface(model: model, appearance: appearance, showOutline: false)
-                ExpandedMusicView(layout: layout, info: Self.info, artwork: nil, appName: "Spotify", controls: .inert)
-                    .padding(.top, layout.stem.height)
+                Group {
+                    if let info {
+                        ExpandedMusicView(layout: layout, info: info, artwork: nil, appName: "Spotify", controls: .inert)
+                    } else {
+                        IdleContentView(layout: layout)
+                    }
+                }
+                .padding(.top, layout.stem.height)
+                if let openingProgress {
+                    if theme.openAnimation == .glitch {
+                        GlitchLayer(
+                            state: GlitchState.bursts[2], unit: layout.unit, tint: appearance.accent,
+                            content: ExpandedMusicView(layout: layout, info: info ?? Self.info, artwork: nil, appName: "Spotify", controls: .inert)
+                                .padding(.top, layout.stem.height)
+                        )
+                    } else {
+                        SignatureOverlay(kind: theme.openAnimation, progress: openingProgress, layout: layout, appearance: appearance)
+                    }
+                }
             }
             .frame(width: layout.size.width, height: layout.size.height, alignment: .top)
             .environment(\.themeAppearance, appearance)

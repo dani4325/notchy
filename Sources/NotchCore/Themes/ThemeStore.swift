@@ -11,6 +11,7 @@ public final class ThemeStore {
         case unsupportedMedia
         case mediaTooLarge
         case writeFailed
+        case builtInTheme
     }
 
     nonisolated static let themeFileName = "theme.json"
@@ -42,6 +43,10 @@ public final class ThemeStore {
         themes.first { $0.id == activeThemeID } ?? themes.first ?? Theme.notchyDefault
     }
 
+    public func isBuiltIn(_ themeID: String) -> Bool {
+        Theme.builtIns.contains { $0.id == themeID }
+    }
+
     public func theme(id: String) -> Theme? {
         themes.first { $0.id == id }
     }
@@ -61,6 +66,7 @@ public final class ThemeStore {
     }
 
     public func save(_ theme: Theme) throws {
+        guard !isBuiltIn(theme.id) else { throw StoreError.builtInTheme }
         let clean = theme.sanitized()
         try write(clean)
         themes = sorted(themes.filter { $0.id != clean.id } + [clean])
@@ -79,14 +85,17 @@ public final class ThemeStore {
         var copy = original
         copy.id = Self.newID()
         copy.name = String("\(original.name) (copia)".prefix(40))
-        try copyFolder(from: folder(for: original.id), to: folder(for: copy.id))
+        if FileManager.default.fileExists(atPath: folder(for: original.id).path) {
+            try copyFolder(from: folder(for: original.id), to: folder(for: copy.id))
+        }
         try save(copy)
         return copy
     }
 
     public func delete(themeID: String) throws {
         guard theme(id: themeID) != nil else { throw StoreError.unknownTheme }
-        guard themes.count > 1 else { throw StoreError.lastTheme }
+        guard !isBuiltIn(themeID) else { throw StoreError.builtInTheme }
+        guard themes.filter({ !isBuiltIn($0.id) }).count > 1 else { throw StoreError.lastTheme }
         try? FileManager.default.removeItem(at: folder(for: themeID))
         themes = themes.filter { $0.id != themeID }
         if activeThemeID == themeID, let first = themes.first {
@@ -96,6 +105,7 @@ public final class ThemeStore {
 
     public func setBackground(from source: URL, themeID: String) throws -> Theme {
         guard var theme = theme(id: themeID) else { throw StoreError.unknownTheme }
+        guard !isBuiltIn(themeID) else { throw StoreError.builtInTheme }
         let kind: MediaKind
         do {
             kind = try MediaKind.detect(at: source)
@@ -129,6 +139,7 @@ public final class ThemeStore {
 
     public func clearBackground(themeID: String) throws -> Theme {
         guard var theme = theme(id: themeID) else { throw StoreError.unknownTheme }
+        guard !isBuiltIn(themeID) else { throw StoreError.builtInTheme }
         let previous = theme.background?.media
         theme.background = nil
         try save(theme)
@@ -175,9 +186,9 @@ public final class ThemeStore {
             } catch {
                 Self.logger.error("seeding default theme failed")
             }
-            themes = [Theme.notchyDefault]
+            themes = sorted([Theme.notchyDefault] + Theme.builtIns)
         } else {
-            themes = sorted(loaded)
+            themes = sorted(loaded.filter { !isBuiltIn($0.id) } + Theme.builtIns)
         }
         if theme(id: activeThemeID) == nil, let first = themes.first {
             activeThemeID = first.id
@@ -225,10 +236,15 @@ public final class ThemeStore {
 
     private func sorted(_ list: [Theme]) -> [Theme] {
         list.sorted { lhs, rhs in
-            if lhs.id == Theme.notchyDefault.id { return true }
-            if rhs.id == Theme.notchyDefault.id { return false }
-            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            let left = (rank(lhs), lhs.name.lowercased())
+            let right = (rank(rhs), rhs.name.lowercased())
+            return left < right
         }
+    }
+
+    private func rank(_ theme: Theme) -> Int {
+        if theme.id == Theme.notchyDefault.id { return 0 }
+        return isBuiltIn(theme.id) ? 1 : 2
     }
 
     private static func newID() -> String {
