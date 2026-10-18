@@ -17,4 +17,23 @@ struct MotionPolicyTests {
         #expect(policy.shapeAnimation(expanding: true) == nil)
         #expect(policy.shapeAnimation(expanding: false) == nil)
     }
+
+    @Test func fadeThemeBehavesLikeReducedMotion() {
+        let policy = MotionPolicy(reduceMotion: false, openAnimation: .fade)
+
+        #expect(!policy.animatesShape)
+        #expect(policy.shapeAnimation(expanding: true) == nil)
+    }
+
+    @Test func reduceMotionWinsOverAnyThemeAnimation() {
+        for animation in OpenAnimation.allCases {
+            #expect(!MotionPolicy(reduceMotion: true, openAnimation: animation).animatesShape)
+        }
+    }
+
+    @Test func everyAnimatedThemeOpensWithAnimation() {
+        for animation in [OpenAnimation.spring, .bouncy, .smooth] {
+            #expect(MotionPolicy(reduceMotion: false, openAnimation: animation).shapeAnimation(expanding: true) != nil)
+        }
+    }
 }

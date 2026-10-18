@@ -24,8 +24,8 @@ final class IslandModel {
     var stripHeight: CGFloat
     var state = IslandState.collapsed
     var reduceMotion = false
-
-    static let expandedSize = CGSize(width: 500, height: 170)
+    var openAnimation = OpenAnimation.spring
+    var shapeStyle = ThemeShape.standard
     private static let minimumWing: CGFloat = 40
     private static let wingPadding: CGFloat = 8
 
@@ -41,16 +41,24 @@ final class IslandModel {
         max(collapsedSize.height + Self.wingPadding, Self.minimumWing)
     }
 
+    var layout: IslandLayout {
+        IslandLayout(notch: collapsedSize, stemHeight: kind == .pill ? stripHeight : nil, shape: shapeStyle)
+    }
+
     var currentSize: CGSize {
         switch state {
         case .collapsed: collapsedSize
         case .compact: CGSize(width: collapsedSize.width + 2 * compactWing, height: collapsedSize.height)
-        case .expanded: Self.expandedSize
+        case .expanded: expandedSize
         }
     }
 
+    var expandedSize: CGSize {
+        layout.size
+    }
+
     var stemHeight: CGFloat {
-        isExpanded ? stripHeight : 0
+        isExpanded ? layout.stem.height : 0
     }
 
     var topRadius: CGFloat {
@@ -58,23 +66,30 @@ final class IslandModel {
     }
 
     var bodyTopRadius: CGFloat {
-        isExpanded ? 18 : topRadius
+        isExpanded ? layout.bodyTopRadius : topRadius
     }
 
     var junctionRadius: CGFloat {
-        isExpanded ? 10 : 0
+        isExpanded ? layout.junctionRadius : 0
     }
 
     var bottomRadius: CGFloat {
         switch (kind, state) {
-        case (_, .expanded): 26
+        case (_, .expanded): layout.bottomRadius
         case (.notch, .compact): 12
         case (.notch, .collapsed): 10
         case (.pill, _): collapsedSize.height / 2
         }
     }
 
-    var contentTopInset: CGFloat {
-        stripHeight
+    var shape: IslandShape {
+        IslandShape(
+            stemWidth: collapsedSize.width,
+            stemHeight: stemHeight,
+            topRadius: topRadius,
+            bodyTopRadius: bodyTopRadius,
+            bottomRadius: bottomRadius,
+            junctionRadius: junctionRadius
+        )
     }
 }

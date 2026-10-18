@@ -5,9 +5,11 @@ struct ArtworkView: View {
     let size: CGFloat
     let cornerRadius: CGFloat
 
+    @Environment(\.themeAppearance) private var appearance
+
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(.white.opacity(0.08))
+            .fill(appearance.text.opacity(0.08))
             .overlay {
                 if let image {
                     Image(nsImage: image)
@@ -17,7 +19,7 @@ struct ArtworkView: View {
                 } else {
                     Image(systemName: "music.note")
                         .font(.system(size: size * 0.32, weight: .semibold))
-                        .foregroundStyle(NotchyStyle.accent)
+                        .foregroundStyle(appearance.accent)
                 }
             }
             .frame(width: size, height: size)

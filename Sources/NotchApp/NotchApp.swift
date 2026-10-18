@@ -16,7 +16,9 @@ struct NotchApp: App {
             SettingsView(
                 nowPlaying: appDelegate.nowPlaying,
                 companion: appDelegate.companion,
-                accessibility: appDelegate.accessibility
+                accessibility: appDelegate.accessibility,
+                editor: appDelegate.themeEditor,
+                router: appDelegate.settingsRouter
             )
         }
         .windowResizability(.contentSize)
@@ -48,8 +50,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let nowPlaying = NowPlayingStore()
     let companion = CompanionStore()
     let accessibility = AccessibilityPermission()
+    let themes = ThemeStore()
+    lazy var themeEditor = ThemeEditorModel(store: themes)
+    let settingsRouter = SettingsRouter()
     private lazy var wings = WingsVisibility(nowPlaying: nowPlaying)
-    private lazy var notchController = NotchWindowController(nowPlaying: nowPlaying, companion: companion, wings: wings)
+    private lazy var notchController = NotchWindowController(
+        nowPlaying: nowPlaying, companion: companion, wings: wings, themes: themes
+    )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         nowPlaying.start()
@@ -58,7 +65,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notchController.start()
     }
 
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls where url.pathExtension.lowercased() == "notchytheme" {
+            themeEditor.importTheme(from: url)
+            themeEditor.activate()
+        }
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
+        themeEditor.flush()
         notchController.stop()
         wings.stop()
         accessibility.stop()

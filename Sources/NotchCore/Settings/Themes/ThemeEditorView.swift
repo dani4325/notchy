@@ -1,0 +1,214 @@
+import AppKit
+import SwiftUI
+
+struct ThemeEditorView: View {
+    let editor: ThemeEditorModel
+    let theme: Theme
+
+    var body: some View {
+        Form {
+            Section("Nombre") {
+                TextField("Nombre del tema", text: editor.binding(\.name, fallback: ""))
+            }
+            BackgroundSection(editor: editor, theme: theme)
+            PaletteSection(editor: editor, theme: theme)
+            TypographySection(editor: editor)
+            ShapeSection(editor: editor)
+            Section("Apertura y efectos") {
+                Picker("Animación de apertura", selection: editor.binding(\.openAnimation, fallback: .spring)) {
+                    Text("Muelle").tag(OpenAnimation.spring)
+                    Text("Rebote").tag(OpenAnimation.bouncy)
+                    Text("Suave").tag(OpenAnimation.smooth)
+                    Text("Fundido").tag(OpenAnimation.fade)
+                }
+                LabeledSlider("Brillo de la carátula", value: editor.binding(\.effects.glow, fallback: 0), range: 0...1)
+                LabeledSlider("Borde", value: editor.binding(\.effects.borderWidth, fallback: 0), range: 0...3, unit: "pt")
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+private struct BackgroundSection: View {
+    let editor: ThemeEditorModel
+    let theme: Theme
+
+    var body: some View {
+        Section {
+            if let background = theme.background {
+                HStack(spacing: 12) {
+                    MediaView(
+                        source: MediaSource(url: editor.store.mediaURL(themeID: theme.id, media: background.media), kind: background.media.kind),
+                        crop: background.media.crop,
+                        isActive: false
+                    )
+                    .frame(width: 132, height: 132 / Self.previewAspect(theme.shape))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(kindLabel(background.media.kind))
+                            .font(.system(size: 12, weight: .semibold))
+                        HStack {
+                            Button("Cambiar…", action: editor.chooseBackground)
+                            Button("Quitar", role: .destructive, action: editor.clearBackground)
+                        }
+                    }
+                }
+                LabeledSlider("Zoom", value: editor.backgroundBinding(\.media.crop.zoom, fallback: 1), range: MediaCrop.zoomRange, unit: "×")
+                LabeledSlider("Legibilidad", value: editor.backgroundBinding(\.legibility, fallback: ThemeBackground.defaultLegibility), range: ThemeBackground.legibilityRange)
+            } else {
+                Button(action: editor.chooseBackground) {
+                    Label("Elegir imagen, GIF o vídeo…", systemImage: "photo.on.rectangle.angled")
+                }
+            }
+        } header: {
+            Text("Fondo")
+        } footer: {
+            Text("Arrastra la imagen en la vista previa para encuadrarla y pellizca para acercarla. La legibilidad oscurece el fondo detrás del texto y nunca baja del mínimo que garantiza el contraste. El fondo solo se reproduce con el panel abierto.")
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private static func previewAspect(_ shape: ThemeShape) -> CGFloat {
+        let layout = IslandLayout(notch: IslandLayout.referenceNotch, shape: shape)
+        return layout.size.width / layout.bodyHeight
+    }
+
+    private func kindLabel(_ kind: MediaKind) -> String {
+        switch kind {
+        case .image: "Imagen"
+        case .animatedImage: "Imagen animada"
+        case .video: "Vídeo en bucle"
+        }
+    }
+}
+
+private struct PaletteSection: View {
+    let editor: ThemeEditorModel
+    let theme: Theme
+
+    var body: some View {
+        Section {
+            HStack {
+                Text(theme.palette.source == .automatic ? "Automática (del fondo)" : "Manual")
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if editor.isExtracting {
+                    ProgressView().controlSize(.small)
+                }
+                Button("Extraer del fondo") { editor.extractPalette(force: true) }
+                    .disabled(theme.background == nil || editor.isExtracting)
+            }
+            ColorPicker("Acento", selection: editor.colorBinding(\.accent), supportsOpacity: false)
+            ColorPicker("Secundario", selection: editor.colorBinding(\.secondary), supportsOpacity: false)
+            ColorPicker("Panel", selection: editor.colorBinding(\.panel), supportsOpacity: false)
+            ColorPicker("Texto", selection: editor.colorBinding(\.text), supportsOpacity: false)
+        } header: {
+            Text("Colores")
+        } footer: {
+            Text("Al tocar un color la paleta pasa a manual y deja de seguir al fondo.")
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct TypographySection: View {
+    let editor: ThemeEditorModel
+
+    var body: some View {
+        Section("Tipografía") {
+            Picker("Estilo", selection: editor.binding(\.typography.design, fallback: .rounded)) {
+                Text("Sistema").tag(FontDesign.system)
+                Text("Redondeada").tag(FontDesign.rounded)
+                Text("Serif").tag(FontDesign.serif)
+                Text("Monoespaciada").tag(FontDesign.monospaced)
+            }
+            Picker("Familia", selection: editor.binding(\.typography.family, fallback: nil)) {
+                Text("La del estilo").tag(String?.none)
+                Divider()
+                ForEach(FontCatalog.families, id: \.self) { family in
+                    Text(family).tag(String?.some(family))
+                }
+            }
+            Picker("Peso del título", selection: editor.binding(\.typography.titleWeight, fallback: .semibold)) {
+                ForEach(FontWeightName.allCases, id: \.self) { weight in
+                    Text(weight.label).tag(weight)
+                }
+            }
+            LabeledSlider("Espaciado de etiquetas", value: editor.binding(\.typography.labelTracking, fallback: 2), range: 0...8)
+        }
+    }
+}
+
+private struct ShapeSection: View {
+    let editor: ThemeEditorModel
+
+    var body: some View {
+        Section {
+            LabeledSlider("Ancho", value: editor.binding(\.shape.widthRatio, fallback: ThemeShape.standard.widthRatio), range: ThemeShape.widthRange, unit: "×")
+            LabeledSlider("Alto del cuerpo", value: editor.binding(\.shape.bodyRatio, fallback: ThemeShape.standard.bodyRatio), range: ThemeShape.bodyRange, unit: "×")
+            LabeledSlider("Esquinas superiores", value: editor.binding(\.shape.bodyTopRadiusRatio, fallback: ThemeShape.standard.bodyTopRadiusRatio), range: ThemeShape.radiusRange, unit: "×")
+            LabeledSlider("Esquinas inferiores", value: editor.binding(\.shape.bottomRadiusRatio, fallback: ThemeShape.standard.bottomRadiusRatio), range: ThemeShape.radiusRange, unit: "×")
+            LabeledSlider("Unión con el notch", value: editor.binding(\.shape.junctionRatio, fallback: ThemeShape.standard.junctionRatio), range: ThemeShape.junctionRange, unit: "×")
+        } header: {
+            Text("Forma del panel")
+        } footer: {
+            Text("Las medidas son proporciones del notch, así que el panel se ve igual en cualquier MacBook.")
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct LabeledSlider: View {
+    let title: String
+    let value: Binding<Double>
+    let range: ClosedRange<Double>
+    let unit: String
+    let step: Double?
+
+    init(_ title: String, value: Binding<Double>, range: ClosedRange<Double>, unit: String = "", step: Double? = nil) {
+        self.title = title
+        self.value = value
+        self.range = range
+        self.unit = unit
+        self.step = step
+    }
+
+    var body: some View {
+        LabeledContent(title) {
+            HStack {
+                if let step {
+                    Slider(value: value, in: range, step: step)
+                } else {
+                    Slider(value: value, in: range)
+                }
+                Text(formatted)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 44, alignment: .trailing)
+            }
+        }
+    }
+
+    private var formatted: String {
+        let number = range.upperBound <= 8 ? String(format: "%.2f", value.wrappedValue) : String(format: "%.0f", value.wrappedValue)
+        return number + unit
+    }
+}
+
+@MainActor
+private enum FontCatalog {
+    static let families = NSFontManager.shared.availableFontFamilies.sorted()
+}
+
+private extension FontWeightName {
+    var label: String {
+        switch self {
+        case .regular: "Normal"
+        case .medium: "Media"
+        case .semibold: "Seminegrita"
+        case .bold: "Negrita"
+        case .heavy: "Gruesa"
+        case .black: "Extragruesa"
+        }
+    }
+}

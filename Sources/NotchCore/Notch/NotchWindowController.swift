@@ -9,9 +9,11 @@ public final class NotchWindowController {
     private let nowPlaying: NowPlayingStore
     private let companion: CompanionStore
     private let wings: WingsVisibility
+    private let themes: ThemeStore
     private let menuInspector = MenuBarInspector()
 
-    public init(nowPlaying: NowPlayingStore, companion: CompanionStore, wings: WingsVisibility) {
+    public init(nowPlaying: NowPlayingStore, companion: CompanionStore, wings: WingsVisibility, themes: ThemeStore) {
+        self.themes = themes
         self.wings = wings
         self.nowPlaying = nowPlaying
         self.companion = companion
@@ -83,7 +85,7 @@ public final class NotchWindowController {
             } else {
                 islands[id] = IslandPanelController(
                     collapsedFrame: frame, kind: kind, screenFrame: metrics.frame, stripHeight: strip,
-                    nowPlaying: nowPlaying, companion: companion, wings: wings
+                    nowPlaying: nowPlaying, companion: companion, wings: wings, themes: themes
                 )
             }
         }

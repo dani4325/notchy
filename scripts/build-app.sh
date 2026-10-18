@@ -42,6 +42,18 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <key>LSUIElement</key><true/>
 <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
 <key>NSHighResolutionCapable</key><true/>
+<key>UTExportedTypeDeclarations</key><array><dict>
+<key>UTTypeIdentifier</key><string>$BUNDLE_ID.theme</string>
+<key>UTTypeDescription</key><string>Tema de $APP_NAME</string>
+<key>UTTypeConformsTo</key><array><string>public.zip-archive</string></array>
+<key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>notchytheme</string></array></dict>
+</dict></array>
+<key>CFBundleDocumentTypes</key><array><dict>
+<key>CFBundleTypeName</key><string>Tema de $APP_NAME</string>
+<key>CFBundleTypeRole</key><string>Viewer</string>
+<key>LSHandlerRank</key><string>Owner</string>
+<key>LSItemContentTypes</key><array><string>$BUNDLE_ID.theme</string></array>
+</dict></array>
 <key>NSAppleEventsUsageDescription</key><string>$APP_NAME lee la canción que suena en Spotify o Música y controla la reproducción cuando MediaRemote no está disponible.</string>
 </dict></plist>
 PLIST

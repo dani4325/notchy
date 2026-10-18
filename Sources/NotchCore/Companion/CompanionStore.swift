@@ -6,12 +6,11 @@ import os
 @Observable
 public final class CompanionStore {
     public enum ImportError: Error, Equatable {
-        case unreadableImage
+        case unsupportedMedia
         case copyFailed
     }
 
-    public private(set) var image: NSImage?
-    public private(set) var fileURL: URL?
+    public private(set) var source: MediaSource?
     public private(set) var lastError: String?
 
     @ObservationIgnored private let directory: URL
@@ -32,64 +31,64 @@ public final class CompanionStore {
         load()
     }
 
-    public func importMedia(from source: URL) throws {
-        guard let loaded = NSImage(contentsOf: source), loaded.isValid else {
-            throw ImportError.unreadableImage
+    public func importMedia(from url: URL) throws {
+        let kind: MediaKind
+        do {
+            kind = try MediaKind.detect(at: url)
+        } catch {
+            throw ImportError.unsupportedMedia
         }
-        let destination = directory.appendingPathComponent("companion-\(UUID().uuidString).\(source.pathExtension.lowercased())")
+        let destination = directory.appendingPathComponent("companion-\(UUID().uuidString).\(url.pathExtension.lowercased())")
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            try FileManager.default.copyItem(at: source, to: destination)
+            try FileManager.default.copyItem(at: url, to: destination)
         } catch {
             Self.logger.error("copy failed: \(error.localizedDescription, privacy: .public)")
             throw ImportError.copyFailed
         }
         removeStoredFile()
         defaults.set(destination.lastPathComponent, forKey: Self.fileNameKey)
-        fileURL = destination
-        image = loaded
+        source = MediaSource(url: destination, kind: kind)
     }
 
     public func chooseFromPanel() {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.image]
+        panel.allowedContentTypes = [.image, .movie]
         panel.allowsMultipleSelection = false
-        panel.message = "Elige una imagen o un GIF para acompañar al notch"
+        panel.message = "Elige una imagen, un GIF o un vídeo para acompañar al notch"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try importMedia(from: url)
             lastError = nil
-        } catch ImportError.unreadableImage {
-            lastError = "No se ha podido leer esa imagen."
+        } catch ImportError.unsupportedMedia {
+            lastError = "Ese archivo no es una imagen ni un vídeo compatible."
         } catch {
-            lastError = "No se ha podido guardar la imagen."
+            lastError = "No se ha podido guardar el archivo."
         }
     }
 
     public func clear() {
         removeStoredFile()
         defaults.removeObject(forKey: Self.fileNameKey)
-        fileURL = nil
-        image = nil
+        source = nil
         lastError = nil
     }
 
     private func load() {
         guard let name = defaults.string(forKey: Self.fileNameKey) else { return }
         let url = directory.appendingPathComponent(name)
-        guard let loaded = NSImage(contentsOf: url) else {
+        guard FileManager.default.fileExists(atPath: url.path), let kind = try? MediaKind.detect(at: url) else {
             Self.logger.error("stored companion missing: \(name, privacy: .public)")
             defaults.removeObject(forKey: Self.fileNameKey)
             return
         }
-        fileURL = url
-        image = loaded
+        source = MediaSource(url: url, kind: kind)
     }
 
     private func removeStoredFile() {
-        guard let fileURL else { return }
+        guard let url = source?.url else { return }
         do {
-            try FileManager.default.removeItem(at: fileURL)
+            try FileManager.default.removeItem(at: url)
         } catch {
             Self.logger.error("remove failed: \(error.localizedDescription, privacy: .public)")
         }

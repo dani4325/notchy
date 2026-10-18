@@ -1,41 +1,59 @@
 import SwiftUI
 
+struct TransportActions {
+    let previous: () -> Void
+    let toggle: () -> Void
+    let next: () -> Void
+
+    static var inert: TransportActions { TransportActions(previous: {}, toggle: {}, next: {}) }
+}
+
 struct ExpandedMusicView: View {
-    let nowPlaying: NowPlayingStore
+    let layout: IslandLayout
     let info: NowPlayingInfo
+    let artwork: NSImage?
+    let appName: String?
+    let controls: TransportActions
+
+    @Environment(\.themeAppearance) private var appearance
 
     var body: some View {
-        HStack(spacing: 16) {
-            ArtworkView(image: nowPlaying.artwork, size: 86, cornerRadius: 16)
-                .shadow(color: NotchyStyle.accent.opacity(0.25), radius: 12, y: 4)
+        HStack(spacing: layout.columnGap) {
+            ArtworkView(image: artwork, size: layout.artworkSide, cornerRadius: layout.artworkCorner)
+                .shadow(color: appearance.accent.opacity(appearance.theme.effects.glow), radius: layout.unit * 0.35)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text((nowPlaying.appName ?? "Ahora suena").uppercased())
-                    .font(.system(size: 9, weight: .heavy, design: .monospaced))
-                    .tracking(2.2)
-                    .foregroundStyle(NotchyStyle.accent)
+            VStack(alignment: .leading, spacing: layout.textSpacing) {
+                Text((appName ?? "Ahora suena").uppercased())
+                    .font(appearance.labelFont(layout.labelSize))
+                    .tracking(appearance.theme.typography.labelTracking)
+                    .foregroundStyle(appearance.accent)
                 Text(info.title)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .font(appearance.titleFont(layout.titleSize))
+                    .foregroundStyle(appearance.text)
                 Text(info.artist ?? info.album ?? " ")
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
-                Spacer(minLength: 6)
-                ProgressRow(info: info)
+                    .font(appearance.bodyFont(layout.subtitleSize))
+                    .foregroundStyle(appearance.text.opacity(0.78))
+                Spacer(minLength: layout.progressGap)
+                ProgressRow(layout: layout, info: info)
             }
             .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .truncationMode(.tail)
+            .shadow(color: appearance.textShadow, radius: layout.unit * 0.08)
+            .frame(width: max(layout.textWidth, 0), height: layout.artworkSide, alignment: .leading)
 
-            TransportControls(nowPlaying: nowPlaying, isPlaying: info.isPlaying)
+            TransportControls(layout: layout, controls: controls, isPlaying: info.isPlaying)
         }
-        .frame(height: 86)
-        .padding(.horizontal, 22)
-        .padding(.vertical, 14)
+        .padding(.leading, layout.padding)
+        .padding(.trailing, layout.trailingPadding)
+        .frame(width: layout.size.width, height: layout.bodyHeight)
     }
 }
 
 private struct ProgressRow: View {
+    let layout: IslandLayout
     let info: NowPlayingInfo
+
+    @Environment(\.themeAppearance) private var appearance
 
     private static let tick: TimeInterval = 0.5
 
@@ -54,26 +72,30 @@ private struct ProgressRow: View {
         let position = info.position(at: date)
         let progress = info.progress(at: date) ?? 0
 
-        return VStack(spacing: 4) {
+        return VStack(spacing: layout.textSpacing) {
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(.white.opacity(0.14))
+                    Capsule().fill(appearance.text.opacity(0.22))
                     Capsule()
-                        .fill(NotchyStyle.accent)
-                        .frame(width: max(proxy.size.width * progress, 4))
+                        .fill(LinearGradient(
+                            colors: [appearance.accent, appearance.secondary],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ))
+                        .frame(width: max(proxy.size.width * progress, layout.progressHeight))
                 }
             }
-            .frame(height: 4)
+            .frame(height: layout.progressHeight)
 
             HStack {
                 Text(Self.format(position))
-                Spacer()
+                Spacer(minLength: 0)
                 if let duration = info.duration {
                     Text("-" + Self.format(max(duration - position, 0)))
                 }
             }
-            .font(.system(size: 10, weight: .medium, design: .monospaced))
-            .foregroundStyle(.white.opacity(0.45))
+            .font(appearance.numericFont(layout.timeSize))
+            .foregroundStyle(appearance.text.opacity(0.72))
         }
         .accessibilityElement(children: .ignore)
         .accessibilityValue(Self.format(position))
@@ -86,38 +108,47 @@ private struct ProgressRow: View {
 }
 
 private struct TransportControls: View {
-    let nowPlaying: NowPlayingStore
+    let layout: IslandLayout
+    let controls: TransportActions
     let isPlaying: Bool
 
+    @Environment(\.themeAppearance) private var appearance
+
     var body: some View {
-        HStack(spacing: 6) {
-            Button(action: nowPlaying.previousTrack) {
-                Image(systemName: "backward.fill").font(.system(size: 15))
+        HStack(spacing: layout.controlSpacing) {
+            Button(action: controls.previous) {
+                Image(systemName: "backward.fill").font(.system(size: layout.skipIconSize))
             }
             .accessibilityLabel("Anterior")
 
-            Button(action: nowPlaying.togglePlayPause) {
+            Button(action: controls.toggle) {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 22))
+                    .font(.system(size: layout.playIconSize))
                     .contentTransition(.symbolEffect(.replace))
             }
             .accessibilityLabel(isPlaying ? "Pausa" : "Reproducir")
 
-            Button(action: nowPlaying.nextTrack) {
-                Image(systemName: "forward.fill").font(.system(size: 15))
+            Button(action: controls.next) {
+                Image(systemName: "forward.fill").font(.system(size: layout.skipIconSize))
             }
             .accessibilityLabel("Siguiente")
         }
-        .buttonStyle(TransportButtonStyle())
+        .buttonStyle(TransportButtonStyle(diameter: layout.controlDiameter, tint: appearance.text, pressed: appearance.accent))
+        .shadow(color: appearance.textShadow, radius: layout.unit * 0.08)
+        .frame(width: layout.controlsWidth)
     }
 }
 
 private struct TransportButtonStyle: ButtonStyle {
+    let diameter: CGFloat
+    let tint: Color
+    let pressed: Color
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(.white.opacity(configuration.isPressed ? 0.7 : 1))
-            .frame(width: 38, height: 38)
-            .background(.white.opacity(configuration.isPressed ? 0.14 : 0), in: Circle())
+            .foregroundStyle(configuration.isPressed ? pressed : tint)
+            .frame(width: diameter, height: diameter)
+            .background(pressed.opacity(configuration.isPressed ? 0.2 : 0), in: Circle())
             .scaleEffect(configuration.isPressed ? 0.86 : 1)
             .animation(.spring(duration: 0.2), value: configuration.isPressed)
             .contentShape(Circle())

@@ -4,27 +4,24 @@ struct IslandView: View {
     let model: IslandModel
     let nowPlaying: NowPlayingStore
     let companion: CompanionStore
+    let themes: ThemeStore
 
     @AppStorage(Preferences.Key.showCalibrationOutline) private var showOutline = false
 
     var body: some View {
-        let policy = MotionPolicy(reduceMotion: model.reduceMotion)
+        let appearance = ThemeAppearance.resolve(themes.activeTheme, in: themes)
+        let policy = MotionPolicy(reduceMotion: model.reduceMotion, openAnimation: model.openAnimation)
         let size = model.currentSize
 
         ZStack(alignment: .top) {
-            shape
-                .fill(.black)
-                .overlay {
-                    if showOutline {
-                        shape.stroke(NotchyStyle.accent, lineWidth: 1)
-                    }
-                }
+            IslandSurface(model: model, appearance: appearance, showOutline: showOutline)
                 .frame(width: size.width, height: size.height)
 
             switch model.state {
             case .expanded:
                 expandedContent
-                    .padding(.top, model.contentTopInset)
+                    .frame(width: size.width, height: model.layout.bodyHeight)
+                    .padding(.top, model.layout.stem.height)
                     .frame(width: size.width, height: size.height, alignment: .top)
                     .transition(contentTransition(policy))
             case .compact:
@@ -36,26 +33,26 @@ struct IslandView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .environment(\.themeAppearance, appearance)
     }
 
     @ViewBuilder
     private var expandedContent: some View {
         if let info = nowPlaying.info {
-            ExpandedMusicView(nowPlaying: nowPlaying, info: info)
+            ExpandedMusicView(
+                layout: model.layout,
+                info: info,
+                artwork: nowPlaying.artwork,
+                appName: nowPlaying.appName,
+                controls: TransportActions(
+                    previous: nowPlaying.previousTrack,
+                    toggle: nowPlaying.togglePlayPause,
+                    next: nowPlaying.nextTrack
+                )
+            )
         } else {
-            IdleContentView()
+            IdleContentView(layout: model.layout)
         }
-    }
-
-    private var shape: IslandShape {
-        IslandShape(
-            stemWidth: model.collapsedSize.width,
-            stemHeight: model.stemHeight,
-            topRadius: model.topRadius,
-            bodyTopRadius: model.bodyTopRadius,
-            bottomRadius: model.bottomRadius,
-            junctionRadius: model.junctionRadius
-        )
     }
 
     private func contentTransition(_ policy: MotionPolicy) -> AnyTransition {

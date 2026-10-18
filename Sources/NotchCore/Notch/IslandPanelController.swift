@@ -13,6 +13,7 @@ final class IslandPanelController {
     private let nowPlaying: NowPlayingStore
     private let companion: CompanionStore
     private let wings: WingsVisibility
+    private let themes: ThemeStore
     private var collapsedFrame: CGRect
     private var screenFrame: CGRect
     private var isHovering = false
@@ -27,23 +28,26 @@ final class IslandPanelController {
         stripHeight: CGFloat,
         nowPlaying: NowPlayingStore,
         companion: CompanionStore,
-        wings: WingsVisibility
+        wings: WingsVisibility,
+        themes: ThemeStore
     ) {
         self.collapsedFrame = collapsedFrame
         self.screenFrame = screenFrame
         self.nowPlaying = nowPlaying
         self.companion = companion
         self.wings = wings
+        self.themes = themes
         model = IslandModel(kind: kind, collapsedSize: collapsedFrame.size, stripHeight: stripHeight)
         panel = NotchPanel(frame: collapsedFrame)
 
-        hostingView = HoverHostingView(rootView: IslandView(model: model, nowPlaying: nowPlaying, companion: companion))
+        hostingView = HoverHostingView(rootView: IslandView(model: model, nowPlaying: nowPlaying, companion: companion, themes: themes))
         hostingView.onHoverChange = { [weak self] isInside in
             self?.hoverChanged(isInside)
         }
         panel.contentView = hostingView
         panel.orderFrontRegardless()
         observeWings()
+        observeTheme()
         transition(to: restingState, animated: false)
         refreshHoverRegions()
     }
@@ -89,6 +93,23 @@ final class IslandPanelController {
         }
     }
 
+    private func observeTheme() {
+        let theme = themes.activeTheme
+        model.shapeStyle = theme.shape
+        model.openAnimation = theme.openAnimation
+        withObservationTracking {
+            _ = themes.activeTheme
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, !self.isClosed else { return }
+                self.observeTheme()
+                if self.model.isExpanded {
+                    self.setPanelFrame(self.frame(for: .expanded))
+                }
+            }
+        }
+    }
+
     private func hoverChanged(_ isInside: Bool) {
         isHovering = isInside
         pendingHover?.cancel()
@@ -107,7 +128,7 @@ final class IslandPanelController {
         guard target != model.state || panel.frame != frame(for: target) else { return }
         pendingResize?.cancel()
 
-        let policy = MotionPolicy.current
+        let policy = MotionPolicy.current(openAnimation: model.openAnimation)
         model.reduceMotion = policy.reduceMotion
         let targetFrame = frame(for: target)
         let isGrowing = target > model.state
@@ -152,7 +173,7 @@ final class IslandPanelController {
         case .compact:
             NotchGeometry.compactFrame(collapsed: collapsedFrame, wing: model.compactWing)
         case .expanded:
-            NotchGeometry.expandedFrame(collapsed: collapsedFrame, size: IslandModel.expandedSize, screen: screenFrame)
+            NotchGeometry.expandedFrame(collapsed: collapsedFrame, size: model.expandedSize, screen: screenFrame)
         }
     }
 

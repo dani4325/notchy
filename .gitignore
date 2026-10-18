@@ -3,3 +3,4 @@ research/
 build/
 *.app
 .DS_Store
+preview/

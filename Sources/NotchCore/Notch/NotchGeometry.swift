@@ -140,3 +140,13 @@ extension NotchGeometry {
         max(collapsed.maxY - screen.visibleFrame.maxY, collapsed.height)
     }
 }
+
+extension NotchGeometry {
+    @MainActor
+    static var primaryNotchSize: CGSize {
+        NSScreen.screens
+            .lazy
+            .compactMap { notchFrame(for: ScreenMetrics(screen: $0))?.size }
+            .first ?? IslandLayout.referenceNotch
+    }
+}

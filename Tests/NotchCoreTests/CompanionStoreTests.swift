@@ -25,35 +25,43 @@ struct CompanionStoreTests {
 
         try store.importMedia(from: source)
 
-        let stored = try #require(store.fileURL)
+        let stored = try #require(store.source?.url)
         #expect(stored.deletingLastPathComponent().path == directory.path)
         #expect(FileManager.default.fileExists(atPath: stored.path))
-        #expect(store.image != nil)
+        #expect(store.source?.kind == .image)
     }
 
     @Test func importSurvivesReloadAndReplacesPreviousFile() throws {
         let store = CompanionStore(directory: directory, defaults: defaults)
         try store.importMedia(from: try makePNG())
-        let first = try #require(store.fileURL)
+        let first = try #require(store.source?.url)
 
         try store.importMedia(from: try makePNG())
         let reloaded = CompanionStore(directory: directory, defaults: defaults)
 
         #expect(!FileManager.default.fileExists(atPath: first.path))
-        #expect(reloaded.fileURL == store.fileURL)
-        #expect(reloaded.image != nil)
+        #expect(reloaded.source == store.source)
     }
 
     @Test func clearRemovesFileAndImage() throws {
         let store = CompanionStore(directory: directory, defaults: defaults)
         try store.importMedia(from: try makePNG())
-        let stored = try #require(store.fileURL)
+        let stored = try #require(store.source?.url)
 
         store.clear()
 
-        #expect(store.image == nil)
-        #expect(store.fileURL == nil)
+        #expect(store.source == nil)
         #expect(!FileManager.default.fileExists(atPath: stored.path))
+    }
+
+    @Test func importAcceptsVideos() throws {
+        let store = CompanionStore(directory: directory, defaults: defaults)
+        let clip = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).mp4")
+        try Data().write(to: clip)
+
+        try store.importMedia(from: clip)
+
+        #expect(store.source?.kind == .video)
     }
 
     @Test func importRejectsNonImageFiles() throws {
@@ -61,9 +69,9 @@ struct CompanionStoreTests {
         let text = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).txt")
         try Data("hola".utf8).write(to: text)
 
-        #expect(throws: CompanionStore.ImportError.unreadableImage) {
+        #expect(throws: CompanionStore.ImportError.unsupportedMedia) {
             try store.importMedia(from: text)
         }
-        #expect(store.image == nil)
+        #expect(store.source == nil)
     }
 }

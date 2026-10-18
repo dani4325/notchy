@@ -1,35 +1,42 @@
 import SwiftUI
 
 struct IdleContentView: View {
+    let layout: IslandLayout
+
+    @Environment(\.themeAppearance) private var appearance
+
     var body: some View {
-        HStack(spacing: 16) {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+        HStack(spacing: layout.columnGap) {
+            RoundedRectangle(cornerRadius: layout.artworkCorner, style: .continuous)
                 .strokeBorder(
-                    NotchyStyle.accent.opacity(0.55),
-                    style: StrokeStyle(lineWidth: 1.5, dash: [4, 4])
+                    appearance.accent.opacity(0.6),
+                    style: StrokeStyle(lineWidth: layout.unit * 0.04, dash: [layout.unit * 0.11, layout.unit * 0.11])
                 )
-                .frame(width: 72, height: 72)
+                .frame(width: layout.artworkSide, height: layout.artworkSide)
                 .overlay {
                     Image(systemName: "music.note")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(NotchyStyle.accent)
+                        .font(.system(size: layout.artworkSide * 0.3, weight: .semibold))
+                        .foregroundStyle(appearance.accent)
                 }
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: layout.textSpacing) {
                 Text("NADA SONANDO")
-                    .font(.system(size: 10, weight: .heavy, design: .monospaced))
-                    .tracking(2.5)
-                    .foregroundStyle(NotchyStyle.accent)
+                    .font(appearance.labelFont(layout.labelSize))
+                    .tracking(appearance.theme.typography.labelTracking)
+                    .foregroundStyle(appearance.accent)
                 Text("Pon algo de música y aparecerá aquí")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white)
-                Text(AppInfo.name.lowercased())
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.35))
+                    .font(appearance.titleFont(layout.titleSize))
+                    .foregroundStyle(appearance.text)
+                    .lineLimit(2)
+                Text(appearance.theme.name.lowercased())
+                    .font(appearance.bodyFont(layout.timeSize))
+                    .foregroundStyle(appearance.text.opacity(0.6))
+                    .lineLimit(1)
             }
-            Spacer(minLength: 0)
+            .shadow(color: appearance.textShadow, radius: layout.unit * 0.08)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
+        .padding(.horizontal, layout.padding)
+        .frame(width: layout.size.width, height: layout.bodyHeight)
     }
 }

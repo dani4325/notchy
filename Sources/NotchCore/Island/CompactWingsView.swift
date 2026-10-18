@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct CompactWingsView: View {
+    @Environment(\.themeAppearance) private var appearance
+
     let nowPlaying: NowPlayingStore
     let companion: CompanionStore
     let wing: CGFloat
@@ -30,27 +32,27 @@ struct CompactWingsView: View {
                     if !info.isPlaying {
                         Image(systemName: "pause.fill")
                             .font(.system(size: mediaSize * 0.42, weight: .heavy))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(appearance.text)
                             .shadow(color: .black.opacity(0.6), radius: 3)
                     }
                 }
         } else {
             Image(systemName: "music.note")
                 .font(.system(size: mediaSize * 0.45, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.22))
+                .foregroundStyle(appearance.text.opacity(0.22))
         }
     }
 
     @ViewBuilder
     private var rightWing: some View {
-        if let image = companion.image {
-            CompanionMediaView(image: image, isAnimating: nowPlaying.isPlaying)
+        if let source = companion.source {
+            MediaView(source: source, isActive: nowPlaying.isPlaying)
                 .frame(width: mediaSize, height: mediaSize)
                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         } else {
             Image(systemName: "sparkle")
                 .font(.system(size: mediaSize * 0.5, weight: .bold))
-                .foregroundStyle(NotchyStyle.accent.opacity(nowPlaying.isPlaying ? 1 : 0.45))
+                .foregroundStyle(appearance.accent.opacity(nowPlaying.isPlaying ? 1 : 0.45))
         }
     }
 }
