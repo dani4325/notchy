@@ -1,6 +1,4 @@
-# AnimeNotch
-
-> Nombre provisional.
+# Notchy
 
 Convierte el notch de tu MacBook en un panel tipo Dynamic Island que puedes vestir con tus propias imágenes, GIFs y vídeos.
 
@@ -11,7 +9,7 @@ Convierte el notch de tu MacBook en un panel tipo Dynamic Island que puedes vest
 ## Instalar
 
 1. Descarga el `.zip` de la última versión en **Releases** y descomprímelo.
-2. Arrastra `AnimeNotch.app` a **Aplicaciones**.
+2. Arrastra `Notchy.app` a **Aplicaciones**.
 3. Ábrela con doble clic. No tiene icono en el Dock: aparece en la barra de menús, arriba a la derecha.
 
 ### La primera vez: aviso de Gatekeeper
@@ -20,7 +18,7 @@ La app está firmada *ad-hoc*: no está notarizada por Apple porque no se distri
 
 1. Haz doble clic en la app y pulsa **OK** (o **Listo**) en el aviso. No la muevas a la papelera.
 2. Abre **Ajustes del Sistema → Privacidad y seguridad**.
-3. Baja hasta la sección **Seguridad**. Verás «Se ha bloqueado el uso de AnimeNotch…». Pulsa **Abrir igualmente**.
+3. Baja hasta la sección **Seguridad**. Verás «Se ha bloqueado el uso de Notchy…». Pulsa **Abrir igualmente**.
 4. Confirma con tu contraseña o Touch ID y pulsa **Abrir**.
 
 Solo hace falta una vez. Desde macOS 15, el truco antiguo de *Control + clic → Abrir* ya no evita este aviso.
@@ -28,7 +26,7 @@ Solo hace falta una vez. Desde macOS 15, el truco antiguo de *Control + clic →
 **Alternativa por Terminal**, si prefieres no pasar por Ajustes. Quita la marca de cuarentena de la descarga:
 
 ```sh
-xattr -dr com.apple.quarantine /Applications/AnimeNotch.app
+xattr -dr com.apple.quarantine /Applications/Notchy.app
 ```
 
 > Pasos según el flujo que Apple documenta desde macOS 15. Aún no los he verificado con una descarga real en macOS 27; los nombres de los menús pueden variar ligeramente.
@@ -38,7 +36,7 @@ xattr -dr com.apple.quarantine /Applications/AnimeNotch.app
 Necesitas las Command Line Tools de Xcode o Xcode completo.
 
 ```sh
-./scripts/build-app.sh   # compila y genera build/AnimeNotch.app (firmada ad-hoc)
+./scripts/build-app.sh   # compila y genera build/Notchy.app (firmada ad-hoc)
 ./scripts/run.sh         # compila, cierra la instancia anterior y abre la app
 swift test               # tests
 ```

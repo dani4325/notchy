@@ -1,8 +1,8 @@
 #!/bin/zsh
 set -euo pipefail
 
-APP_NAME="AnimeNotch"
-BUNDLE_ID="com.danirubio.animenotch"
+APP_NAME="Notchy"
+BUNDLE_ID="com.danirubio.notchy"
 VERSION="0.1.0"
 BUILD_NUMBER="1"
 MIN_MACOS="15.0"

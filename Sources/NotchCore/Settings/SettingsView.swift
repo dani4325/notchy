@@ -4,14 +4,13 @@ public struct SettingsView: View {
     @AppStorage(Preferences.Key.nonNotchMode) private var nonNotchMode = NonNotchMode.pill.rawValue
     @AppStorage(Preferences.Key.showCalibrationOutline) private var showOutline = false
 
-    private static let accent = Color(red: 1, green: 0.42, blue: 0.1)
 
     public init() {}
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
-            Divider().overlay(Self.accent.opacity(0.4))
+            Divider().overlay(NotchyStyle.accent.opacity(0.4))
             Form {
                 Section {
                     Picker("Pantallas sin notch", selection: $nonNotchMode) {
@@ -35,14 +34,14 @@ public struct SettingsView: View {
             .scrollDisabled(true)
         }
         .frame(width: 440)
-        .tint(Self.accent)
+        .tint(NotchyStyle.accent)
     }
 
     private var header: some View {
         HStack(spacing: 12) {
             Image(nsImage: MenuBarIcon.image)
                 .renderingMode(.template)
-                .foregroundStyle(Self.accent)
+                .foregroundStyle(NotchyStyle.accent)
                 .scaleEffect(1.6)
                 .frame(width: 36, height: 36)
                 .background(.black, in: RoundedRectangle(cornerRadius: 9, style: .continuous))

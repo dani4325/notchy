@@ -100,3 +100,14 @@ public enum NotchGeometry {
         )
     }
 }
+
+extension NotchGeometry {
+    public static func expandedFrame(collapsed: CGRect, size: CGSize, screen: CGRect) -> CGRect {
+        let width = min(max(size.width, collapsed.width), screen.width)
+        let height = max(size.height, collapsed.height)
+        let centeredX = collapsed.midX - width / 2
+        let x = min(max(centeredX, screen.minX), screen.maxX - width)
+
+        return CGRect(x: x, y: collapsed.maxY - height, width: width, height: height)
+    }
+}

@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 public final class NotchWindowController {
-    private var panels: [CGDirectDisplayID: NotchPanel] = [:]
+    private var islands: [CGDirectDisplayID: IslandPanelController] = [:]
     private var observers: [NSObjectProtocol] = []
     private var currentMode: NonNotchMode
 
@@ -35,8 +35,8 @@ public final class NotchWindowController {
     public func stop() {
         observers.forEach(NotificationCenter.default.removeObserver)
         observers = []
-        panels.values.forEach { $0.close() }
-        panels = [:]
+        islands.values.forEach { $0.close() }
+        islands = [:]
     }
 
     private func preferencesChanged() {
@@ -47,31 +47,27 @@ public final class NotchWindowController {
     }
 
     private func rebuild() {
-        let layouts = Dictionary(
-            NSScreen.screens.compactMap { screen -> (CGDirectDisplayID, NotchLayout)? in
-                guard let id = screen.displayID else { return nil }
-                return (id, NotchGeometry.layout(for: ScreenMetrics(screen: screen), nonNotchMode: currentMode))
-            },
-            uniquingKeysWith: { first, _ in first }
-        )
+        let screens = NSScreen.screens.compactMap { screen -> (CGDirectDisplayID, NotchLayout, CGRect)? in
+            guard let id = screen.displayID else { return nil }
+            let layout = NotchGeometry.layout(for: ScreenMetrics(screen: screen), nonNotchMode: currentMode)
+            return (id, layout, screen.frame)
+        }
+        let visibleIDs = Set(screens.compactMap { id, layout, _ in layout.frame == nil ? nil : id })
 
-        for (id, panel) in panels where layouts[id]?.frame == nil {
-            panel.close()
-            panels[id] = nil
+        for (id, island) in islands where !visibleIDs.contains(id) {
+            island.close()
+            islands[id] = nil
         }
 
-        for (id, layout) in layouts {
+        for (id, layout, screenFrame) in screens {
             guard let frame = layout.frame else { continue }
-            let panel = panels[id] ?? makePanel(frame: frame)
-            panel.contentView = NSHostingView(rootView: IslandView(isNotch: layout.isNotch))
-            panel.setFrame(frame, display: true)
-            panel.orderFrontRegardless()
-            panels[id] = panel
+            let kind: IslandKind = layout.isNotch ? .notch : .pill
+            if let island = islands[id] {
+                island.update(collapsedFrame: frame, kind: kind, screenFrame: screenFrame)
+            } else {
+                islands[id] = IslandPanelController(collapsedFrame: frame, kind: kind, screenFrame: screenFrame)
+            }
         }
-    }
-
-    private func makePanel(frame: CGRect) -> NotchPanel {
-        NotchPanel(frame: frame)
     }
 }
 

@@ -1,26 +1,56 @@
 import SwiftUI
 
 struct IslandView: View {
-    let isNotch: Bool
+    let model: IslandModel
 
     @AppStorage(Preferences.Key.showCalibrationOutline) private var showOutline = false
 
-    private static let notchBottomRadius: CGFloat = 10
-    private static let calibrationColor = Color(red: 1, green: 0.42, blue: 0.1)
-
     var body: some View {
-        shape
-            .fill(.black)
-            .overlay {
-                if showOutline {
-                    shape.stroke(Self.calibrationColor, lineWidth: 1)
+        let policy = MotionPolicy(reduceMotion: model.reduceMotion)
+        let size = model.currentSize
+
+        ZStack(alignment: .top) {
+            shape
+                .fill(.black)
+                .overlay {
+                    if showOutline {
+                        shape.stroke(NotchyStyle.accent, lineWidth: 1)
+                    }
                 }
+                .frame(width: size.width, height: size.height)
+
+            if model.isExpanded {
+                IdleContentView()
+                    .padding(.top, model.contentTopInset)
+                    .frame(width: size.width, height: size.height, alignment: .top)
+                    .transition(contentTransition(policy))
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    private var shape: AnyShape {
-        isNotch
-            ? AnyShape(NotchShape(bottomRadius: Self.notchBottomRadius))
-            : AnyShape(Capsule(style: .continuous))
+    private var shape: UnevenRoundedRectangle {
+        UnevenRoundedRectangle(
+            topLeadingRadius: model.topRadius,
+            bottomLeadingRadius: model.bottomRadius,
+            bottomTrailingRadius: model.bottomRadius,
+            topTrailingRadius: model.topRadius,
+            style: .continuous
+        )
+    }
+
+    private func contentTransition(_ policy: MotionPolicy) -> AnyTransition {
+        guard policy.animatesShape else {
+            return .asymmetric(
+                insertion: .opacity.animation(policy.contentAnimation),
+                removal: .identity
+            )
+        }
+        return .asymmetric(
+            insertion: .opacity
+                .combined(with: .scale(scale: policy.contentScale, anchor: .top))
+                .animation(policy.contentAnimation.delay(0.06)),
+            removal: .opacity.animation(.easeOut(duration: 0.12))
+        )
     }
 }
