@@ -14,12 +14,15 @@ final class IslandPanelController {
     private let companion: CompanionStore
     private let wings: WingsVisibility
     private let themes: ThemeStore
+    private let visualizer: AudioVisualizer
+    private let shelf: ShelfStore
     private var collapsedFrame: CGRect
     private var screenFrame: CGRect
     private var isHovering = false
     private var pendingHover: Task<Void, Never>?
     private var pendingResize: Task<Void, Never>?
     private var isClosed = false
+    private var activityTimer: Task<Void, Never>?
 
     init(
         collapsedFrame: CGRect,
@@ -29,7 +32,9 @@ final class IslandPanelController {
         nowPlaying: NowPlayingStore,
         companion: CompanionStore,
         wings: WingsVisibility,
-        themes: ThemeStore
+        themes: ThemeStore,
+        visualizer: AudioVisualizer,
+        shelf: ShelfStore
     ) {
         self.collapsedFrame = collapsedFrame
         self.screenFrame = screenFrame
@@ -37,13 +42,28 @@ final class IslandPanelController {
         self.companion = companion
         self.wings = wings
         self.themes = themes
+        self.visualizer = visualizer
+        self.shelf = shelf
         model = IslandModel(kind: kind, collapsedSize: collapsedFrame.size, stripHeight: stripHeight)
         panel = NotchPanel(frame: collapsedFrame)
 
-        hostingView = HoverHostingView(rootView: IslandView(model: model, nowPlaying: nowPlaying, companion: companion, themes: themes))
+        hostingView = HoverHostingView(rootView: IslandView(
+            model: model, nowPlaying: nowPlaying, companion: companion, themes: themes,
+            visualizer: visualizer, shelf: shelf, togglePage: {}
+        ))
         hostingView.onHoverChange = { [weak self] isInside in
             self?.hoverChanged(isInside)
         }
+        hostingView.onDragHover = { [weak self] isInside in
+            self?.dragHoverChanged(isInside)
+        }
+        hostingView.onDropFiles = { [weak self] urls in
+            self?.dropped(urls) ?? false
+        }
+        hostingView.rootView = IslandView(
+            model: model, nowPlaying: nowPlaying, companion: companion, themes: themes,
+            visualizer: visualizer, shelf: shelf, togglePage: { [weak self] in self?.togglePage() }
+        )
         panel.contentView = hostingView
         panel.orderFrontRegardless()
         observeWings()
@@ -69,7 +89,39 @@ final class IslandPanelController {
         panel.orderFrontRegardless()
     }
 
+    func show(_ activity: IslandActivity) {
+        activityTimer?.cancel()
+        let isUpdate = activity.isSameKind(as: model.activity) && model.isExpanded
+        model.activity = activity
+        if !isUpdate {
+            if model.isExpanded {
+                model.openCount += 1
+            } else {
+                transition(to: .expanded, animated: true)
+            }
+        }
+        activityTimer = Task { [weak self] in
+            try? await Task.sleep(for: activity.duration)
+            guard !Task.isCancelled, let self else { return }
+            self.endActivity()
+        }
+    }
+
+    private func resetPageIfLeaving(_ target: IslandState) {
+        if target != .expanded {
+            model.page = .main
+        }
+    }
+
+    private func endActivity() {
+        activityTimer = nil
+        guard !isHovering else { return }
+        model.activity = nil
+        transition(to: restingState, animated: true)
+    }
+
     func close() {
+        activityTimer?.cancel()
         isClosed = true
         cancelPending()
         panel.close()
@@ -110,9 +162,34 @@ final class IslandPanelController {
         }
     }
 
+    private func togglePage() {
+        model.page = model.page == .shelf ? .main : .shelf
+    }
+
+    private func dragHoverChanged(_ isInside: Bool) {
+        guard Preferences.shelf else { return }
+        model.isDropTargeted = isInside
+        if isInside {
+            activityTimer?.cancel()
+            model.activity = nil
+            model.page = .shelf
+        }
+        hoverChanged(isInside)
+    }
+
+    private func dropped(_ urls: [URL]) -> Bool {
+        guard Preferences.shelf, !urls.isEmpty else { return false }
+        shelf.add(urls)
+        model.page = .shelf
+        return true
+    }
+
     private func hoverChanged(_ isInside: Bool) {
         isHovering = isInside
         pendingHover?.cancel()
+        if !isInside, model.activity != nil, activityTimer == nil {
+            model.activity = nil
+        }
         let target = isInside ? IslandState.expanded : restingState
         guard target != model.state else { return }
 
@@ -138,6 +215,7 @@ final class IslandPanelController {
         if target == .expanded, animated {
             model.openCount += 1
         }
+        resetPageIfLeaving(target)
         withAnimation(animation) {
             model.state = target
         }

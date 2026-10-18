@@ -5,6 +5,11 @@ struct IslandView: View {
     let nowPlaying: NowPlayingStore
     let companion: CompanionStore
     let themes: ThemeStore
+    let visualizer: AudioVisualizer
+    let shelf: ShelfStore
+    let togglePage: () -> Void
+
+    @AppStorage(Preferences.Key.shelf) private var shelfEnabled = true
 
     @AppStorage(Preferences.Key.showCalibrationOutline) private var showOutline = false
 
@@ -22,6 +27,13 @@ struct IslandView: View {
             case .expanded:
                 expandedContent
                     .frame(width: size.width, height: model.layout.bodyHeight)
+                    .overlay(alignment: .topTrailing) {
+                        if shelfEnabled, model.activity == nil {
+                            PageToggleButton(page: model.page, count: shelf.items.count, layout: model.layout, action: togglePage)
+                                .padding(.top, model.layout.padding * 0.18)
+                                .padding(.trailing, model.layout.padding * 0.55)
+                        }
+                    }
                     .padding(.top, model.layout.stem.height)
                     .frame(width: size.width, height: size.height, alignment: .top)
                     .transition(contentTransition(policy))
@@ -47,7 +59,15 @@ struct IslandView: View {
 
     @ViewBuilder
     private var expandedContent: some View {
-        if let info = nowPlaying.info {
+        if case .power(let event) = model.activity {
+            ChargingView(layout: model.layout, event: event)
+        } else if case .volume(let reading) = model.activity {
+            VolumeHUDView(layout: model.layout, reading: reading)
+        } else if model.activity == .greeting {
+            GreetingView(layout: model.layout)
+        } else if shelfEnabled, model.page == .shelf {
+            ShelfView(layout: model.layout, shelf: shelf, isDropTargeted: model.isDropTargeted)
+        } else if let info = nowPlaying.info {
             ExpandedMusicView(
                 layout: model.layout,
                 info: info,
@@ -57,7 +77,8 @@ struct IslandView: View {
                     previous: nowPlaying.previousTrack,
                     toggle: nowPlaying.togglePlayPause,
                     next: nowPlaying.nextTrack
-                )
+                ),
+                visualizer: visualizer
             )
         } else {
             IdleContentView(layout: model.layout)

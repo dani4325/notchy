@@ -27,12 +27,15 @@ cp "$ADAPTER_OUT/MediaRemoteAdapterTestClient" "$APP/Contents/MacOS/"
 cp "$ADAPTER_OUT/mediaremote-adapter.pl" "$APP/Contents/Resources/"
 cp "$ROOT/Vendor/mediaremote-adapter/LICENSE" "$APP/Contents/Resources/MediaRemoteAdapter-LICENSE.txt"
 cp -R "$ROOT/Resources/Fonts" "$APP/Contents/Resources/Fonts"
+python3 -I "$ROOT/scripts/build-localizations.py" "$ROOT/Resources/Localization" "$APP/Contents/Resources"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>CFBundleName</key><string>$APP_NAME</string>
+<key>CFBundleDevelopmentRegion</key><string>en</string>
+<key>CFBundleLocalizations</key><array><string>en</string><string>es</string></array>
 <key>CFBundleDisplayName</key><string>$APP_NAME</string>
 <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
 <key>CFBundleExecutable</key><string>$APP_NAME</string>
@@ -55,6 +58,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <key>LSHandlerRank</key><string>Owner</string>
 <key>LSItemContentTypes</key><array><string>$BUNDLE_ID.theme</string></array>
 </dict></array>
+<key>NSAudioCaptureUsageDescription</key><string>$APP_NAME escucha el audio que suena para animar el visualizador del notch. No graba ni guarda nada.</string>
 <key>NSAppleEventsUsageDescription</key><string>$APP_NAME lee la canción que suena en Spotify o Música y controla la reproducción cuando MediaRemote no está disponible.</string>
 </dict></plist>
 PLIST

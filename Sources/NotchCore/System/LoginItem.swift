@@ -45,8 +45,8 @@ public final class LoginItem {
         } catch {
             Self.logger.error("login item change failed: \(error.localizedDescription, privacy: .public)")
             message = enabled
-                ? "macOS no ha permitido activar el arranque. Mueve Notchy a Aplicaciones y vuelve a intentarlo."
-                : "No se ha podido desactivar el arranque."
+                ? String(localized: "macOS no ha permitido activar el arranque. Mueve Notchy a Aplicaciones y vuelve a intentarlo.")
+                : String(localized: "No se ha podido desactivar el arranque.")
         }
         refresh()
     }

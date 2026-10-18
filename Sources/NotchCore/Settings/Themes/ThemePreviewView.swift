@@ -6,7 +6,7 @@ struct ThemePreviewView: View {
     let nowPlaying: NowPlayingStore
 
     private static let sample = NowPlayingInfo(
-        title: "Canción de ejemplo", artist: "Tu artista favorito", album: nil, duration: 214,
+        title: String(localized: "Canción de ejemplo"), artist: String(localized: "Tu artista favorito"), album: nil, duration: 214,
         elapsed: 71, timestamp: .now, playbackRate: 0, isPlaying: false, appBundleID: "", artworkData: nil
     )
 
@@ -48,7 +48,7 @@ struct ThemePreviewView: View {
                     layout: layout,
                     info: nowPlaying.info ?? Self.sample,
                     artwork: nowPlaying.info == nil ? nil : nowPlaying.artwork,
-                    appName: nowPlaying.info == nil ? "Vista previa" : nowPlaying.appName,
+                    appName: nowPlaying.info == nil ? String(localized: "Vista previa") : nowPlaying.appName,
                     controls: .inert
                 )
                 .allowsHitTesting(false)

@@ -6,6 +6,32 @@ enum IslandKind: Equatable {
     case pill
 }
 
+enum IslandActivity: Equatable {
+    case power(PowerEvent)
+    case volume(VolumeReading)
+    case greeting
+
+    var duration: Duration {
+        switch self {
+        case .power: .seconds(3)
+        case .volume: .milliseconds(1500)
+        case .greeting: .seconds(4)
+        }
+    }
+
+    func isSameKind(as other: IslandActivity?) -> Bool {
+        switch (self, other) {
+        case (.power, .power?), (.volume, .volume?), (.greeting, .greeting?): true
+        default: false
+        }
+    }
+}
+
+enum IslandPage: Equatable {
+    case main
+    case shelf
+}
+
 enum IslandState: Int, Comparable {
     case collapsed
     case compact
@@ -26,6 +52,9 @@ final class IslandModel {
     var reduceMotion = false
     var openAnimation = OpenAnimation.spring
     var openCount = 0
+    var activity: IslandActivity?
+    var page = IslandPage.main
+    var isDropTargeted = false
     var shapeStyle = ThemeShape.standard
     private static let minimumWing: CGFloat = 40
     private static let wingPadding: CGFloat = 8

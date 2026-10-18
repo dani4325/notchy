@@ -61,15 +61,15 @@ struct ThemeEditorView: View {
 extension OpenAnimation {
     var label: String {
         switch self {
-        case .spring: "Muelle"
-        case .bouncy: "Rebote"
-        case .smooth: "Suave"
-        case .fade: "Fundido"
-        case .glitch: "Glitch"
-        case .gate: "Portón"
-        case .menacing: "ゴゴゴ"
-        case .slash: "Tajo"
-        case .orbit: "Órbitas"
+        case .spring: String(localized: "Muelle")
+        case .bouncy: String(localized: "Rebote")
+        case .smooth: String(localized: "Suave")
+        case .fade: String(localized: "Fundido")
+        case .glitch: String(localized: "Glitch")
+        case .gate: String(localized: "Portón")
+        case .menacing: String(localized: "ゴゴゴ")
+        case .slash: String(localized: "Tajo")
+        case .orbit: String(localized: "Órbitas")
         }
     }
 }
@@ -77,22 +77,22 @@ extension OpenAnimation {
 extension ThemeDecoration {
     var label: String {
         switch self {
-        case .nixieTerminal: "Nixie y terminal"
-        case .wallPlating: "Metal y remaches"
-        case .menacing: "Rayas amenazantes"
-        case .reiatsu: "Aura y tajo"
-        case .orbits: "Órbitas y estrellas"
-        case .cracks: "Grietas"
-        case .tacticalGrid: "Rejilla táctica"
-        case .clovers: "Tréboles"
-        case .cursedWisps: "Volutas de energía"
-        case .sawTeeth: "Dientes de sierra"
-        case .transmutation: "Círculo geométrico"
-        case .petals: "Florecillas"
-        case .waves: "Olas"
-        case .spiral: "Espiral"
-        case .stationery: "Papel de carta"
-        case .psychicRings: "Anillos psíquicos"
+        case .nixieTerminal: String(localized: "Nixie y terminal")
+        case .wallPlating: String(localized: "Metal y remaches")
+        case .menacing: String(localized: "Rayas amenazantes")
+        case .reiatsu: String(localized: "Aura y tajo")
+        case .orbits: String(localized: "Órbitas y estrellas")
+        case .cracks: String(localized: "Grietas")
+        case .tacticalGrid: String(localized: "Rejilla táctica")
+        case .clovers: String(localized: "Tréboles")
+        case .cursedWisps: String(localized: "Volutas de energía")
+        case .sawTeeth: String(localized: "Dientes de sierra")
+        case .transmutation: String(localized: "Círculo geométrico")
+        case .petals: String(localized: "Florecillas")
+        case .waves: String(localized: "Olas")
+        case .spiral: String(localized: "Espiral")
+        case .stationery: String(localized: "Papel de carta")
+        case .psychicRings: String(localized: "Anillos psíquicos")
         }
     }
 }
@@ -143,9 +143,9 @@ private struct BackgroundSection: View {
 
     private func kindLabel(_ kind: MediaKind) -> String {
         switch kind {
-        case .image: "Imagen"
-        case .animatedImage: "Imagen animada"
-        case .video: "Vídeo en bucle"
+        case .image: String(localized: "Imagen")
+        case .animatedImage: String(localized: "Imagen animada")
+        case .video: String(localized: "Vídeo en bucle")
         }
     }
 }
@@ -157,7 +157,7 @@ private struct PaletteSection: View {
     var body: some View {
         Section {
             HStack {
-                Text(theme.palette.source == .automatic ? "Automática (del fondo)" : "Manual")
+                Text(theme.palette.source == .automatic ? "Automática (del fondo)" as LocalizedStringKey : "Manual")
                     .foregroundStyle(.secondary)
                 Spacer()
                 if editor.isExtracting {
@@ -271,12 +271,12 @@ private enum FontCatalog {
 private extension FontWeightName {
     var label: String {
         switch self {
-        case .regular: "Normal"
-        case .medium: "Media"
-        case .semibold: "Seminegrita"
-        case .bold: "Negrita"
-        case .heavy: "Gruesa"
-        case .black: "Extragruesa"
+        case .regular: String(localized: "Normal")
+        case .medium: String(localized: "Media")
+        case .semibold: String(localized: "Seminegrita")
+        case .bold: String(localized: "Negrita")
+        case .heavy: String(localized: "Gruesa")
+        case .black: String(localized: "Extragruesa")
         }
     }
 }

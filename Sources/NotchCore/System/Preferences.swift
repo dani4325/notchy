@@ -6,6 +6,11 @@ public enum Preferences {
         public static let showCalibrationOutline = "showCalibrationOutline"
         public static let musicSourceMode = "musicSourceMode"
         public static let wingsMode = "wingsMode"
+        public static let chargingAnimation = "chargingAnimation"
+        public static let volumeHUD = "volumeHUD"
+        public static let visualizer = "visualizer"
+        public static let shelf = "shelf"
+        public static let shelfLimit = "shelfLimit"
     }
 
     public static var nonNotchMode: NonNotchMode {
@@ -18,5 +23,26 @@ public enum Preferences {
 
     public static var wingsMode: WingsMode {
         UserDefaults.standard.string(forKey: Key.wingsMode).flatMap(WingsMode.init) ?? .withMusic
+    }
+
+    public static var chargingAnimation: Bool {
+        UserDefaults.standard.object(forKey: Key.chargingAnimation) as? Bool ?? true
+    }
+
+    public static var volumeHUD: Bool {
+        UserDefaults.standard.object(forKey: Key.volumeHUD) as? Bool ?? true
+    }
+
+    public static var visualizer: Bool {
+        UserDefaults.standard.object(forKey: Key.visualizer) as? Bool ?? true
+    }
+
+    public static var shelf: Bool {
+        UserDefaults.standard.object(forKey: Key.shelf) as? Bool ?? true
+    }
+
+    public static var shelfLimit: Int {
+        let stored = UserDefaults.standard.integer(forKey: Key.shelfLimit)
+        return stored == 0 ? ShelfStore.defaultLimit : stored
     }
 }

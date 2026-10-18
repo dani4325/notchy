@@ -14,8 +14,10 @@ struct ExpandedMusicView: View {
     let artwork: NSImage?
     let appName: String?
     let controls: TransportActions
+    var visualizer: AudioVisualizer?
 
     @Environment(\.themeAppearance) private var appearance
+    @AppStorage(Preferences.Key.visualizer) private var showsVisualizer = true
 
     var body: some View {
         HStack(spacing: layout.columnGap) {
@@ -23,10 +25,16 @@ struct ExpandedMusicView: View {
                 .shadow(color: appearance.accent.opacity(appearance.theme.effects.glow), radius: layout.unit * 0.35)
 
             VStack(alignment: .leading, spacing: layout.textSpacing) {
-                Text((appName ?? "Ahora suena").uppercased())
-                    .font(appearance.labelFont(layout.labelSize))
-                    .tracking(appearance.theme.typography.labelTracking)
-                    .foregroundStyle(appearance.accent)
+                HStack(alignment: .bottom) {
+                    Text((appName ?? String(localized: "Ahora suena")).uppercased())
+                        .font(appearance.labelFont(layout.labelSize))
+                        .tracking(appearance.theme.typography.labelTracking)
+                        .foregroundStyle(appearance.accent)
+                    Spacer(minLength: layout.textSpacing)
+                    if showsVisualizer, info.isPlaying {
+                        VisualizerView(visualizer: visualizer, height: layout.labelSize * IslandLayout.lineHeightFactor)
+                    }
+                }
                 Text(info.title)
                     .font(appearance.titleFont(layout.titleSize))
                     .foregroundStyle(appearance.text)
@@ -136,7 +144,7 @@ private struct TransportControls: View {
                     .font(.system(size: layout.playIconSize))
                     .contentTransition(.symbolEffect(.replace))
             }
-            .accessibilityLabel(isPlaying ? "Pausa" : "Reproducir")
+            .accessibilityLabel(isPlaying ? Text("Pausa") : Text("Reproducir"))
 
             Button(action: controls.next) {
                 Image(systemName: "forward.fill").font(.system(size: layout.skipIconSize))

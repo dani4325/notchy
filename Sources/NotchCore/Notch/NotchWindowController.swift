@@ -10,10 +10,15 @@ public final class NotchWindowController {
     private let companion: CompanionStore
     private let wings: WingsVisibility
     private let themes: ThemeStore
+    private let visualizer = AudioVisualizer()
+    private let shelf: ShelfStore
     private let menuInspector = MenuBarInspector()
     private var wakeObserver: NSObjectProtocol?
 
-    public init(nowPlaying: NowPlayingStore, companion: CompanionStore, wings: WingsVisibility, themes: ThemeStore) {
+    public init(
+        nowPlaying: NowPlayingStore, companion: CompanionStore, wings: WingsVisibility, themes: ThemeStore, shelf: ShelfStore
+    ) {
+        self.shelf = shelf
         self.themes = themes
         self.wings = wings
         self.nowPlaying = nowPlaying
@@ -63,6 +68,20 @@ public final class NotchWindowController {
         islands = [:]
     }
 
+    public func show(_ event: PowerEvent) {
+        guard Preferences.chargingAnimation else { return }
+        islands.values.forEach { $0.show(.power(event)) }
+    }
+
+    public func greet() {
+        islands.values.forEach { $0.show(.greeting) }
+    }
+
+    public func show(_ reading: VolumeReading) {
+        guard Preferences.volumeHUD else { return }
+        islands.values.forEach { $0.show(.volume(reading)) }
+    }
+
     private func preferencesChanged() {
         let mode = Preferences.nonNotchMode
         guard mode != currentMode else { return }
@@ -92,7 +111,8 @@ public final class NotchWindowController {
                 islands[placement.displayID] = IslandPanelController(
                     collapsedFrame: placement.collapsedFrame, kind: placement.kind,
                     screenFrame: placement.screenFrame, stripHeight: placement.stripHeight,
-                    nowPlaying: nowPlaying, companion: companion, wings: wings, themes: themes
+                    nowPlaying: nowPlaying, companion: companion, wings: wings, themes: themes,
+                    visualizer: visualizer, shelf: shelf
                 )
             }
         }

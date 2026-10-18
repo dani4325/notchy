@@ -55,15 +55,15 @@ public final class CompanionStore {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image, .movie]
         panel.allowsMultipleSelection = false
-        panel.message = "Elige una imagen, un GIF o un vídeo para acompañar al notch"
+        panel.message = String(localized: "Elige una imagen, un GIF o un vídeo para acompañar al notch")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try importMedia(from: url)
             lastError = nil
         } catch ImportError.unsupportedMedia {
-            lastError = "Ese archivo no es una imagen ni un vídeo compatible."
+            lastError = String(localized: "Ese archivo no es una imagen ni un vídeo compatible.")
         } catch {
-            lastError = "No se ha podido guardar el archivo."
+            lastError = String(localized: "No se ha podido guardar el archivo.")
         }
     }
 

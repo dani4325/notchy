@@ -19,11 +19,27 @@ struct NotchApp: App {
                 accessibility: appDelegate.accessibility,
                 editor: appDelegate.themeEditor,
                 router: appDelegate.settingsRouter,
-                loginItem: appDelegate.loginItem
+                loginItem: appDelegate.loginItem,
+                autoThemes: appDelegate.autoThemes,
+                shelf: appDelegate.shelf,
+                onboarding: appDelegate.onboarding
             )
         }
         .windowResizability(.contentSize)
         .defaultLaunchBehavior(.suppressed)
+
+        Window(AppInfo.name, id: OnboardingModel.windowID) {
+            OnboardingView(
+                model: appDelegate.onboarding,
+                accessibility: appDelegate.accessibility,
+                loginItem: appDelegate.loginItem,
+                themes: appDelegate.themes
+            )
+            .onAppear { NSApp.activate() }
+        }
+        .windowResizability(.contentSize)
+        .windowStyle(.hiddenTitleBar)
+        .defaultLaunchBehavior(OnboardingModel.needsOnboarding() ? .presented : .suppressed)
     }
 }
 
@@ -52,12 +68,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let companion = CompanionStore()
     let accessibility = AccessibilityPermission()
     let themes = ThemeStore()
+    let shelf = ShelfStore(limit: Preferences.shelfLimit)
     lazy var themeEditor = ThemeEditorModel(store: themes)
     let settingsRouter = SettingsRouter()
     let loginItem = LoginItem()
+    let onboarding = OnboardingModel()
+    private let power = PowerMonitor()
+    private let volumeHUD = VolumeHUDCoordinator()
+    lazy var autoThemes = AutoThemeController(store: themes)
     private lazy var wings = WingsVisibility(nowPlaying: nowPlaying)
     private lazy var notchController = NotchWindowController(
-        nowPlaying: nowPlaying, companion: companion, wings: wings, themes: themes
+        nowPlaying: nowPlaying, companion: companion, wings: wings, themes: themes, shelf: shelf
     )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -68,6 +89,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         accessibility.start()
         wings.start()
         notchController.start()
+        power.onEvent = { [weak self] event in self?.notchController.show(event) }
+        power.start()
+        autoThemes.start()
+        volumeHUD.onShow = { [weak self] reading in self?.notchController.show(reading) }
+        volumeHUD.start()
+        onboarding.onTryPanel = { [weak self] in self?.notchController.greet() }
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
@@ -79,6 +106,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         themeEditor.flush()
+        power.stop()
+        autoThemes.stop()
+        volumeHUD.stop()
         notchController.stop()
         wings.stop()
         accessibility.stop()

@@ -3,6 +3,8 @@ import SwiftUI
 
 final class HoverHostingView<Content: View>: NSHostingView<Content> {
     var onHoverChange: ((Bool) -> Void)?
+    var onDragHover: ((Bool) -> Void)?
+    var onDropFiles: (([URL]) -> Bool)?
 
     private var screenRegions: [CGRect] = []
     private var trackingAreasInUse: [NSTrackingArea] = []
@@ -12,6 +14,7 @@ final class HoverHostingView<Content: View>: NSHostingView<Content> {
     required init(rootView: Content) {
         super.init(rootView: rootView)
         sizingOptions = []
+        registerForDraggedTypes([.fileURL])
     }
 
     @available(*, unavailable)
@@ -42,6 +45,31 @@ final class HoverHostingView<Content: View>: NSHostingView<Content> {
     }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        guard onDropFiles != nil, Self.fileURLs(in: sender).isEmpty == false else { return [] }
+        onDragHover?(true)
+        return .copy
+    }
+
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        onDropFiles == nil ? [] : .copy
+    }
+
+    override func draggingExited(_ sender: NSDraggingInfo?) {
+        onDragHover?(false)
+    }
+
+    override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool { true }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        onDragHover?(false)
+        return onDropFiles?(Self.fileURLs(in: sender)) ?? false
+    }
+
+    private static func fileURLs(in info: NSDraggingInfo) -> [URL] {
+        info.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+    }
 
     private func rebuildTrackingAreas() {
         trackingAreasInUse.forEach(removeTrackingArea)

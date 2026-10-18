@@ -28,6 +28,7 @@ public final class ThemeStore {
 
     public private(set) var themes: [Theme] = []
     public private(set) var activeThemeID: String
+    public private(set) var overrideThemeID: String?
 
     @ObservationIgnored private let directory: URL
     @ObservationIgnored private let defaults: UserDefaults
@@ -40,7 +41,15 @@ public final class ThemeStore {
     }
 
     public var activeTheme: Theme {
-        themes.first { $0.id == activeThemeID } ?? themes.first ?? Theme.notchyDefault
+        if let overrideThemeID, let shown = theme(id: overrideThemeID) {
+            return shown
+        }
+        return themes.first { $0.id == activeThemeID } ?? themes.first ?? Theme.notchyDefault
+    }
+
+    public func setOverride(themeID: String?) {
+        guard overrideThemeID != themeID else { return }
+        overrideThemeID = themeID
     }
 
     public func isBuiltIn(_ themeID: String) -> Bool {
@@ -84,7 +93,7 @@ public final class ThemeStore {
         guard let original = theme(id: themeID) else { throw StoreError.unknownTheme }
         var copy = original
         copy.id = Self.newID()
-        copy.name = String("\(original.name) (copia)".prefix(40))
+        copy.name = String(String(localized: "\(original.name) (copia)").prefix(40))
         if FileManager.default.fileExists(atPath: folder(for: original.id).path) {
             try copyFolder(from: folder(for: original.id), to: folder(for: copy.id))
         }

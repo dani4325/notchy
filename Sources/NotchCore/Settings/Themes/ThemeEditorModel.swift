@@ -109,7 +109,7 @@ public final class ThemeEditorModel {
         do {
             try store.save(draft)
         } catch {
-            message = "No se ha podido guardar el tema."
+            message = String(localized: "No se ha podido guardar el tema.")
         }
     }
 
@@ -149,21 +149,21 @@ public final class ThemeEditorModel {
 
     public func createTheme() {
         flush()
-        perform("No se ha podido crear el tema.") {
-            select(themeID: try store.createTheme(named: "Tema nuevo").id)
+        perform(String(localized: "No se ha podido crear el tema.")) {
+            select(themeID: try store.createTheme(named: String(localized: "Tema nuevo")).id)
         }
     }
 
     public func duplicate(themeID: String) {
         flush()
-        perform("No se ha podido duplicar el tema.") {
+        perform(String(localized: "No se ha podido duplicar el tema.")) {
             select(themeID: try store.duplicate(themeID: themeID).id)
         }
     }
 
     public func delete(themeID: String) {
         flush()
-        perform("No se puede borrar el único tema que queda.") {
+        perform(String(localized: "No se puede borrar el único tema que queda.")) {
             try store.delete(themeID: themeID)
             if draft?.id == themeID {
                 select(themeID: store.activeThemeID)
@@ -175,10 +175,10 @@ public final class ThemeEditorModel {
         guard let themeID = draft?.id else { return }
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image, .movie]
-        panel.message = "Elige una imagen, un GIF o un vídeo para el fondo del panel"
+        panel.message = String(localized: "Elige una imagen, un GIF o un vídeo para el fondo del panel")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         flush()
-        perform("Ese archivo no se puede usar como fondo.") {
+        perform(String(localized: "Ese archivo no se puede usar como fondo.")) {
             draft = try store.setBackground(from: url, themeID: themeID)
             syncPreview()
             loadBackgroundAspect()
@@ -189,7 +189,7 @@ public final class ThemeEditorModel {
     public func clearBackground() {
         guard let themeID = draft?.id else { return }
         flush()
-        perform("No se ha podido quitar el fondo.") {
+        perform(String(localized: "No se ha podido quitar el fondo.")) {
             draft = try store.clearBackground(themeID: themeID)
             syncPreview()
         }
@@ -205,7 +205,7 @@ public final class ThemeEditorModel {
             guard let self else { return }
             self.isExtracting = false
             guard self.draft?.id == theme.id, !clusters.isEmpty else {
-                if clusters.isEmpty { self.message = "No se han podido leer los colores del fondo." }
+                if clusters.isEmpty { self.message = String(localized: "No se han podido leer los colores del fondo.") }
                 return
             }
             self.applyExtracted(PaletteBuilder.palette(from: clusters), force: force)
@@ -219,26 +219,26 @@ public final class ThemeEditorModel {
         panel.allowedContentTypes = [Self.archiveType]
         panel.nameFieldStringValue = "\(theme.name).\(ThemeArchive.fileExtension)"
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        perform("No se ha podido exportar el tema.") {
+        perform(String(localized: "No se ha podido exportar el tema.")) {
             try store.exportArchive(themeID: themeID, to: url)
-            message = "Tema exportado."
+            message = String(localized: "Tema exportado.")
         }
     }
 
     public func importTheme() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [Self.archiveType]
-        panel.message = "Elige un archivo .\(ThemeArchive.fileExtension)"
+        panel.message = String(localized: "Elige un archivo .\(ThemeArchive.fileExtension)")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         importTheme(from: url)
     }
 
     public func importTheme(from url: URL) {
         flush()
-        perform("Ese archivo no es un tema válido de Notchy.") {
+        perform(String(localized: "Ese archivo no es un tema válido de Notchy.")) {
             let theme = try store.importArchive(from: url)
             select(themeID: theme.id)
-            message = "Tema «\(theme.name)» importado."
+            message = String(localized: "Tema «\(theme.name)» importado.")
         }
     }
 

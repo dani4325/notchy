@@ -6,8 +6,8 @@ public enum SettingsSection: String, CaseIterable, Sendable {
 
     var title: String {
         switch self {
-        case .themes: "Temas"
-        case .general: "General"
+        case .themes: String(localized: "Temas")
+        case .general: String(localized: "General")
         }
     }
 }

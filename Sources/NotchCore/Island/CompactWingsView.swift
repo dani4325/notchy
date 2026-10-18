@@ -20,7 +20,7 @@ struct CompactWingsView: View {
         }
         .frame(height: height)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(nowPlaying.info.map { "Sonando: \($0.title)" } ?? "Nada sonando")
+        .accessibilityLabel(nowPlaying.info.map { Text("Sonando: \($0.title)") } ?? Text("Nada sonando"))
     }
 
     @ViewBuilder

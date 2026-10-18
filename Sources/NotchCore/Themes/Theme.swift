@@ -232,7 +232,7 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let fallback = Theme.notchyDefault
         id = try container.decode(String.self, forKey: .id)
-        name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Sin nombre"
+        name = try container.decodeIfPresent(String.self, forKey: .name) ?? String(localized: "Sin nombre")
         palette = try container.decodeIfPresent(ThemePalette.self, forKey: .palette) ?? fallback.palette
         typography = try container.decodeIfPresent(ThemeTypography.self, forKey: .typography) ?? fallback.typography
         shape = try container.decodeIfPresent(ThemeShape.self, forKey: .shape) ?? fallback.shape
@@ -261,7 +261,7 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
     public func sanitized() -> Theme {
         var copy = self
         copy.name = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(40))
-        if copy.name.isEmpty { copy.name = "Sin nombre" }
+        if copy.name.isEmpty { copy.name = String(localized: "Sin nombre") }
         copy.typography = typography.sanitized()
         copy.shape = shape.sanitized()
         copy.effects = effects.sanitized()

@@ -7,6 +7,11 @@ public struct SettingsView: View {
     private let editor: ThemeEditorModel
     private let router: SettingsRouter
     private let loginItem: LoginItem
+    private let autoThemes: AutoThemeController
+    private let shelf: ShelfStore
+    private let onboarding: OnboardingModel
+
+    @Environment(\.openWindow) private var openWindow
 
     public init(
         nowPlaying: NowPlayingStore,
@@ -14,8 +19,14 @@ public struct SettingsView: View {
         accessibility: AccessibilityPermission,
         editor: ThemeEditorModel,
         router: SettingsRouter,
-        loginItem: LoginItem
+        loginItem: LoginItem,
+        autoThemes: AutoThemeController,
+        shelf: ShelfStore,
+        onboarding: OnboardingModel
     ) {
+        self.shelf = shelf
+        self.onboarding = onboarding
+        self.autoThemes = autoThemes
         self.router = router
         self.loginItem = loginItem
         self.nowPlaying = nowPlaying
@@ -32,7 +43,8 @@ public struct SettingsView: View {
             case .themes:
                 ThemesSettingsView(editor: editor, nowPlaying: nowPlaying)
             case .general:
-                GeneralSettingsView(nowPlaying: nowPlaying, companion: companion, accessibility: accessibility, loginItem: loginItem)
+                GeneralSettingsView(nowPlaying: nowPlaying, companion: companion, accessibility: accessibility,
+                                    loginItem: loginItem, autoThemes: autoThemes, themes: editor.store, shelf: shelf)
                     .onAppear(perform: loginItem.refresh)
             }
         }
@@ -59,6 +71,11 @@ public struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
+            Button("Ver la bienvenida") {
+                onboarding.restart()
+                openWindow(id: OnboardingModel.windowID)
+            }
+            .buttonStyle(.borderless)
             Picker("Sección", selection: Bindable(router).section) {
                 ForEach(SettingsSection.allCases, id: \.self) { section in
                     Text(section.title).tag(section)

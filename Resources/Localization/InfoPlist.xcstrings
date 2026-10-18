@@ -1,0 +1,38 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "NSAppleEventsUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy reads the song playing in Spotify or Music and controls playback when MediaRemote isn't available."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy lee la canción que suena en Spotify o Música y controla la reproducción cuando MediaRemote no está disponible."
+          }
+        }
+      }
+    },
+    "NSAudioCaptureUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy listens to the audio that's playing to drive the notch visualizer. Nothing is recorded or saved."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy escucha el audio que suena para animar el visualizador del notch. No graba ni guarda nada."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
