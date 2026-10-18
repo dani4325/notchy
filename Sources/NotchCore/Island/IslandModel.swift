@@ -21,6 +21,7 @@ enum IslandState: Int, Comparable {
 final class IslandModel {
     var kind: IslandKind
     var collapsedSize: CGSize
+    var stripHeight: CGFloat
     var state = IslandState.collapsed
     var reduceMotion = false
 
@@ -28,9 +29,10 @@ final class IslandModel {
     private static let minimumWing: CGFloat = 40
     private static let wingPadding: CGFloat = 8
 
-    init(kind: IslandKind, collapsedSize: CGSize) {
+    init(kind: IslandKind, collapsedSize: CGSize, stripHeight: CGFloat) {
         self.kind = kind
         self.collapsedSize = collapsedSize
+        self.stripHeight = stripHeight
     }
 
     var isExpanded: Bool { state == .expanded }
@@ -47,11 +49,20 @@ final class IslandModel {
         }
     }
 
+    var stemHeight: CGFloat {
+        isExpanded ? stripHeight : 0
+    }
+
     var topRadius: CGFloat {
-        switch kind {
-        case .notch: 0
-        case .pill: isExpanded ? 22 : collapsedSize.height / 2
-        }
+        kind == .notch ? 0 : collapsedSize.height / 2
+    }
+
+    var bodyTopRadius: CGFloat {
+        isExpanded ? 18 : topRadius
+    }
+
+    var junctionRadius: CGFloat {
+        isExpanded ? 10 : 0
     }
 
     var bottomRadius: CGFloat {
@@ -64,6 +75,6 @@ final class IslandModel {
     }
 
     var contentTopInset: CGFloat {
-        kind == .notch ? collapsedSize.height : 12
+        stripHeight
     }
 }

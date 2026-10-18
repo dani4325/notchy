@@ -8,6 +8,7 @@ final class IslandPanelController {
     private static let closeDelay: Duration = .milliseconds(180)
 
     private let panel: NotchPanel
+    private let hostingView: HoverHostingView<IslandView>
     private let model: IslandModel
     private let nowPlaying: NowPlayingStore
     private let companion: CompanionStore
@@ -23,6 +24,7 @@ final class IslandPanelController {
         collapsedFrame: CGRect,
         kind: IslandKind,
         screenFrame: CGRect,
+        stripHeight: CGFloat,
         nowPlaying: NowPlayingStore,
         companion: CompanionStore,
         wings: WingsVisibility
@@ -32,10 +34,10 @@ final class IslandPanelController {
         self.nowPlaying = nowPlaying
         self.companion = companion
         self.wings = wings
-        model = IslandModel(kind: kind, collapsedSize: collapsedFrame.size)
+        model = IslandModel(kind: kind, collapsedSize: collapsedFrame.size, stripHeight: stripHeight)
         panel = NotchPanel(frame: collapsedFrame)
 
-        let hostingView = HoverHostingView(rootView: IslandView(model: model, nowPlaying: nowPlaying, companion: companion))
+        hostingView = HoverHostingView(rootView: IslandView(model: model, nowPlaying: nowPlaying, companion: companion))
         hostingView.onHoverChange = { [weak self] isInside in
             self?.hoverChanged(isInside)
         }
@@ -43,17 +45,23 @@ final class IslandPanelController {
         panel.orderFrontRegardless()
         observeWings()
         transition(to: restingState, animated: false)
+        refreshHoverRegions()
     }
 
-    func update(collapsedFrame: CGRect, kind: IslandKind, screenFrame: CGRect) {
+    var wingZones: [CGRect] {
+        NotchGeometry.wingZones(collapsed: collapsedFrame, wing: model.compactWing)
+    }
+
+    func update(collapsedFrame: CGRect, kind: IslandKind, screenFrame: CGRect, stripHeight: CGFloat) {
         cancelPending()
         self.collapsedFrame = collapsedFrame
         self.screenFrame = screenFrame
         model.kind = kind
         model.collapsedSize = collapsedFrame.size
+        model.stripHeight = stripHeight
         isHovering = false
         model.state = restingState
-        panel.setFrame(frame(for: model.state), display: true)
+        setPanelFrame(frame(for: model.state))
         panel.orderFrontRegardless()
     }
 
@@ -104,22 +112,37 @@ final class IslandPanelController {
         let targetFrame = frame(for: target)
         let isGrowing = target > model.state
 
-        panel.setFrame(panel.frame.union(targetFrame), display: true)
+        setPanelFrame(panel.frame.union(targetFrame))
         let animation = animated ? policy.shapeAnimation(expanding: isGrowing) : nil
         withAnimation(animation) {
             model.state = target
         }
+        refreshHoverRegions()
 
         guard animation != nil else {
-            panel.setFrame(targetFrame, display: true)
+            setPanelFrame(targetFrame)
             return
         }
         let settle = isGrowing ? MotionPolicy.openDuration : MotionPolicy.closeDuration
         pendingResize = Task { [weak self] in
             try? await Task.sleep(for: settle)
             guard !Task.isCancelled, let self, self.model.state == target else { return }
-            self.panel.setFrame(targetFrame, display: true)
+            self.setPanelFrame(targetFrame)
         }
+    }
+
+    private func setPanelFrame(_ frame: CGRect) {
+        panel.setFrame(frame, display: true)
+        refreshHoverRegions()
+    }
+
+    private func refreshHoverRegions() {
+        hostingView.setHoverRegions(NotchGeometry.hoverRegions(
+            expanded: model.isExpanded,
+            collapsed: collapsedFrame,
+            expandedFrame: frame(for: .expanded),
+            stripHeight: model.stripHeight
+        ))
     }
 
     private func frame(for state: IslandState) -> CGRect {

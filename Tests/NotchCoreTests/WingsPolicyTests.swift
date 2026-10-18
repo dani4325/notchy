@@ -30,6 +30,12 @@ struct WingsPolicyTests {
         #expect(!WingsPolicy.isVisible(mode: .withMusic, phase: phase, now: pausedAt.addingTimeInterval(60)))
     }
 
+    @Test func menuCollisionHidesWingsInAnyMode() {
+        #expect(!WingsPolicy.isVisible(mode: .always, phase: .playing, now: now, menusCollide: true))
+        #expect(!WingsPolicy.isVisible(mode: .withMusic, phase: .playing, now: now, menusCollide: true))
+        #expect(WingsPolicy.isVisible(mode: .withMusic, phase: .playing, now: now, menusCollide: false))
+    }
+
     @Test func hideDeadlineOnlyExistsForPausedWithMusic() {
         #expect(WingsPolicy.hideDeadline(mode: .withMusic, phase: .paused(since: now)) == now.addingTimeInterval(60))
         #expect(WingsPolicy.hideDeadline(mode: .withMusic, phase: .playing) == nil)

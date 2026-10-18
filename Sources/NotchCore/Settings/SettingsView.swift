@@ -8,10 +8,12 @@ public struct SettingsView: View {
 
     private let nowPlaying: NowPlayingStore
     private let companion: CompanionStore
+    private let accessibility: AccessibilityPermission
 
-    public init(nowPlaying: NowPlayingStore, companion: CompanionStore) {
+    public init(nowPlaying: NowPlayingStore, companion: CompanionStore, accessibility: AccessibilityPermission) {
         self.nowPlaying = nowPlaying
         self.companion = companion
+        self.accessibility = accessibility
     }
 
     public var body: some View {
@@ -27,10 +29,18 @@ public struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     CompanionSettingsRow(companion: companion)
+                    LabeledContent("Ocultar si chocan con menús") {
+                        if accessibility.isTrusted {
+                            Label("Activo", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        } else {
+                            Button("Dar permiso…", action: accessibility.request)
+                        }
+                    }
                 } header: {
                     Text("Alas y acompañante")
                 } footer: {
-                    Text("Las alas muestran la carátula y tu imagen junto al notch. En «Solo con música» se quedan un minuto tras pausar. Los GIF se mueven solo mientras suena música.")
+                    Text("Las alas muestran la carátula y tu imagen junto al notch. En «Solo con música» se quedan un minuto tras pausar. Los GIF se mueven solo mientras suena música. Con permiso de Accesibilidad se ocultan cuando la app activa tiene menús que llegan al notch.")
                         .foregroundStyle(.secondary)
                 }
 

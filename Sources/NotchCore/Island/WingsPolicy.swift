@@ -24,8 +24,9 @@ enum WingsPhase: Equatable {
 enum WingsPolicy {
     static let pauseGrace: TimeInterval = 60
 
-    static func isVisible(mode: WingsMode, phase: WingsPhase, now: Date) -> Bool {
-        switch (mode, phase) {
+    static func isVisible(mode: WingsMode, phase: WingsPhase, now: Date, menusCollide: Bool = false) -> Bool {
+        guard !menusCollide else { return false }
+        return switch (mode, phase) {
         case (.always, _): true
         case (.never, _): false
         case (.withMusic, .playing): true

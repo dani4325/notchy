@@ -9,6 +9,7 @@ public final class NotchWindowController {
     private let nowPlaying: NowPlayingStore
     private let companion: CompanionStore
     private let wings: WingsVisibility
+    private let menuInspector = MenuBarInspector()
 
     public init(nowPlaying: NowPlayingStore, companion: CompanionStore, wings: WingsVisibility) {
         self.wings = wings
@@ -18,6 +19,12 @@ public final class NotchWindowController {
     }
 
     public func start() {
+        menuInspector.wingZones = { [weak self] in
+            self?.islands.values.flatMap(\.wingZones) ?? []
+        }
+        menuInspector.onCollisionChange = { [weak self] collide in
+            self?.wings.setMenusCollide(collide)
+        }
         let center = NotificationCenter.default
         observers = [
             center.addObserver(
@@ -36,9 +43,11 @@ public final class NotchWindowController {
             },
         ]
         rebuild()
+        menuInspector.start()
     }
 
     public func stop() {
+        menuInspector.stop()
         observers.forEach(NotificationCenter.default.removeObserver)
         observers = []
         islands.values.forEach { $0.close() }
@@ -53,10 +62,10 @@ public final class NotchWindowController {
     }
 
     private func rebuild() {
-        let screens = NSScreen.screens.compactMap { screen -> (CGDirectDisplayID, NotchLayout, CGRect)? in
+        let screens = NSScreen.screens.compactMap { screen -> (CGDirectDisplayID, NotchLayout, ScreenMetrics)? in
             guard let id = screen.displayID else { return nil }
-            let layout = NotchGeometry.layout(for: ScreenMetrics(screen: screen), nonNotchMode: currentMode)
-            return (id, layout, screen.frame)
+            let metrics = ScreenMetrics(screen: screen)
+            return (id, NotchGeometry.layout(for: metrics, nonNotchMode: currentMode), metrics)
         }
         let visibleIDs = Set(screens.compactMap { id, layout, _ in layout.frame == nil ? nil : id })
 
@@ -65,18 +74,20 @@ public final class NotchWindowController {
             islands[id] = nil
         }
 
-        for (id, layout, screenFrame) in screens {
+        for (id, layout, metrics) in screens {
             guard let frame = layout.frame else { continue }
             let kind: IslandKind = layout.isNotch ? .notch : .pill
+            let strip = NotchGeometry.stripHeight(collapsed: frame, screen: metrics)
             if let island = islands[id] {
-                island.update(collapsedFrame: frame, kind: kind, screenFrame: screenFrame)
+                island.update(collapsedFrame: frame, kind: kind, screenFrame: metrics.frame, stripHeight: strip)
             } else {
                 islands[id] = IslandPanelController(
-                    collapsedFrame: frame, kind: kind, screenFrame: screenFrame,
+                    collapsedFrame: frame, kind: kind, screenFrame: metrics.frame, stripHeight: strip,
                     nowPlaying: nowPlaying, companion: companion, wings: wings
                 )
             }
         }
+        menuInspector.inspect()
     }
 }
 

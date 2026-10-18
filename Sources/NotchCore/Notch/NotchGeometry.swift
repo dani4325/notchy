@@ -117,3 +117,26 @@ extension NotchGeometry {
         collapsed.insetBy(dx: -wing, dy: 0)
     }
 }
+
+extension NotchGeometry {
+    public static func hoverRegions(expanded: Bool, collapsed: CGRect, expandedFrame: CGRect, stripHeight: CGFloat) -> [CGRect] {
+        guard expanded else { return [collapsed] }
+        let strip = min(stripHeight, expandedFrame.height)
+        let stem = CGRect(x: collapsed.minX, y: expandedFrame.maxY - strip, width: collapsed.width, height: strip)
+        let body = CGRect(x: expandedFrame.minX, y: expandedFrame.minY, width: expandedFrame.width, height: expandedFrame.height - strip)
+        return [stem, body]
+    }
+
+    public static func wingZones(collapsed: CGRect, wing: CGFloat) -> [CGRect] {
+        [
+            CGRect(x: collapsed.minX - wing, y: collapsed.minY, width: wing, height: collapsed.height),
+            CGRect(x: collapsed.maxX, y: collapsed.minY, width: wing, height: collapsed.height),
+        ]
+    }
+}
+
+extension NotchGeometry {
+    public static func stripHeight(collapsed: CGRect, screen: ScreenMetrics) -> CGFloat {
+        max(collapsed.maxY - screen.visibleFrame.maxY, collapsed.height)
+    }
+}

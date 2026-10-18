@@ -47,13 +47,14 @@ struct IslandView: View {
         }
     }
 
-    private var shape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(
-            topLeadingRadius: model.topRadius,
-            bottomLeadingRadius: model.bottomRadius,
-            bottomTrailingRadius: model.bottomRadius,
-            topTrailingRadius: model.topRadius,
-            style: .continuous
+    private var shape: IslandShape {
+        IslandShape(
+            stemWidth: model.collapsedSize.width,
+            stemHeight: model.stemHeight,
+            topRadius: model.topRadius,
+            bodyTopRadius: model.bodyTopRadius,
+            bottomRadius: model.bottomRadius,
+            junctionRadius: model.junctionRadius
         )
     }
 

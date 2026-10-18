@@ -13,7 +13,11 @@ struct NotchApp: App {
         }
 
         Window(AppInfo.name, id: StatusMenu.settingsWindowID) {
-            SettingsView(nowPlaying: appDelegate.nowPlaying, companion: appDelegate.companion)
+            SettingsView(
+                nowPlaying: appDelegate.nowPlaying,
+                companion: appDelegate.companion,
+                accessibility: appDelegate.accessibility
+            )
         }
         .windowResizability(.contentSize)
         .defaultLaunchBehavior(.suppressed)
@@ -43,11 +47,13 @@ struct StatusMenu: View {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let nowPlaying = NowPlayingStore()
     let companion = CompanionStore()
+    let accessibility = AccessibilityPermission()
     private lazy var wings = WingsVisibility(nowPlaying: nowPlaying)
     private lazy var notchController = NotchWindowController(nowPlaying: nowPlaying, companion: companion, wings: wings)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         nowPlaying.start()
+        accessibility.start()
         wings.start()
         notchController.start()
     }
@@ -55,6 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         notchController.stop()
         wings.stop()
+        accessibility.stop()
         nowPlaying.stop()
     }
 }
