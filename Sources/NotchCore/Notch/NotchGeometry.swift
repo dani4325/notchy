@@ -111,3 +111,9 @@ extension NotchGeometry {
         return CGRect(x: x, y: collapsed.maxY - height, width: width, height: height)
     }
 }
+
+extension NotchGeometry {
+    public static func compactFrame(collapsed: CGRect, wing: CGFloat) -> CGRect {
+        collapsed.insetBy(dx: -wing, dy: 0)
+    }
+}

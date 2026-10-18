@@ -7,6 +7,7 @@ struct MotionPolicy {
     static let closeSpring = Animation.spring(duration: 0.34, bounce: 0)
     static let fade = Animation.easeInOut(duration: 0.18)
 
+    static let openDuration: Duration = .milliseconds(480)
     static let closeDuration: Duration = .milliseconds(340)
 
     var animatesShape: Bool { !reduceMotion }

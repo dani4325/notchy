@@ -15,9 +15,17 @@ cd "$ROOT"
 swift build -c release --product NotchApp
 BIN="$(swift build -c release --show-bin-path)/NotchApp"
 
+ADAPTER_OUT="$(mktemp -d)"
+trap 'rm -rf "$ADAPTER_OUT"' EXIT
+"$ROOT/scripts/build-adapter.sh" "$ROOT/Vendor/mediaremote-adapter" "$ADAPTER_OUT" >/dev/null
+
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp "$BIN" "$APP/Contents/MacOS/$APP_NAME"
+cp -R "$ADAPTER_OUT/MediaRemoteAdapter.framework" "$APP/Contents/Frameworks/"
+cp "$ADAPTER_OUT/MediaRemoteAdapterTestClient" "$APP/Contents/MacOS/"
+cp "$ADAPTER_OUT/mediaremote-adapter.pl" "$APP/Contents/Resources/"
+cp "$ROOT/Vendor/mediaremote-adapter/LICENSE" "$APP/Contents/Resources/MediaRemoteAdapter-LICENSE.txt"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -34,8 +42,12 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <key>LSUIElement</key><true/>
 <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
 <key>NSHighResolutionCapable</key><true/>
+<key>NSAppleEventsUsageDescription</key><string>$APP_NAME lee la canción que suena en Spotify o Música y controla la reproducción cuando MediaRemote no está disponible.</string>
 </dict></plist>
 PLIST
 
-codesign --force --deep --sign - "$APP"
+codesign --force --sign - "$APP/Contents/MacOS/MediaRemoteAdapterTestClient"
+codesign --force --sign - "$APP/Contents/Frameworks/MediaRemoteAdapter.framework"
+codesign --force --sign - "$APP"
+codesign --verify --strict "$APP"
 echo "OK -> $APP"

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct IslandView: View {
     let model: IslandModel
+    let nowPlaying: NowPlayingStore
+    let companion: CompanionStore
 
     @AppStorage(Preferences.Key.showCalibrationOutline) private var showOutline = false
 
@@ -19,14 +21,30 @@ struct IslandView: View {
                 }
                 .frame(width: size.width, height: size.height)
 
-            if model.isExpanded {
-                IdleContentView()
+            switch model.state {
+            case .expanded:
+                expandedContent
                     .padding(.top, model.contentTopInset)
                     .frame(width: size.width, height: size.height, alignment: .top)
                     .transition(contentTransition(policy))
+            case .compact:
+                CompactWingsView(nowPlaying: nowPlaying, companion: companion, wing: model.compactWing, height: size.height)
+                    .frame(width: size.width, height: size.height)
+                    .transition(.opacity.animation(policy.contentAnimation))
+            case .collapsed:
+                EmptyView()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    @ViewBuilder
+    private var expandedContent: some View {
+        if let info = nowPlaying.info {
+            ExpandedMusicView(nowPlaying: nowPlaying, info: info)
+        } else {
+            IdleContentView()
+        }
     }
 
     private var shape: UnevenRoundedRectangle {

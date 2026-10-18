@@ -41,3 +41,13 @@ struct IslandGeometryTests {
         #expect(frame.maxY == nearEdge.maxY)
     }
 }
+
+struct CompactGeometryTests {
+    @Test func compactFrameAddsSymmetricWingsKeepingTopAndHeight() {
+        let notch = CGRect(x: 751, y: 1074.5, width: 208, height: 37.5)
+
+        let frame = NotchGeometry.compactFrame(collapsed: notch, wing: 44)
+
+        #expect(frame == CGRect(x: 707, y: 1074.5, width: 296, height: 37.5))
+    }
+}

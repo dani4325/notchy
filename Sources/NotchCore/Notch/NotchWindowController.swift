@@ -6,8 +6,14 @@ public final class NotchWindowController {
     private var islands: [CGDirectDisplayID: IslandPanelController] = [:]
     private var observers: [NSObjectProtocol] = []
     private var currentMode: NonNotchMode
+    private let nowPlaying: NowPlayingStore
+    private let companion: CompanionStore
+    private let wings: WingsVisibility
 
-    public init() {
+    public init(nowPlaying: NowPlayingStore, companion: CompanionStore, wings: WingsVisibility) {
+        self.wings = wings
+        self.nowPlaying = nowPlaying
+        self.companion = companion
         currentMode = Preferences.nonNotchMode
     }
 
@@ -65,7 +71,10 @@ public final class NotchWindowController {
             if let island = islands[id] {
                 island.update(collapsedFrame: frame, kind: kind, screenFrame: screenFrame)
             } else {
-                islands[id] = IslandPanelController(collapsedFrame: frame, kind: kind, screenFrame: screenFrame)
+                islands[id] = IslandPanelController(
+                    collapsedFrame: frame, kind: kind, screenFrame: screenFrame,
+                    nowPlaying: nowPlaying, companion: companion, wings: wings
+                )
             }
         }
     }
