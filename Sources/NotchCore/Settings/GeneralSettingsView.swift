@@ -9,8 +9,10 @@ struct GeneralSettingsView: View {
     private let nowPlaying: NowPlayingStore
     private let companion: CompanionStore
     private let accessibility: AccessibilityPermission
+    private let loginItem: LoginItem
 
-    init(nowPlaying: NowPlayingStore, companion: CompanionStore, accessibility: AccessibilityPermission) {
+    init(nowPlaying: NowPlayingStore, companion: CompanionStore, accessibility: AccessibilityPermission, loginItem: LoginItem) {
+        self.loginItem = loginItem
         self.nowPlaying = nowPlaying
         self.companion = companion
         self.accessibility = accessibility
@@ -19,6 +21,21 @@ struct GeneralSettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Form {
+                Section {
+                    Toggle("Abrir Notchy al iniciar sesión", isOn: Binding(
+                        get: { loginItem.state.isOn },
+                        set: { loginItem.setEnabled($0) }
+                    ))
+                    if loginItem.state == .needsApproval {
+                        LabeledContent("Falta tu aprobación") {
+                            Button("Abrir Ítems de inicio…", action: loginItem.openSystemSettings)
+                        }
+                    }
+                    if let message = loginItem.message {
+                        Text(message).font(.system(size: 11)).foregroundStyle(.red)
+                    }
+                }
+
                 Section {
                     Picker("Mostrar alas", selection: $wingsMode) {
                         Text("Siempre").tag(WingsMode.always.rawValue)

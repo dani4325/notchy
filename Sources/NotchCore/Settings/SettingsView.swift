@@ -6,15 +6,18 @@ public struct SettingsView: View {
     private let accessibility: AccessibilityPermission
     private let editor: ThemeEditorModel
     private let router: SettingsRouter
+    private let loginItem: LoginItem
 
     public init(
         nowPlaying: NowPlayingStore,
         companion: CompanionStore,
         accessibility: AccessibilityPermission,
         editor: ThemeEditorModel,
-        router: SettingsRouter
+        router: SettingsRouter,
+        loginItem: LoginItem
     ) {
         self.router = router
+        self.loginItem = loginItem
         self.nowPlaying = nowPlaying
         self.companion = companion
         self.accessibility = accessibility
@@ -29,7 +32,8 @@ public struct SettingsView: View {
             case .themes:
                 ThemesSettingsView(editor: editor, nowPlaying: nowPlaying)
             case .general:
-                GeneralSettingsView(nowPlaying: nowPlaying, companion: companion, accessibility: accessibility)
+                GeneralSettingsView(nowPlaying: nowPlaying, companion: companion, accessibility: accessibility, loginItem: loginItem)
+                    .onAppear(perform: loginItem.refresh)
             }
         }
         .frame(width: 900, height: 680)

@@ -11,6 +11,7 @@ public final class NotchWindowController {
     private let wings: WingsVisibility
     private let themes: ThemeStore
     private let menuInspector = MenuBarInspector()
+    private var wakeObserver: NSObjectProtocol?
 
     public init(nowPlaying: NowPlayingStore, companion: CompanionStore, wings: WingsVisibility, themes: ThemeStore) {
         self.themes = themes
@@ -21,6 +22,10 @@ public final class NotchWindowController {
     }
 
     public func start() {
+        let workspace = NSWorkspace.shared.notificationCenter
+        wakeObserver = workspace.addObserver(forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.rebuild() }
+        }
         menuInspector.wingZones = { [weak self] in
             self?.islands.values.flatMap(\.wingZones) ?? []
         }
@@ -49,6 +54,8 @@ public final class NotchWindowController {
     }
 
     public func stop() {
+        wakeObserver.map(NSWorkspace.shared.notificationCenter.removeObserver)
+        wakeObserver = nil
         menuInspector.stop()
         observers.forEach(NotificationCenter.default.removeObserver)
         observers = []
@@ -64,27 +71,27 @@ public final class NotchWindowController {
     }
 
     private func rebuild() {
-        let screens = NSScreen.screens.compactMap { screen -> (CGDirectDisplayID, NotchLayout, ScreenMetrics)? in
-            guard let id = screen.displayID else { return nil }
-            let metrics = ScreenMetrics(screen: screen)
-            return (id, NotchGeometry.layout(for: metrics, nonNotchMode: currentMode), metrics)
+        let screens = NSScreen.screens.compactMap { screen in
+            screen.displayID.map { ($0, ScreenMetrics(screen: screen)) }
         }
-        let visibleIDs = Set(screens.compactMap { id, layout, _ in layout.frame == nil ? nil : id })
+        let placements = ScreenPlan.islands(for: screens, nonNotchMode: currentMode)
+        let visibleIDs = Set(placements.map(\.displayID))
 
         for (id, island) in islands where !visibleIDs.contains(id) {
             island.close()
             islands[id] = nil
         }
 
-        for (id, layout, metrics) in screens {
-            guard let frame = layout.frame else { continue }
-            let kind: IslandKind = layout.isNotch ? .notch : .pill
-            let strip = NotchGeometry.stripHeight(collapsed: frame, screen: metrics)
-            if let island = islands[id] {
-                island.update(collapsedFrame: frame, kind: kind, screenFrame: metrics.frame, stripHeight: strip)
+        for placement in placements {
+            if let island = islands[placement.displayID] {
+                island.update(
+                    collapsedFrame: placement.collapsedFrame, kind: placement.kind,
+                    screenFrame: placement.screenFrame, stripHeight: placement.stripHeight
+                )
             } else {
-                islands[id] = IslandPanelController(
-                    collapsedFrame: frame, kind: kind, screenFrame: metrics.frame, stripHeight: strip,
+                islands[placement.displayID] = IslandPanelController(
+                    collapsedFrame: placement.collapsedFrame, kind: placement.kind,
+                    screenFrame: placement.screenFrame, stripHeight: placement.stripHeight,
                     nowPlaying: nowPlaying, companion: companion, wings: wings, themes: themes
                 )
             }

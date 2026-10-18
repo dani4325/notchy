@@ -18,7 +18,8 @@ struct NotchApp: App {
                 companion: appDelegate.companion,
                 accessibility: appDelegate.accessibility,
                 editor: appDelegate.themeEditor,
-                router: appDelegate.settingsRouter
+                router: appDelegate.settingsRouter,
+                loginItem: appDelegate.loginItem
             )
         }
         .windowResizability(.contentSize)
@@ -53,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let themes = ThemeStore()
     lazy var themeEditor = ThemeEditorModel(store: themes)
     let settingsRouter = SettingsRouter()
+    let loginItem = LoginItem()
     private lazy var wings = WingsVisibility(nowPlaying: nowPlaying)
     private lazy var notchController = NotchWindowController(
         nowPlaying: nowPlaying, companion: companion, wings: wings, themes: themes
