@@ -7,6 +7,7 @@ struct ZipExtractor {
         let method: UInt16
         let flags: UInt16
         let compressedSize: Int
+        let declaredSize: Int
         let localHeaderOffset: Int
         let unixMode: UInt32
 
@@ -20,7 +21,7 @@ struct ZipExtractor {
     private static let localHeaderSignature: UInt32 = 0x0403_4B50
     private static let stored: UInt16 = 0
     private static let deflated: UInt16 = 8
-    private static let chunkSize = 64 * 1024
+    private static let chunkSize = 8 * 1024
     private static let maximumCommentLength = 0xFFFF
 
     let data: Data
@@ -29,7 +30,10 @@ struct ZipExtractor {
     private(set) var writtenBytes = 0
 
     init(archive: URL, maximumBytes: Int, maximumEntries: Int) throws {
-        data = try Data(contentsOf: archive, options: .alwaysMapped)
+        let size = try archive.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max
+        guard size <= maximumBytes else { throw ThemeArchive.ArchiveError.tooLarge }
+        data = try Data(contentsOf: archive)
+        guard data.count <= maximumBytes else { throw ThemeArchive.ArchiveError.tooLarge }
         self.maximumBytes = maximumBytes
         self.maximumEntries = maximumEntries
     }
@@ -47,6 +51,7 @@ struct ZipExtractor {
         guard count <= maximumEntries else { throw ThemeArchive.ArchiveError.tooLarge }
 
         var result: [Entry] = []
+        var declaredTotal = 0
         var cursor = directoryOffset
         for _ in 0..<count {
             guard try u32(cursor) == Self.centralHeaderSignature else { throw ThemeArchive.ArchiveError.unsafeContent }
@@ -58,12 +63,15 @@ struct ZipExtractor {
                 method: try u16(cursor + 10),
                 flags: try u16(cursor + 8),
                 compressedSize: Int(try u32(cursor + 20)),
+                declaredSize: Int(try u32(cursor + 24)),
                 localHeaderOffset: Int(try u32(cursor + 42)),
                 unixMode: try u32(cursor + 38) >> 16
             )
             guard ThemeArchive.isSafeEntry(entry.name), !entry.isSymlink, !entry.isEncrypted else {
                 throw ThemeArchive.ArchiveError.unsafeContent
             }
+            declaredTotal += entry.declaredSize
+            guard declaredTotal <= maximumBytes else { throw ThemeArchive.ArchiveError.tooLarge }
             result.append(entry)
             cursor += 46 + nameLength + extraLength + commentLength
         }
@@ -86,14 +94,23 @@ struct ZipExtractor {
         let handle = try FileHandle(forWritingTo: destination)
         defer { try? handle.close() }
 
-        let payload = try compressedPayload(of: entry)
         switch entry.method {
         case Self.stored:
-            try append(payload, to: handle)
+            guard entry.compressedSize <= maximumBytes - writtenBytes else { throw ThemeArchive.ArchiveError.tooLarge }
+            try copy(try compressedPayload(of: entry), to: handle)
         case Self.deflated:
-            try inflate(payload, to: handle)
+            try inflate(try compressedPayload(of: entry), to: handle)
         default:
             throw ThemeArchive.ArchiveError.unsafeContent
+        }
+    }
+
+    private mutating func copy(_ payload: Data, to handle: FileHandle) throws {
+        var offset = payload.startIndex
+        while offset < payload.endIndex {
+            let next = min(offset + Self.chunkSize, payload.endIndex)
+            try append(payload[offset..<next], to: handle)
+            offset = next
         }
     }
 
@@ -139,7 +156,7 @@ struct ZipExtractor {
 
     private func bytes(_ offset: Int, _ count: Int) throws -> Data {
         guard offset >= 0, count >= 0, offset + count <= data.count else { throw ThemeArchive.ArchiveError.unsafeContent }
-        return data.subdata(in: offset..<offset + count)
+        return data[data.startIndex + offset..<data.startIndex + offset + count]
     }
 
     private func u16(_ offset: Int) throws -> UInt16 {

@@ -16,11 +16,20 @@ enum ThemeArchive {
 
     private static let logger = Logger(subsystem: "com.danirubio.notchy", category: "archive")
     private static let ditto = URL(fileURLWithPath: "/usr/bin/ditto")
-    private static let zipinfo = URL(fileURLWithPath: "/usr/bin/zipinfo")
+    private static let separator = UInt8(ascii: "/")
+    private static let backslash = UInt8(ascii: "\\")
+    private static let delete: UInt8 = 0x7F
+    private static let firstPrintable: UInt8 = 0x20
 
     static func isSafeEntry(_ name: String) -> Bool {
-        guard !name.isEmpty, !name.hasPrefix("/"), !name.contains("\\") else { return false }
-        return !name.split(separator: "/", omittingEmptySubsequences: false).contains("..")
+        let bytes = Array(name.utf8)
+        guard let first = bytes.first, first != separator else { return false }
+        guard !bytes.contains(where: { $0 < firstPrintable || $0 == delete || $0 == backslash }) else { return false }
+        let components = bytes.split(separator: separator, omittingEmptySubsequences: false)
+        return components.enumerated().allSatisfy { index, component in
+            if component.isEmpty { return index == components.count - 1 }
+            return component.elementsEqual(".".utf8) == false && component.elementsEqual("..".utf8) == false
+        }
     }
 
     static func compress(folder: URL, to destination: URL) throws {
@@ -35,35 +44,11 @@ enum ThemeArchive {
         }
     }
 
-    static func preflight(listing: String, maximumBytes: Int, maximumEntries: Int) throws -> [String] {
-        var names: [String] = []
-        var total = 0
-        for line in listing.split(separator: "\n") {
-            let fields = line.split(separator: " ", omittingEmptySubsequences: true)
-            guard fields.count >= 9, let mode = fields.first, mode.count == 10, "-dl".contains(mode.first!) else { continue }
-            guard mode.first != "l" else { throw ArchiveError.unsafeContent }
-            guard let size = Int(fields[3]) else { throw ArchiveError.unsafeContent }
-            let prefix = line.ranges(of: fields[7]).last.map { line[$0.upperBound...] } ?? ""
-            let name = prefix.drop { $0 == " " }
-            guard isSafeEntry(String(name)) else { throw ArchiveError.unsafeContent }
-            total += size
-            names.append(String(name))
-            if total > maximumBytes || names.count > maximumEntries { throw ArchiveError.tooLarge }
-        }
-        return names
-    }
-
-    static func listing(of archive: URL) throws -> String {
-        try run(zipinfo, [archive.path])
-    }
-
     static func extract(
         _ archive: URL,
         maximumBytes: Int = maximumBytes,
         workingDirectory: URL = FileManager.default.temporaryDirectory
     ) throws -> (theme: Theme, folder: URL) {
-        _ = try preflight(listing: listing(of: archive), maximumBytes: maximumBytes, maximumEntries: maximumEntries)
-
         let folder = workingDirectory.appendingPathComponent("notchy-import-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         do {

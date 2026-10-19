@@ -135,6 +135,14 @@ struct ThemeArchiveTests {
         #expect(!ThemeArchive.isSafeEntry("media/../../evil"))
         #expect(!ThemeArchive.isSafeEntry("/etc/passwd"))
         #expect(!ThemeArchive.isSafeEntry("media\\\\evil"))
+        #expect(!ThemeArchive.isSafeEntry("media/a\u{0}b"))
+        #expect(!ThemeArchive.isSafeEntry("media/a\u{1}b"))
+        #expect(!ThemeArchive.isSafeEntry("../\u{301}x"))
+        #expect(!ThemeArchive.isSafeEntry("./theme.json"))
+        #expect(!ThemeArchive.isSafeEntry("media/./bg.png"))
+        #expect(!ThemeArchive.isSafeEntry("media//bg.png"))
+        #expect(ThemeArchive.isSafeEntry("media/"))
+        #expect(ThemeArchive.isSafeEntry("media/fondo ñ 1.png"))
     }
 
     func understatingSizes(of archive: URL, declaredSize: UInt32) throws -> URL {
@@ -159,9 +167,6 @@ struct ThemeArchiveTests {
         let lying = try understatingSizes(of: honest, declaredSize: 10)
         let workspace = FileManager.default.temporaryDirectory.appendingPathComponent("extract-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: true)
-        let listing = try ThemeArchive.listing(of: lying)
-
-        _ = try ThemeArchive.preflight(listing: listing, maximumBytes: realSize / 2, maximumEntries: 64)
         #expect(throws: ThemeArchive.ArchiveError.tooLarge) {
             _ = try ThemeArchive.extract(lying, maximumBytes: realSize / 2, workingDirectory: workspace)
         }
@@ -209,45 +214,5 @@ struct MediaKindTests {
         try Data().write(to: clip)
 
         #expect(try MediaKind.detect(at: clip) == .video)
-    }
-}
-
-struct ThemeArchivePreflightTests {
-    let listing = """
-    Archive:  /tmp/t.zip
-    Zip file size: 551 bytes, number of entries: 3
-    -rw-r--r--  2.1 unx       11 bX defN 26-Oct-19 10:59 theme.json
-    drwxr-xr-x  2.1 unx        0 bx stor 26-Oct-19 10:59 media/
-    -rw-r--r--  2.1 unx     5000 bX defN 26-Oct-19 10:59 media/fondo con espacios.png
-    3 files, 5011 bytes uncompressed, 39 bytes compressed:  99.2%
-    """
-
-    @Test func acceptsRegularFilesAndFoldersAndSumsTheirSizes() throws {
-        let entries = try ThemeArchive.preflight(listing: listing, maximumBytes: 10_000, maximumEntries: 64)
-
-        #expect(entries == ["theme.json", "media/", "media/fondo con espacios.png"])
-    }
-
-    @Test func rejectsSymlinksBeforeExtracting() {
-        let withLink = listing.replacingOccurrences(of: "drwxr-xr-x  2.1 unx        0 bx stor 26-Oct-19 10:59 media/", with: "lrwxr-xr-x  2.1 unx        4 b- stor 26-Oct-19 10:59 media")
-
-        #expect(throws: ThemeArchive.ArchiveError.unsafeContent) {
-            try ThemeArchive.preflight(listing: withLink, maximumBytes: 10_000, maximumEntries: 64)
-        }
-    }
-
-    @Test func rejectsArchivesThatWouldExpandBeyondTheLimit() {
-        #expect(throws: ThemeArchive.ArchiveError.tooLarge) {
-            try ThemeArchive.preflight(listing: listing, maximumBytes: 5_000, maximumEntries: 64)
-        }
-    }
-
-    @Test func rejectsTooManyEntriesAndTraversal() {
-        #expect(throws: ThemeArchive.ArchiveError.tooLarge) {
-            try ThemeArchive.preflight(listing: listing, maximumBytes: 10_000, maximumEntries: 2)
-        }
-        #expect(throws: ThemeArchive.ArchiveError.unsafeContent) {
-            try ThemeArchive.preflight(listing: listing.replacingOccurrences(of: "media/fondo", with: "../fondo"), maximumBytes: 10_000, maximumEntries: 64)
-        }
     }
 }
