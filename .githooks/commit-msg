@@ -1,0 +1,5 @@
+#!/bin/zsh
+if grep -i -q -E "claude|anthropic|chatgpt|openai|copilot|co-authored-by|generated (by|with)" "$1"; then
+  print "El mensaje de commit contiene una atribución de IA. Quítala y vuelve a intentarlo."
+  exit 1
+fi
