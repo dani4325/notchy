@@ -1,13 +1,13 @@
 cask "notchy" do
   version "1.0.0"
-  sha256 "6965e7318131cd84f7ff9b7951697bc68cdc3d651221365cffc035ae594d398f"
+  sha256 "25ec7125d4153bd22fd0566b14583c88f9ac3cf5f9681ce5dff721bbbf39b5bb"
 
-  url "https://github.com/TU_USUARIO/notchy/releases/download/v#{version}/Notchy-#{version}.zip"
+  url "https://github.com/dani4325/notchy/releases/download/v#{version}/Notchy-#{version}.zip"
   name "Notchy"
   desc "Dynamic Island-style notch panel with anime themes"
-  homepage "https://github.com/TU_USUARIO/notchy"
+  homepage "https://github.com/dani4325/notchy"
 
-  depends_on macos: ">= :sequoia"
+  depends_on macos: :sequoia
   depends_on arch: :arm64
 
   app "Notchy.app"

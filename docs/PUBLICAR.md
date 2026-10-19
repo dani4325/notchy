@@ -25,10 +25,7 @@ Para comprobar que nada sensible está bajo seguimiento: `git ls-files | grep -i
 
 ## Pasos de cada versión
 
-1. Define las URL reales (o sustituye `TU_USUARIO` en `scripts/build-app.sh` y `scripts/release.sh`, los README y el cask):
-   `export NOTCHY_REPO_URL=https://github.com/<usuario>/notchy`
-   `export NOTCHY_FEED_URL=https://raw.githubusercontent.com/<usuario>/notchy/main/appcast.xml`
-   El script se niega a publicar con `TU_USUARIO` (solo `NOTCHY_ALLOW_PLACEHOLDER=1` lo permite, para pruebas locales).
+1. Las URL del repositorio (`https://github.com/dani4325/notchy`) y del feed de Sparkle (`https://raw.githubusercontent.com/dani4325/notchy/main/appcast.xml`) ya están en `scripts/build-app.sh` y `scripts/release.sh`. Se pueden cambiar con `NOTCHY_REPO_URL` y `NOTCHY_FEED_URL`.
 2. `./scripts/release.sh <versión> <build>`. El build es obligatorio y debe ser mayor que el último del `appcast.xml`, o Sparkle no ofrecería la actualización. El script se niega también si el certificado de firma no está en el llavero, y comprueba que la app salga firmada con él. Pasa los tests y la comprobación de idiomas, crea `dist/Notchy-<versión>.zip`, su `.sha256` y actualiza `appcast.xml` con la firma EdDSA.
 3. Crea en GitHub la release `v<versión>` y sube el `.zip` y el `.sha256`. Usa como texto `docs/release-notes/<versión>.md`.
 4. Haz commit y push de `appcast.xml`: es el archivo que Sparkle consulta.

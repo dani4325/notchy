@@ -40,7 +40,7 @@ Notchy uses macOS's low battery warning, which isn't tied to a fixed percentage 
 ### With Homebrew
 
 ```sh
-brew tap YOUR_USER/notchy
+brew tap dani4325/notchy
 brew install --cask notchy
 ```
 
@@ -102,6 +102,7 @@ Full details in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - **Updates:** [Sparkle](https://sparkle-project.org), MIT license.
 - **Fonts** (SIL Open Font License 1.1): Nixie One, Share Tech Mono, Big Shoulders Stencil Display, Dela Gothic One, Bebas Neue and Cormorant Garamond.
 - **Inspiration:** [boring.notch](https://github.com/TheBoredTeam/boring.notch). Notchy doesn't reuse any of its code.
+- **Development:** Notchy is developed with the help of Claude Code.
 
 ## License
 

@@ -1,16 +1,16 @@
 # Tap de Homebrew de Notchy
 
-Este directorio es la plantilla del repositorio `TU_USUARIO/homebrew-notchy`.
+Este directorio es la plantilla del repositorio `dani4325/homebrew-notchy`.
 
 1. Crea en GitHub un repositorio público llamado `homebrew-notchy` y sube `Casks/notchy.rb`.
-2. Sustituye `TU_USUARIO` por tu usuario de GitHub en el cask.
+2. Sustituye `dani4325` por tu usuario de GitHub en el cask.
 3. En cada versión, después de subir el `.zip` a Releases, ejecuta desde la raíz del proyecto:
    `./scripts/update-cask.sh <versión>` y sube el cask actualizado al tap.
 
 Los usuarios instalan con:
 
 ```sh
-brew tap TU_USUARIO/notchy
+brew tap dani4325/notchy
 brew install --cask notchy
 ```
 

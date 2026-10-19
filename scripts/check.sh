@@ -30,7 +30,11 @@ PRIVATE=$(grep -rn -E "dlopen|dlsym|PrivateFrameworks|NSClassFromString|perform\
 
 print "Rastros de IA"
 AI_PATTERN='claude|anthropic|chatgpt|openai|copilot|co-authored-by|generated (by|with)|ai-generated'
-AI_HITS=$(tracked_text_files | xargs grep -n -i -E "$AI_PATTERN" 2>/dev/null)
+DISCLOSURES=(
+  "README.md:- **Desarrollo:** Notchy está desarrollada con ayuda de Claude Code."
+  "README.en.md:- **Development:** Notchy is developed with the help of Claude Code."
+)
+AI_HITS=$(tracked_text_files | xargs grep -n -i -E "$AI_PATTERN" 2>/dev/null | perl -pe 's/^([^:]+):\d+:/$1:/' | grep -v -x -F -f <(print -l $DISCLOSURES))
 [[ -z "$AI_HITS" ]] && pass "sin menciones en el código ni la documentación" || fail "rastro de IA:\n$AI_HITS"
 AI_COMMITS=$(git log --format="%h %B" | grep -i -E "$AI_PATTERN")
 [[ -z "$AI_COMMITS" ]] && pass "sin menciones en el historial de commits" || fail "rastro de IA en commits:\n$AI_COMMITS"

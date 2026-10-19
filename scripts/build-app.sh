@@ -7,7 +7,7 @@ VERSION="${NOTCHY_VERSION:-1.0.0}"
 BUILD_NUMBER="${NOTCHY_BUILD:-1}"
 MIN_MACOS="15.0"
 SIGN_IDENTITY_NAME="Notchy Self-Signed Code Signing"
-FEED_URL="${NOTCHY_FEED_URL:-https://raw.githubusercontent.com/TU_USUARIO/notchy/main/appcast.xml}"
+FEED_URL="${NOTCHY_FEED_URL:-https://raw.githubusercontent.com/dani4325/notchy/main/appcast.xml}"
 SPARKLE_PUBLIC_KEY="+KFJVUJ6PNEn2LeQ1tZci7c8ADYMTV7ag4sd2zP3SVs="
 
 ROOT="${0:A:h:h}"
