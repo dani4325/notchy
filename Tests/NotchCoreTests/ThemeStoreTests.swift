@@ -8,7 +8,23 @@ struct ThemeStoreTests {
     let defaults = UserDefaults(suiteName: "notchy-themes-\(UUID().uuidString)")!
 
     func makeStore() -> ThemeStore {
-        ThemeStore(directory: directory, defaults: defaults)
+        ThemeStore(directory: directory, defaults: defaults, trash: FakeTrash(root: directory).move)
+    }
+
+    @Test func deletingMovesTheThemeToTheTrashAndUndoBringsItBack() throws {
+        let store = makeStore()
+        let theme = try store.createTheme(named: "Temporal")
+
+        let trashed = try store.delete(themeID: theme.id)
+
+        #expect(store.theme(id: theme.id) == nil)
+        #expect(!FileManager.default.fileExists(atPath: store.folder(for: theme.id).path))
+        #expect(FileManager.default.fileExists(atPath: trashed.path))
+
+        try store.restore(themeID: theme.id, from: trashed)
+
+        #expect(store.theme(id: theme.id)?.name == "Temporal")
+        #expect(!FileManager.default.fileExists(atPath: trashed.path))
     }
 
     func makePNG(color: NSColor = .red) throws -> URL {
@@ -222,7 +238,7 @@ struct ThemeMeasurementStorageTests {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent("notchy-measure-\(UUID().uuidString)")
     let defaults = UserDefaults(suiteName: "notchy-measure-\(UUID().uuidString)")!
 
-    func makeStore() -> ThemeStore { ThemeStore(directory: directory, defaults: defaults) }
+    func makeStore() -> ThemeStore { ThemeStore(directory: directory, defaults: defaults, trash: FakeTrash(root: directory).move) }
 
     func makePNG(white: Bool) throws -> URL {
         let rep = try #require(NSBitmapImageRep(
@@ -304,5 +320,20 @@ struct ThemeMeasurementStorageTests {
 
         await store.measureMissing()
         #expect(store.measurement(themeID: imported.id) == real)
+    }
+}
+
+struct FakeTrash {
+    let folder: URL
+
+    init(root: URL) {
+        folder = root.deletingLastPathComponent().appendingPathComponent(root.lastPathComponent + "-papelera")
+    }
+
+    func move(_ url: URL) throws -> URL {
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let destination = folder.appendingPathComponent("\(UUID().uuidString)-\(url.lastPathComponent)")
+        try FileManager.default.moveItem(at: url, to: destination)
+        return destination
     }
 }

@@ -3,8 +3,6 @@ import SwiftUI
 struct ThemeGalleryView: View {
     let editor: ThemeEditorModel
 
-    private var pendingName: String { editor.pendingDeletion?.name ?? "" }
-
     var body: some View {
         VStack(spacing: 0) {
             List(selection: Binding(
@@ -29,23 +27,25 @@ struct ThemeGalleryView: View {
                         Button("Duplicar") { editor.duplicate(themeID: theme.id) }
                         Button("Exportar…") { editor.exportTheme(themeID: theme.id) }
                         Divider()
-                        Button("Eliminar…", role: .destructive) { editor.requestDeletion(themeID: theme.id) }
+                        Button("Mover a la Papelera", role: .destructive) { editor.delete(themeID: theme.id) }
                             .disabled(editor.store.isBuiltIn(theme.id))
                     }
                 }
             }
             .listStyle(.plain)
             .onDeleteCommand {
-                if let id = editor.draft?.id { editor.requestDeletion(themeID: id) }
+                if let id = editor.draft?.id { editor.delete(themeID: id) }
             }
-            .confirmationDialog(
-                Text("¿Eliminar «\(pendingName)»?"),
-                isPresented: Binding(get: { editor.pendingDeletion != nil }, set: { if !$0 { editor.pendingDeletion = nil } }),
-                titleVisibility: .visible
-            ) {
-                Button("Eliminar", role: .destructive, action: editor.confirmDeletion)
-            } message: {
-                Text("Se borran el tema y los archivos que importaste para él. No se puede deshacer.")
+            if let deleted = editor.undoableDeletion {
+                Divider()
+                HStack {
+                    Text("«\(deleted.name)» está en la Papelera.")
+                        .lineLimit(2)
+                    Spacer()
+                    Button("Deshacer", action: editor.undoDeletion)
+                        .keyboardShortcut("z", modifiers: .command)
+                }
+                .padding(10)
             }
             Divider()
             HStack {

@@ -6,30 +6,34 @@ import Testing
 struct ThemeEditorModelTests {
     let store = ThemeStore(
         directory: FileManager.default.temporaryDirectory.appendingPathComponent("notchy-editor-\(UUID().uuidString)"),
-        defaults: UserDefaults(suiteName: "notchy-editor-\(UUID().uuidString)")!
+        defaults: UserDefaults(suiteName: "notchy-editor-\(UUID().uuidString)")!,
+        trash: FakeTrash(root: FileManager.default.temporaryDirectory.appendingPathComponent("notchy-editor-trash-\(UUID().uuidString)")).move
     )
 
-    @Test func deletingAsksFirstAndOnlyDeletesAfterConfirming() throws {
+    @Test func deletingMovesToTheTrashAndOffersUndo() throws {
         let editor = ThemeEditorModel(store: store)
         let theme = try store.createTheme(named: "Para borrar")
 
-        editor.requestDeletion(themeID: theme.id)
+        editor.delete(themeID: theme.id)
 
-        #expect(editor.pendingDeletion?.id == theme.id)
-        #expect(store.theme(id: theme.id) != nil)
-
-        editor.confirmDeletion()
-
-        #expect(editor.pendingDeletion == nil)
         #expect(store.theme(id: theme.id) == nil)
+        #expect(editor.undoableDeletion?.name == "Para borrar")
+
+        editor.undoDeletion()
+
+        #expect(store.theme(id: theme.id) != nil)
+        #expect(editor.undoableDeletion == nil)
+        #expect(editor.draft?.id == theme.id)
     }
 
-    @Test func builtInThemesCannotBeQueuedForDeletion() throws {
+    @Test func builtInThemesAreNotDeleted() throws {
         let editor = ThemeEditorModel(store: store)
+        let builtIn = try #require(Theme.builtIns.first)
 
-        editor.requestDeletion(themeID: try #require(Theme.builtIns.first).id)
+        editor.delete(themeID: builtIn.id)
 
-        #expect(editor.pendingDeletion == nil)
+        #expect(store.theme(id: builtIn.id) != nil)
+        #expect(editor.undoableDeletion == nil)
     }
 
     @Test func startsEditingTheActiveTheme() {

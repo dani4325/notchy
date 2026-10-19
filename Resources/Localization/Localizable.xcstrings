@@ -1201,22 +1201,6 @@
         }
       }
     },
-    "Eliminar…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete…"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eliminar…"
-          }
-        }
-      }
-    },
     "Empezar": {
       "localizations": {
         "en": {
@@ -2977,22 +2961,6 @@
         }
       }
     },
-    "Se borran el tema y los archivos que importaste para él. No se puede deshacer.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This deletes the theme and the files you imported for it. It can't be undone."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se borran el tema y los archivos que importaste para él. No se puede deshacer."
-          }
-        }
-      }
-    },
     "Sección": {
       "localizations": {
         "en": {
@@ -3709,22 +3677,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "«%@» está en la Papelera."
-          }
-        }
-      }
-    },
-    "¿Eliminar «%@»?": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete “%@”?"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Eliminar «%@»?"
           }
         }
       }

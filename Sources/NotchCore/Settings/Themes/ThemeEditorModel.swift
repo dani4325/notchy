@@ -8,7 +8,8 @@ import UniformTypeIdentifiers
 @Observable
 public final class ThemeEditorModel {
     public private(set) var draft: Theme?
-    public var pendingDeletion: Theme?
+    public private(set) var undoableDeletion: Theme?
+    @ObservationIgnored private var trashedFolder: URL?
     public private(set) var message: String?
     public private(set) var isExtracting = false
     public private(set) var isMeasuringBackground = false
@@ -163,21 +164,22 @@ public final class ThemeEditorModel {
         }
     }
 
-    public func requestDeletion(themeID: String) {
-        guard !store.isBuiltIn(themeID) else { return }
-        pendingDeletion = store.theme(id: themeID)
-    }
-
-    public func confirmDeletion() {
-        guard let theme = pendingDeletion else { return }
-        pendingDeletion = nil
-        delete(themeID: theme.id)
+    public func undoDeletion() {
+        guard let theme = undoableDeletion, let trashed = trashedFolder else { return }
+        undoableDeletion = nil
+        trashedFolder = nil
+        perform(String(localized: "No se ha podido recuperar el tema de la Papelera.")) {
+            try store.restore(themeID: theme.id, from: trashed)
+            select(themeID: theme.id)
+        }
     }
 
     public func delete(themeID: String) {
+        guard !store.isBuiltIn(themeID), let theme = store.theme(id: themeID) else { return }
         flush()
         perform(String(localized: "No se puede borrar el único tema que queda.")) {
-            try store.delete(themeID: themeID)
+            trashedFolder = try store.delete(themeID: themeID)
+            undoableDeletion = theme
             if draft?.id == themeID {
                 select(themeID: store.activeThemeID)
             }

@@ -37,10 +37,12 @@ public final class ThemeStore {
 
     @ObservationIgnored private let directory: URL
     @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored let trash: @MainActor (URL) throws -> URL
 
-    public init(directory: URL = ThemeStore.defaultDirectory, defaults: UserDefaults = .standard) {
+    public init(directory: URL = ThemeStore.defaultDirectory, defaults: UserDefaults = .standard, trash: @escaping @MainActor (URL) throws -> URL = ThemeStore.moveToTrash) {
         self.directory = directory
         self.defaults = defaults
+        self.trash = trash
         activeThemeID = defaults.string(forKey: Self.activeKey) ?? Theme.notchyDefault.id
         reload()
     }
@@ -107,16 +109,41 @@ public final class ThemeStore {
         return copy
     }
 
-    public func delete(themeID: String) throws {
+    public static func moveToTrash(_ url: URL) throws -> URL {
+        var trashed: NSURL?
+        try FileManager.default.trashItem(at: url, resultingItemURL: &trashed)
+        guard let trashed else { throw StoreError.writeFailed }
+        return trashed as URL
+    }
+
+    @discardableResult
+    public func delete(themeID: String) throws -> URL {
         guard theme(id: themeID) != nil else { throw StoreError.unknownTheme }
         guard !isBuiltIn(themeID) else { throw StoreError.builtInTheme }
         guard themes.filter({ !isBuiltIn($0.id) }).count > 1 else { throw StoreError.lastTheme }
-        try? FileManager.default.removeItem(at: folder(for: themeID))
+        let trashed: URL
+        do {
+            trashed = try trash(folder(for: themeID))
+        } catch {
+            Self.logger.error("moving theme to the Trash failed: \(error.localizedDescription, privacy: .public)")
+            throw StoreError.writeFailed
+        }
         themes = themes.filter { $0.id != themeID }
         setMeasurement(nil, themeID: themeID)
         if activeThemeID == themeID, let first = themes.first {
             activate(themeID: first.id)
         }
+        return trashed
+    }
+
+    public func restore(themeID: String, from trashed: URL) throws {
+        do {
+            try FileManager.default.moveItem(at: trashed, to: folder(for: themeID))
+        } catch {
+            Self.logger.error("restoring theme from the Trash failed: \(error.localizedDescription, privacy: .public)")
+            throw StoreError.writeFailed
+        }
+        reload()
     }
 
     func setBackground(from source: URL, themeID: String, measurement: BackgroundMeasurement) throws -> Theme {
