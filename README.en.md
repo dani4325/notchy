@@ -26,6 +26,10 @@ Notchy turns your MacBook's notch into a living, Dynamic Island–style panel ma
 
 > Notchy doesn't include official art, logos, characters or sounds from any series. The templates only use colors, shapes and free fonts; each user adds their own art from their Mac. Notchy isn't affiliated with the rights holders of any series mentioned.
 
+### Low battery warning
+
+Notchy uses macOS's low battery warning, which isn't tied to a fixed percentage but to time: it fires when the battery has about **20 minutes** of use left (and again at about 10). So the percentage depends on what you're doing: on a MacBook it's usually **between 3% and 8%** (closer to 3% with light use, closer to 8% with heavy use). This way Notchy doesn't have to keep watching the battery.
+
 ## Requirements
 
 - macOS 15 Sequoia or later (tested on macOS 27).
