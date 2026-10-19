@@ -18,6 +18,7 @@ public final class CompanionStore {
 
     @ObservationIgnored private let directory: URL
     @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let trash: @MainActor (URL) throws -> URL
 
     private static let fileNameKey = "companionFileName"
     private static let logger = Logger(subsystem: "com.danirubio.notchy", category: "companion")
@@ -28,7 +29,8 @@ public final class CompanionStore {
             .appendingPathComponent("Companion", isDirectory: true)
     }
 
-    public init(directory: URL = CompanionStore.defaultDirectory, defaults: UserDefaults = .standard) {
+    public init(directory: URL = CompanionStore.defaultDirectory, defaults: UserDefaults = .standard, trash: @escaping @MainActor (URL) throws -> URL = ThemeStore.moveToTrash) {
+        self.trash = trash
         self.directory = directory
         self.defaults = defaults
         load()
@@ -56,15 +58,46 @@ public final class CompanionStore {
         source = MediaSource(url: destination, kind: kind)
     }
 
+    public func migrateGIF() async {
+        guard let source, source.kind == .animatedImage else { return }
+        do {
+            let video = try await GIFTranscoder.transcode(source.url)
+            defer { try? FileManager.default.removeItem(at: video) }
+            guard await GIFTranscoder.matches(video: video, gif: source.url) else { throw GIFTranscoder.TranscodeError.encodingFailed }
+            guard self.source == source else { return }
+            let destination = directory.appendingPathComponent("companion-\(UUID().uuidString).\(video.pathExtension)")
+            try FileManager.default.copyItem(at: video, to: destination)
+            defaults.set(destination.lastPathComponent, forKey: Self.fileNameKey)
+            self.source = MediaSource(url: destination, kind: .video)
+            _ = try trash(source.url)
+        } catch {
+            Self.logger.error("keeping companion GIF: \(String(describing: error), privacy: .public)")
+        }
+    }
+
     public func chooseFromPanel() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image, .movie]
         panel.allowsMultipleSelection = false
         panel.message = String(localized: "Elige una imagen, un GIF o un vídeo para acompañar al notch")
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        Task { await importConvertingGIFs(from: url) }
+    }
+
+    func importConvertingGIFs(from url: URL) async {
         do {
-            try importMedia(from: url)
+            if (try? MediaKind.detect(at: url)) == .animatedImage {
+                let video = try await GIFTranscoder.transcode(url)
+                defer { try? FileManager.default.removeItem(at: video) }
+                try importMedia(from: video)
+            } else {
+                try importMedia(from: url)
+            }
             lastError = nil
+        } catch GIFTranscoder.TranscodeError.unreadable {
+            lastError = String(localized: "Ese archivo no es una imagen ni un vídeo compatible.")
+        } catch GIFTranscoder.TranscodeError.encodingFailed {
+            lastError = String(localized: "No se ha podido convertir el GIF a vídeo.")
         } catch ImportError.unsupportedMedia {
             lastError = String(localized: "Ese archivo no es una imagen ni un vídeo compatible.")
         } catch ImportError.tooLarge {

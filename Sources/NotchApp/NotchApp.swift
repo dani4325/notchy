@@ -87,7 +87,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Task { await themes.measureMissing() }
+        Task {
+            await themes.migrateGIFBackgrounds()
+            await themes.measureMissing()
+            await companion.migrateGIF()
+        }
         if let fonts = FontRegistry.bundledFontsDirectory {
             FontRegistry.register(directory: fonts)
         }

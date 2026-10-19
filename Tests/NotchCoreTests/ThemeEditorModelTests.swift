@@ -36,6 +36,31 @@ struct ThemeEditorModelTests {
         #expect(editor.undoableDeletion == nil)
     }
 
+    @Test func importedGIFBackgroundsBecomeMeasuredVideos() async throws {
+        let editor = ThemeEditorModel(store: store)
+        let theme = try store.createTheme(named: "Con GIF")
+        let gif = try GIFTranscoderTests().makeGIF(transparent: false)
+
+        await editor.applyBackground(from: gif, themeID: theme.id)
+
+        let media = try #require(store.theme(id: theme.id)?.background?.media)
+        #expect(media.kind == .video)
+        #expect(store.measurement(themeID: theme.id) != nil)
+    }
+
+    @Test func importedGIFCompanionsBecomeVideos() async throws {
+        let companion = CompanionStore(
+            directory: FileManager.default.temporaryDirectory.appendingPathComponent("companion-\(UUID().uuidString)"),
+            defaults: UserDefaults(suiteName: "companion-\(UUID().uuidString)")!
+        )
+        let gif = try GIFTranscoderTests().makeGIF(transparent: true)
+
+        await companion.importConvertingGIFs(from: gif)
+
+        #expect(companion.source?.kind == .video)
+        #expect(companion.lastError == nil)
+    }
+
     @Test func startsEditingTheActiveTheme() {
         let editor = ThemeEditorModel(store: store)
 

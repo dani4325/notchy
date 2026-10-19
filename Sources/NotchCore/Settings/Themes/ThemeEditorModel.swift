@@ -196,12 +196,25 @@ public final class ThemeEditorModel {
         Task { await applyBackground(from: url, themeID: themeID) }
     }
 
-    func applyBackground(from url: URL, themeID: String) async {
-        guard let kind = try? MediaKind.detect(at: url) else {
+    func applyBackground(from original: URL, themeID: String) async {
+        guard var kind = try? MediaKind.detect(at: original) else {
             message = String(localized: "Ese archivo no se puede usar como fondo.")
             return
         }
         isMeasuringBackground = true
+        var url = original
+        if kind == .animatedImage {
+            do {
+                url = try await GIFTranscoder.transcode(original)
+                kind = .video
+            } catch {
+                isMeasuringBackground = false
+                Self.logger.error("gif transcoding failed: \(String(describing: error), privacy: .public)")
+                message = String(localized: "No se ha podido convertir el GIF a vídeo.")
+                return
+            }
+        }
+        defer { if url != original { try? FileManager.default.removeItem(at: url) } }
         let measurement = await BackgroundMeasurer.measureInBackground(url, kind: kind)
         isMeasuringBackground = false
         guard let measurement else {
