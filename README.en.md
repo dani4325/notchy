@@ -98,3 +98,7 @@ Full details in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - **Updates:** [Sparkle](https://sparkle-project.org), MIT license.
 - **Fonts** (SIL Open Font License 1.1): Nixie One, Share Tech Mono, Big Shoulders Stencil Display, Dela Gothic One, Bebas Neue and Cormorant Garamond.
 - **Inspiration:** [boring.notch](https://github.com/TheBoredTeam/boring.notch). Notchy doesn't reuse any of its code.
+
+## License
+
+Notchy is free software under the [GNU General Public License v3.0](LICENSE). You can use, study, modify and redistribute it; if you publish a modified version, it must also be GPL-3.0 with its source code available. Third-party components keep their own licenses (see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
