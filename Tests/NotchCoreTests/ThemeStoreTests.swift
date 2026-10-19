@@ -137,6 +137,48 @@ struct ThemeArchiveTests {
         #expect(!ThemeArchive.isSafeEntry("media\\\\evil"))
     }
 
+    func understatingSizes(of archive: URL, declaredSize: UInt32) throws -> URL {
+        var bytes = [UInt8](try Data(contentsOf: archive))
+        let centralHeader: [UInt8] = [0x50, 0x4B, 0x01, 0x02]
+        for offset in 0..<(bytes.count - 28) where Array(bytes[offset..<offset + 4]) == centralHeader {
+            withUnsafeBytes(of: declaredSize.littleEndian) { bytes.replaceSubrange(offset + 24..<offset + 28, with: $0) }
+        }
+        let patched = archive.deletingPathExtension().appendingPathExtension("lying.notchytheme")
+        try Data(bytes).write(to: patched)
+        return patched
+    }
+
+    @Test func extractionCountsRealBytesWhenTheArchiveUnderstatesSizes() throws {
+        let realSize = 2 * 1024 * 1024
+        let honest = try zip { folder in
+            try JSONEncoder().encode(Theme.notchyDefault).write(to: folder.appendingPathComponent("theme.json"))
+            let media = folder.appendingPathComponent("media")
+            try FileManager.default.createDirectory(at: media, withIntermediateDirectories: true)
+            try Data(count: realSize).write(to: media.appendingPathComponent("big.bin"))
+        }
+        let lying = try understatingSizes(of: honest, declaredSize: 10)
+        let workspace = FileManager.default.temporaryDirectory.appendingPathComponent("extract-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: true)
+        let listing = try ThemeArchive.listing(of: lying)
+
+        _ = try ThemeArchive.preflight(listing: listing, maximumBytes: realSize / 2, maximumEntries: 64)
+        #expect(throws: ThemeArchive.ArchiveError.tooLarge) {
+            _ = try ThemeArchive.extract(lying, maximumBytes: realSize / 2, workingDirectory: workspace)
+        }
+        #expect(try FileManager.default.contentsOfDirectory(atPath: workspace.path).isEmpty)
+    }
+
+    @Test func extractionRestoresFilesOfAnHonestArchive() throws {
+        let archive = try zip { folder in
+            try JSONEncoder().encode(Theme.notchyDefault).write(to: folder.appendingPathComponent("theme.json"))
+        }
+
+        let (theme, folder) = try ThemeArchive.extract(archive)
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        #expect(theme.name == Theme.notchyDefault.name)
+    }
+
     @Test func archiveWithoutThemeFileIsRejected() throws {
         let archive = try zip { folder in
             try Data("x".utf8).write(to: folder.appendingPathComponent("readme.txt"))
@@ -167,5 +209,45 @@ struct MediaKindTests {
         try Data().write(to: clip)
 
         #expect(try MediaKind.detect(at: clip) == .video)
+    }
+}
+
+struct ThemeArchivePreflightTests {
+    let listing = """
+    Archive:  /tmp/t.zip
+    Zip file size: 551 bytes, number of entries: 3
+    -rw-r--r--  2.1 unx       11 bX defN 26-Oct-19 10:59 theme.json
+    drwxr-xr-x  2.1 unx        0 bx stor 26-Oct-19 10:59 media/
+    -rw-r--r--  2.1 unx     5000 bX defN 26-Oct-19 10:59 media/fondo con espacios.png
+    3 files, 5011 bytes uncompressed, 39 bytes compressed:  99.2%
+    """
+
+    @Test func acceptsRegularFilesAndFoldersAndSumsTheirSizes() throws {
+        let entries = try ThemeArchive.preflight(listing: listing, maximumBytes: 10_000, maximumEntries: 64)
+
+        #expect(entries == ["theme.json", "media/", "media/fondo con espacios.png"])
+    }
+
+    @Test func rejectsSymlinksBeforeExtracting() {
+        let withLink = listing.replacingOccurrences(of: "drwxr-xr-x  2.1 unx        0 bx stor 26-Oct-19 10:59 media/", with: "lrwxr-xr-x  2.1 unx        4 b- stor 26-Oct-19 10:59 media")
+
+        #expect(throws: ThemeArchive.ArchiveError.unsafeContent) {
+            try ThemeArchive.preflight(listing: withLink, maximumBytes: 10_000, maximumEntries: 64)
+        }
+    }
+
+    @Test func rejectsArchivesThatWouldExpandBeyondTheLimit() {
+        #expect(throws: ThemeArchive.ArchiveError.tooLarge) {
+            try ThemeArchive.preflight(listing: listing, maximumBytes: 5_000, maximumEntries: 64)
+        }
+    }
+
+    @Test func rejectsTooManyEntriesAndTraversal() {
+        #expect(throws: ThemeArchive.ArchiveError.tooLarge) {
+            try ThemeArchive.preflight(listing: listing, maximumBytes: 10_000, maximumEntries: 2)
+        }
+        #expect(throws: ThemeArchive.ArchiveError.unsafeContent) {
+            try ThemeArchive.preflight(listing: listing.replacingOccurrences(of: "media/fondo", with: "../fondo"), maximumBytes: 10_000, maximumEntries: 64)
+        }
     }
 }

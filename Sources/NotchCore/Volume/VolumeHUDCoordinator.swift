@@ -16,7 +16,7 @@ public final class VolumeHUDCoordinator {
     public func start() {
         volume.onChange = { [weak self] reading in self?.volumeChanged(reading) }
         volume.start()
-        keys.onKey = { [weak self] key in self?.keyPressed(key) }
+        keys.onKey = { [weak self] key in self?.keyPressed(key) ?? false }
         observers = [
             NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.syncKeyTap() }
@@ -45,13 +45,15 @@ public final class VolumeHUDCoordinator {
         }
     }
 
-    private func keyPressed(_ key: MediaKey) {
+    private func keyPressed(_ key: MediaKey) -> Bool {
+        guard volume.current != nil else { return false }
         volume.apply(key)
-        guard key.isDown else { return }
+        guard key.isDown else { return true }
         lastKeyPress = Date()
         if let reading = volume.current {
             onShow?(reading)
         }
+        return true
     }
 
     private func volumeChanged(_ reading: VolumeReading) {

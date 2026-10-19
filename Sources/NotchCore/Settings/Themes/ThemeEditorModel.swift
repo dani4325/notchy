@@ -218,10 +218,19 @@ public final class ThemeEditorModel {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [Self.archiveType]
         panel.nameFieldStringValue = "\(theme.name).\(ThemeArchive.fileExtension)"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        perform(String(localized: "No se ha podido exportar el tema.")) {
-            try store.exportArchive(themeID: themeID, to: url)
-            message = String(localized: "Tema exportado.")
+        guard panel.runModal() == .OK, let url = panel.url,
+              let (payload, media) = try? store.exportPayload(themeID: themeID)
+        else { return }
+        Task { [weak self] in
+            do {
+                try await Task.detached(priority: .userInitiated) {
+                    try ThemeStore.writeArchive(theme: payload, mediaURL: media, to: url)
+                }.value
+                self?.message = String(localized: "Tema exportado.")
+            } catch {
+                Self.logger.error("export failed: \(String(describing: error), privacy: .public)")
+                self?.message = String(localized: "No se ha podido exportar el tema.")
+            }
         }
     }
 
@@ -230,15 +239,26 @@ public final class ThemeEditorModel {
         panel.allowedContentTypes = [Self.archiveType]
         panel.message = String(localized: "Elige un archivo .\(ThemeArchive.fileExtension)")
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        importTheme(from: url)
+        Task { await importTheme(from: url) }
     }
 
-    public func importTheme(from url: URL) {
+    @discardableResult
+    public func importTheme(from url: URL) async -> Bool {
         flush()
-        perform(String(localized: "Ese archivo no es un tema válido de Notchy.")) {
-            let theme = try store.importArchive(from: url)
+        let destination = store.importDestination()
+        do {
+            let staged = try await Task.detached(priority: .userInitiated) {
+                try ThemeStore.stageImport(archive: url, into: destination.folder)
+            }.value
+            let theme = try store.finishImport(staged, id: destination.id)
             select(themeID: theme.id)
             message = String(localized: "Tema «\(theme.name)» importado.")
+            return true
+        } catch {
+            Self.logger.error("import failed: \(String(describing: error), privacy: .public)")
+            try? FileManager.default.removeItem(at: destination.folder)
+            message = String(localized: "Ese archivo no es un tema válido de Notchy.")
+            return false
         }
     }
 

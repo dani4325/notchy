@@ -46,7 +46,8 @@ python3 -I scripts/check-localization.py >/dev/null && pass "todos los textos en
 
 if [[ "$MODE" == "--full" ]]; then
   print "Compilación y tests"
-  swift build -j 1 2>&1 | grep -q "Build complete" && pass "compila" || fail "no compila (swift build -j 1)"
+  BUILD_OUTPUT="$(swift build -j 1 2>&1)"
+  [[ "$BUILD_OUTPUT" == *"Build complete"* ]] && pass "compila" || fail "no compila (swift build -j 1)"
   ./scripts/test.sh >/dev/null 2>&1 && pass "tests en verde" || fail "fallan tests (./scripts/test.sh)"
 fi
 

@@ -60,6 +60,7 @@ final class IslandPanelController {
         hostingView.onDropFiles = { [weak self] urls in
             self?.dropped(urls) ?? false
         }
+        hostingView.canAcceptDrop = { Preferences.shelf }
         hostingView.rootView = IslandView(
             model: model, nowPlaying: nowPlaying, companion: companion, themes: themes,
             visualizer: visualizer, shelf: shelf, togglePage: { [weak self] in self?.togglePage() }
@@ -91,6 +92,9 @@ final class IslandPanelController {
 
     func show(_ activity: IslandActivity) {
         activityTimer?.cancel()
+        if !isHovering {
+            pendingHover?.cancel()
+        }
         let isUpdate = activity.isSameKind(as: model.activity) && model.isExpanded
         model.activity = activity
         if !isUpdate {
@@ -115,8 +119,8 @@ final class IslandPanelController {
 
     private func endActivity() {
         activityTimer = nil
-        guard !isHovering else { return }
         model.activity = nil
+        guard !isHovering else { return }
         transition(to: restingState, animated: true)
     }
 
@@ -124,6 +128,9 @@ final class IslandPanelController {
         activityTimer?.cancel()
         isClosed = true
         cancelPending()
+        model.activity = nil
+        model.state = .collapsed
+        panel.contentView = nil
         panel.close()
     }
 
@@ -178,6 +185,7 @@ final class IslandPanelController {
     }
 
     private func dropped(_ urls: [URL]) -> Bool {
+        model.isDropTargeted = false
         guard Preferences.shelf, !urls.isEmpty else { return false }
         shelf.add(urls)
         model.page = .shelf

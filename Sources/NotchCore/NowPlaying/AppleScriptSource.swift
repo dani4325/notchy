@@ -13,6 +13,8 @@ final class AppleScriptSource: NowPlayingSource {
     private var observers: [NSObjectProtocol] = []
     private var current: (app: PlayerApp, info: NowPlayingInfo)?
     private var artworkTask: Task<Void, Never>?
+    private var initialTask: Task<Void, Never>?
+    private var isStopped = true
 
     func start() {
         let center = DistributedNotificationCenter.default()
@@ -23,13 +25,16 @@ final class AppleScriptSource: NowPlayingSource {
                 MainActor.assumeIsolated { self?.received(info, from: app) }
             }
         }
-        Task { await loadInitialState() }
+        isStopped = false
+        initialTask = Task { [weak self] in await self?.loadInitialState() }
     }
 
     func stop() {
         observers.forEach(DistributedNotificationCenter.default().removeObserver)
         observers = []
         artworkTask?.cancel()
+        initialTask?.cancel()
+        isStopped = true
         current = nil
     }
 
@@ -40,6 +45,7 @@ final class AppleScriptSource: NowPlayingSource {
     }
 
     private func received(_ info: NowPlayingInfo?, from app: PlayerApp) {
+        guard !isStopped else { return }
         guard let info else {
             if current?.app == app {
                 current = nil
@@ -88,6 +94,7 @@ final class AppleScriptSource: NowPlayingSource {
     }
 
     private func refreshPosition(for app: PlayerApp) async {
+        guard isRunning(app) else { return }
         let script = "tell application \"\(app.scriptName)\" to return player position"
         guard let raw = await runner.string(script),
               let position = Double(raw.replacingOccurrences(of: ",", with: ".")),
@@ -100,6 +107,7 @@ final class AppleScriptSource: NowPlayingSource {
 
     private func loadArtwork(for app: PlayerApp, trackKey: String) {
         artworkTask?.cancel()
+        guard isRunning(app) else { return }
         artworkTask = Task { [runner] in
             let data: Data?
             switch app {

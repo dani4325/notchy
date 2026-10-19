@@ -8,7 +8,7 @@ public final class MediaKeyTap {
     nonisolated private static let systemDefinedType = CGEventType(rawValue: 14)!
     nonisolated private static let auxControlButtonsSubtype: Int16 = 8
 
-    var onKey: ((MediaKey) -> Void)?
+    var onKey: ((MediaKey) -> Bool)?
 
     private var tap: CFMachPort?
     private var source: CFRunLoopSource?
@@ -36,8 +36,8 @@ public final class MediaKeyTap {
                 guard let key = MediaKeyTap.mediaKey(type: type, event: event) else {
                     return Unmanaged.passUnretained(event)
                 }
-                MainActor.assumeIsolated { owner.onKey?(key) }
-                return nil
+                let handled = MainActor.assumeIsolated { owner.onKey?(key) ?? false }
+                return handled ? nil : Unmanaged.passUnretained(event)
             },
             userInfo: refcon
         ) else {
@@ -52,7 +52,10 @@ public final class MediaKeyTap {
     }
 
     public func stop() {
-        if let tap { CGEvent.tapEnable(tap: tap, enable: false) }
+        if let tap {
+            CGEvent.tapEnable(tap: tap, enable: false)
+            CFMachPortInvalidate(tap)
+        }
         if let source { CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes) }
         tap = nil
         source = nil

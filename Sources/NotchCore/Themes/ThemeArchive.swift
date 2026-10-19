@@ -24,31 +24,65 @@ enum ThemeArchive {
     }
 
     static func compress(folder: URL, to destination: URL) throws {
-        try? FileManager.default.removeItem(at: destination)
-        try run(ditto, ["-c", "-k", "--norsrc", "--noextattr", "--noqtn", "--noacl", folder.path, destination.path])
-    }
-
-    static func extract(_ archive: URL) throws -> (theme: Theme, folder: URL) {
-        let entries = try run(zipinfo, ["-1", archive.path])
-            .split(separator: "\n")
-            .map(String.init)
-        guard entries.count <= maximumEntries else { throw ArchiveError.tooLarge }
-        guard entries.allSatisfy(isSafeEntry) else { throw ArchiveError.unsafeContent }
-
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("notchy-import-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let staging = FileManager.default.temporaryDirectory.appendingPathComponent("notchy-export-\(UUID().uuidString).zip")
+        try run(ditto, ["-c", "-k", "--norsrc", "--noextattr", "--noqtn", "--noacl", folder.path, staging.path])
         do {
-            try run(ditto, ["-x", "-k", "--norsrc", "--noextattr", "--noqtn", archive.path, folder.path])
-            try validateContents(of: folder)
-            let theme = try decodeTheme(in: folder)
-            return (theme, folder)
+            _ = try FileManager.default.replaceItemAt(destination, withItemAt: staging)
         } catch {
-            try? FileManager.default.removeItem(at: folder)
-            throw error
+            try? FileManager.default.removeItem(at: staging)
+            logger.error("export move failed: \(error.localizedDescription, privacy: .public)")
+            throw ArchiveError.toolFailed
         }
     }
 
-    private static func validateContents(of folder: URL) throws {
+    static func preflight(listing: String, maximumBytes: Int, maximumEntries: Int) throws -> [String] {
+        var names: [String] = []
+        var total = 0
+        for line in listing.split(separator: "\n") {
+            let fields = line.split(separator: " ", omittingEmptySubsequences: true)
+            guard fields.count >= 9, let mode = fields.first, mode.count == 10, "-dl".contains(mode.first!) else { continue }
+            guard mode.first != "l" else { throw ArchiveError.unsafeContent }
+            guard let size = Int(fields[3]) else { throw ArchiveError.unsafeContent }
+            let prefix = line.ranges(of: fields[7]).last.map { line[$0.upperBound...] } ?? ""
+            let name = prefix.drop { $0 == " " }
+            guard isSafeEntry(String(name)) else { throw ArchiveError.unsafeContent }
+            total += size
+            names.append(String(name))
+            if total > maximumBytes || names.count > maximumEntries { throw ArchiveError.tooLarge }
+        }
+        return names
+    }
+
+    static func listing(of archive: URL) throws -> String {
+        try run(zipinfo, [archive.path])
+    }
+
+    static func extract(
+        _ archive: URL,
+        maximumBytes: Int = maximumBytes,
+        workingDirectory: URL = FileManager.default.temporaryDirectory
+    ) throws -> (theme: Theme, folder: URL) {
+        _ = try preflight(listing: listing(of: archive), maximumBytes: maximumBytes, maximumEntries: maximumEntries)
+
+        let folder = workingDirectory.appendingPathComponent("notchy-import-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        do {
+            var extractor = try ZipExtractor(archive: archive, maximumBytes: maximumBytes, maximumEntries: maximumEntries)
+            try extractor.extract(into: folder)
+            try validateContents(of: folder, maximumBytes: maximumBytes)
+            let theme = try decodeTheme(in: folder)
+            return (theme, folder)
+        } catch let error as ArchiveError {
+            try? FileManager.default.removeItem(at: folder)
+            throw error
+        } catch {
+            try? FileManager.default.removeItem(at: folder)
+            logger.error("extraction failed: \(error.localizedDescription, privacy: .public)")
+            throw ArchiveError.unsafeContent
+        }
+    }
+
+    private static func validateContents(of folder: URL, maximumBytes: Int) throws {
         let keys: [URLResourceKey] = [.isSymbolicLinkKey, .isRegularFileKey, .isDirectoryKey, .fileSizeKey]
         guard let enumerator = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: keys) else {
             throw ArchiveError.unsafeContent

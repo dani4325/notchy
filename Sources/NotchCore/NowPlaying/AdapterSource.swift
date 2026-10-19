@@ -35,6 +35,9 @@ final class AdapterSource: NowPlayingSource {
     private var fields: [String: Any] = [:]
     private var restarts = 0
     private var isStopping = false
+    private var launchedAt = Date.distantPast
+
+    private static let stableRunDuration: TimeInterval = 10
 
     init(paths: AdapterPaths) {
         self.paths = paths
@@ -121,6 +124,7 @@ final class AdapterSource: NowPlayingSource {
         do {
             try stream.run()
             process = stream
+            launchedAt = Date()
         } catch {
             Self.logger.error("stream launch failed: \(error.localizedDescription, privacy: .public)")
             onFailure?()
@@ -128,8 +132,11 @@ final class AdapterSource: NowPlayingSource {
     }
 
     private func consume(_ batch: AdapterMessages) {
+        guard !isStopping else { return }
         fields = batch.items.reduce(fields, AdapterPayload.merge)
-        restarts = 0
+        if Date().timeIntervalSince(launchedAt) > Self.stableRunDuration {
+            restarts = 0
+        }
         onUpdate?(AdapterPayload.info(from: fields, now: Date()))
     }
 

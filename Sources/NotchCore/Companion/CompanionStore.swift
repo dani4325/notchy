@@ -7,8 +7,11 @@ import os
 public final class CompanionStore {
     public enum ImportError: Error, Equatable {
         case unsupportedMedia
+        case tooLarge
         case copyFailed
     }
+
+    static let maximumBytes = 200 * 1024 * 1024
 
     public private(set) var source: MediaSource?
     public private(set) var lastError: String?
@@ -38,6 +41,8 @@ public final class CompanionStore {
         } catch {
             throw ImportError.unsupportedMedia
         }
+        let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+        guard size <= Self.maximumBytes else { throw ImportError.tooLarge }
         let destination = directory.appendingPathComponent("companion-\(UUID().uuidString).\(url.pathExtension.lowercased())")
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -62,6 +67,8 @@ public final class CompanionStore {
             lastError = nil
         } catch ImportError.unsupportedMedia {
             lastError = String(localized: "Ese archivo no es una imagen ni un vídeo compatible.")
+        } catch ImportError.tooLarge {
+            lastError = String(localized: "El archivo supera los 200 MB.")
         } catch {
             lastError = String(localized: "No se ha podido guardar el archivo.")
         }

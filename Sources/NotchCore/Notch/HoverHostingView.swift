@@ -5,6 +5,7 @@ final class HoverHostingView<Content: View>: NSHostingView<Content> {
     var onHoverChange: ((Bool) -> Void)?
     var onDragHover: ((Bool) -> Void)?
     var onDropFiles: (([URL]) -> Bool)?
+    var canAcceptDrop: () -> Bool = { true }
 
     private var screenRegions: [CGRect] = []
     private var trackingAreasInUse: [NSTrackingArea] = []
@@ -47,13 +48,13 @@ final class HoverHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        guard onDropFiles != nil, Self.fileURLs(in: sender).isEmpty == false else { return [] }
+        guard onDropFiles != nil, canAcceptDrop(), Self.fileURLs(in: sender).isEmpty == false else { return [] }
         onDragHover?(true)
         return .copy
     }
 
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
-        onDropFiles == nil ? [] : .copy
+        onDropFiles == nil || !canAcceptDrop() ? [] : .copy
     }
 
     override func draggingExited(_ sender: NSDraggingInfo?) {
@@ -63,8 +64,17 @@ final class HoverHostingView<Content: View>: NSHostingView<Content> {
     override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool { true }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        onDragHover?(false)
-        return onDropFiles?(Self.fileURLs(in: sender)) ?? false
+        let accepted = onDropFiles?(Self.fileURLs(in: sender)) ?? false
+        reportCurrentHover()
+        return accepted
+    }
+
+    private func reportCurrentHover() {
+        let mouse = NSEvent.mouseLocation
+        let inside = screenRegions.contains { $0.contains(mouse) }
+        areasContainingMouse = Set(zip(screenRegions, trackingAreasInUse).filter { $0.0.contains(mouse) }.map { ObjectIdentifier($0.1) })
+        isInside = inside
+        onHoverChange?(inside)
     }
 
     private static func fileURLs(in info: NSDraggingInfo) -> [URL] {

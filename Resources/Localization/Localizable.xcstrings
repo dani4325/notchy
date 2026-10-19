@@ -1025,6 +1025,22 @@
         }
       }
     },
+    "El archivo supera los 200 MB.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file is larger than 200 MB."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El archivo supera los 200 MB."
+          }
+        }
+      }
+    },
     "Elegir imagen, GIF o vídeo…": {
       "localizations": {
         "en": {

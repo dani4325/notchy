@@ -40,7 +40,9 @@ public final class AudioVisualizer {
 
     func acquire() {
         viewers += 1
-        guard viewers == 1, Preferences.visualizer, mode == .live else { return }
+        guard viewers == 1, Preferences.visualizer else { return }
+        mode = .live
+        silentSince = nil
         startTap()
     }
 

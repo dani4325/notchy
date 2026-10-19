@@ -103,9 +103,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls where url.pathExtension.lowercased() == "notchytheme" {
-            themeEditor.importTheme(from: url)
-            themeEditor.activate()
+        let themes = urls.filter { $0.pathExtension.lowercased() == "notchytheme" }
+        Task {
+            for url in themes where await themeEditor.importTheme(from: url) {
+                themeEditor.activate()
+            }
         }
     }
 

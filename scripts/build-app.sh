@@ -72,7 +72,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </dict></plist>
 PLIST
 
-if security find-identity -p codesigning | grep -q "$SIGN_IDENTITY_NAME"; then
+IDENTITIES="$(security find-identity -p codesigning)"
+if [[ "$IDENTITIES" == *"$SIGN_IDENTITY_NAME"* ]]; then
   IDENTITY="$SIGN_IDENTITY_NAME"
 else
   IDENTITY="-"

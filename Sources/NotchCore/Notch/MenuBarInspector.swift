@@ -14,6 +14,7 @@ final class MenuBarInspector {
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     private var settleTask: Task<Void, Never>?
     private var lastResult = false
+    private var generation = 0
 
     func start() {
         let workspace = NSWorkspace.shared.notificationCenter
@@ -49,12 +50,17 @@ final class MenuBarInspector {
         }
         let pid = app.processIdentifier
         let zones = wingZones()
+        generation += 1
+        let request = generation
         Task.detached(priority: .utility) {
             let items = Self.menuItemFrames(pid: pid).map {
                 MenuCollision.cocoaFrame(fromAccessibility: $0, primaryScreenHeight: primaryHeight)
             }
             let collides = MenuCollision.collides(menuItems: items, wingZones: zones)
-            await MainActor.run { [weak self] in self?.report(collides) }
+            await MainActor.run { [weak self] in
+                guard let self, request == self.generation else { return }
+                self.report(collides)
+            }
         }
     }
 

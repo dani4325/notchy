@@ -159,31 +159,59 @@ public final class ThemeStore {
     }
 
     public func exportArchive(themeID: String, to destination: URL) throws {
+        let (theme, media) = try exportPayload(themeID: themeID)
+        try Self.writeArchive(theme: theme, mediaURL: media, to: destination)
+    }
+
+    func exportPayload(themeID: String) throws -> (Theme, URL?) {
         guard let theme = theme(id: themeID) else { throw StoreError.unknownTheme }
+        return (theme, theme.background.map { mediaURL(themeID: themeID, media: $0.media) })
+    }
+
+    nonisolated static func writeArchive(theme: Theme, mediaURL: URL?, to destination: URL) throws {
         let staging = FileManager.default.temporaryDirectory.appendingPathComponent("notchy-export-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: staging) }
 
         try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
-        try Self.encoder.encode(theme).write(to: staging.appendingPathComponent(Self.themeFileName))
-        if let media = theme.background?.media {
-            let mediaFolder = staging.appendingPathComponent(Self.mediaFolderName)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        try encoder.encode(theme).write(to: staging.appendingPathComponent(themeFileName))
+        if let mediaURL, let media = theme.background?.media {
+            let mediaFolder = staging.appendingPathComponent(mediaFolderName)
             try FileManager.default.createDirectory(at: mediaFolder, withIntermediateDirectories: true)
-            try FileManager.default.copyItem(
-                at: mediaURL(themeID: themeID, media: media),
-                to: mediaFolder.appendingPathComponent(media.file)
-            )
+            try FileManager.default.copyItem(at: mediaURL, to: mediaFolder.appendingPathComponent(media.file))
         }
         try ThemeArchive.compress(folder: staging, to: destination)
     }
 
     public func importArchive(from archive: URL) throws -> Theme {
+        let id = Self.newID()
+        let staged = try Self.stageImport(archive: archive, into: folder(for: id))
+        return try finishImport(staged, id: id)
+    }
+
+    func importDestination() -> (id: String, folder: URL) {
+        let id = Self.newID()
+        return (id, folder(for: id))
+    }
+
+    nonisolated static func stageImport(archive: URL, into destination: URL) throws -> Theme {
         let (extracted, folder) = try ThemeArchive.extract(archive)
         defer { try? FileManager.default.removeItem(at: folder) }
+        try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: folder, to: destination)
+        return extracted
+    }
 
+    func finishImport(_ extracted: Theme, id: String) throws -> Theme {
         var theme = extracted
-        theme.id = Self.newID()
-        try copyFolder(from: folder, to: self.folder(for: theme.id))
-        try save(theme)
+        theme.id = id
+        do {
+            try save(theme)
+        } catch {
+            try? FileManager.default.removeItem(at: folder(for: id))
+            throw error
+        }
         return theme
     }
 
@@ -256,11 +284,11 @@ public final class ThemeStore {
         return isBuiltIn(theme.id) ? 1 : 2
     }
 
-    private static func newID() -> String {
+    nonisolated static func newID() -> String {
         UUID().uuidString.lowercased()
     }
 
-    private static let encoder: JSONEncoder = {
+    private nonisolated static let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         return encoder

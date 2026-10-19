@@ -14,6 +14,7 @@ public struct ShelfItem: Codable, Equatable, Identifiable, Sendable {
 public final class ShelfStore {
     public nonisolated static let limitRange = 1...50
     public nonisolated static let defaultLimit = 10
+    static let maximumPreservedBytes = 200 * 1024 * 1024
 
     public private(set) var items: [ShelfItem] = []
     public private(set) var limit: Int
@@ -92,6 +93,11 @@ public final class ShelfStore {
     }
 
     private func preserveCopy(of item: ShelfItem, from url: URL) -> ShelfItem? {
+        let size = (try? url.resourceValues(forKeys: [.totalFileAllocatedSizeKey]).totalFileAllocatedSize) ?? 0
+        guard size <= Self.maximumPreservedBytes else {
+            Self.logger.error("trashed item too large to preserve: \(size) bytes")
+            return nil
+        }
         let name = "\(item.id.uuidString)-\(url.lastPathComponent)"
         do {
             try FileManager.default.createDirectory(at: copiesDirectory, withIntermediateDirectories: true)
@@ -113,7 +119,7 @@ public final class ShelfStore {
     }
 
     private func deleteCopy(_ item: ShelfItem) {
-        guard let copy = item.copyFileName else { return }
+        guard let copy = item.copyFileName, ThemeMedia.isSafeFileName(copy) else { return }
         try? FileManager.default.removeItem(at: copiesDirectory.appendingPathComponent(copy))
     }
 
