@@ -36,6 +36,8 @@ public final class WingsVisibility {
         defaultsObserver = nil
     }
 
+    var allowsCompactActivity: Bool { !menusCollide }
+
     func setMenusCollide(_ collide: Bool) {
         guard collide != menusCollide else { return }
         menusCollide = collide

@@ -11,6 +11,7 @@ public final class ThemeEditorModel {
     public var pendingDeletion: Theme?
     public private(set) var message: String?
     public private(set) var isExtracting = false
+    public private(set) var isMeasuringBackground = false
     public private(set) var backgroundAspect: Double?
     let previewModel: IslandModel
 
@@ -190,8 +191,25 @@ public final class ThemeEditorModel {
         panel.message = String(localized: "Elige una imagen, un GIF o un vídeo para el fondo del panel")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         flush()
+        Task { await applyBackground(from: url, themeID: themeID) }
+    }
+
+    func applyBackground(from url: URL, themeID: String) async {
+        guard let kind = try? MediaKind.detect(at: url) else {
+            message = String(localized: "Ese archivo no se puede usar como fondo.")
+            return
+        }
+        isMeasuringBackground = true
+        let measurement = await BackgroundMeasurer.measureInBackground(url, kind: kind)
+        isMeasuringBackground = false
+        guard let measurement else {
+            message = String(localized: "No se ha podido medir el fondo para garantizar el contraste. Prueba con otro archivo.")
+            return
+        }
         perform(String(localized: "Ese archivo no se puede usar como fondo.")) {
-            draft = try store.setBackground(from: url, themeID: themeID)
+            let updated = try store.setBackground(from: url, themeID: themeID, measurement: measurement)
+            guard draft?.id == themeID else { return }
+            draft = updated
             syncPreview()
             loadBackgroundAspect()
             extractPalette(force: false)
@@ -265,6 +283,7 @@ public final class ThemeEditorModel {
             let theme = try store.finishImport(staged, id: destination.id)
             select(themeID: theme.id)
             message = String(localized: "Tema «\(theme.name)» importado.")
+            Task { await store.measureMissing() }
             return true
         } catch {
             Self.logger.error("import failed: \(String(describing: error), privacy: .public)")

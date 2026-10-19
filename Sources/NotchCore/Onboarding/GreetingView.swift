@@ -6,34 +6,23 @@ struct GreetingView: View {
     @Environment(\.themeAppearance) private var appearance
 
     var body: some View {
-        HStack(spacing: layout.columnGap) {
-            Group {
-                if let emblem = appearance.theme.emblem {
-                    EmblemView(emblem: emblem, size: layout.artworkSide * 0.8, appearance: appearance)
-                } else {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: layout.artworkSide * 0.4, weight: .semibold))
-                        .foregroundStyle(appearance.accentGraphic)
-                }
-            }
-            .frame(width: layout.artworkSide, height: layout.artworkSide)
-
-            VStack(alignment: .leading, spacing: layout.textSpacing) {
-                Text("HOLA")
-                    .font(appearance.labelFont(layout.labelSize))
-                    .tracking(appearance.theme.typography.labelTracking)
-                    .foregroundStyle(appearance.accentText)
-                Text("Esto es Notchy")
-                    .font(appearance.titleFont(layout.titleSize * 1.3))
+        PanelRow(layout: layout, subtitle: Text("Pasa el ratón por el notch cuando quieras"), subtitleLines: 2, showsBar: false) {
+            PanelTile(layout: layout) {
+                Image(nsImage: MenuBarIcon.image)
+                    .renderingMode(.template)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: layout.artworkSide * 0.42)
                     .foregroundStyle(appearance.text)
-                Text("Pasa el ratón por el notch cuando quieras")
-                    .font(appearance.bodyFont(layout.subtitleSize))
-                    .foregroundStyle(appearance.text.opacity(0.7))
             }
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        } title: {
+            Text("Esto es Notchy")
+        } accessory: {
+            EmptyView()
+        } bar: {
+            EmptyView()
+        } trailing: {
+            Color.clear
         }
-        .padding(.horizontal, layout.padding)
-        .frame(width: layout.size.width, height: layout.bodyHeight)
     }
 }

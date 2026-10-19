@@ -2,7 +2,7 @@ import AppKit
 
 @MainActor
 public final class VolumeHUDCoordinator {
-    public var onShow: ((VolumeReading) -> Void)?
+    public var onShow: ((VolumeReading, VolumeLimit?) -> Void)?
 
     private let volume = VolumeController()
     private let keys = MediaKeyTap()
@@ -46,12 +46,12 @@ public final class VolumeHUDCoordinator {
     }
 
     private func keyPressed(_ key: MediaKey) -> Bool {
-        guard volume.current != nil else { return false }
+        guard let before = volume.current else { return false }
         volume.apply(key)
         guard key.isDown else { return true }
         lastKeyPress = Date()
         if let reading = volume.current {
-            onShow?(reading)
+            onShow?(reading, VolumeLimit.reached(before: before.isMuted ? 0 : before.level, after: reading.isMuted ? 0 : reading.level, kind: key.kind))
         }
         return true
     }
@@ -60,6 +60,6 @@ public final class VolumeHUDCoordinator {
         if let lastKeyPress, Date().timeIntervalSince(lastKeyPress) < Self.keyEchoWindow {
             return
         }
-        onShow?(reading)
+        onShow?(reading, nil)
     }
 }

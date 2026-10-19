@@ -53,9 +53,16 @@ enum VolumeStep {
 public struct VolumeReading: Equatable, Sendable {
     public let level: Float
     public let isMuted: Bool
+    public let output: AudioOutput?
+
+    public init(level: Float, isMuted: Bool, output: AudioOutput? = nil) {
+        self.level = level
+        self.isMuted = isMuted
+        self.output = output
+    }
 
     static func isChange(from previous: VolumeReading?, to current: VolumeReading) -> Bool {
         guard let previous else { return false }
-        return previous != current
+        return previous.level != current.level || previous.isMuted != current.isMuted
     }
 }

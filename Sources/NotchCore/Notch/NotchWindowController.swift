@@ -14,6 +14,7 @@ public final class NotchWindowController {
     private let shelf: ShelfStore
     private let menuInspector = MenuBarInspector()
     private var wakeObserver: NSObjectProtocol?
+    private var bumpCount = 0
 
     public init(
         nowPlaying: NowPlayingStore, companion: CompanionStore, wings: WingsVisibility, themes: ThemeStore, shelf: ShelfStore
@@ -77,9 +78,13 @@ public final class NotchWindowController {
         islands.values.forEach { $0.show(.greeting) }
     }
 
-    public func show(_ reading: VolumeReading) {
+    public func show(_ reading: VolumeReading, limit: VolumeLimit? = nil) {
         guard Preferences.volumeHUD else { return }
-        islands.values.forEach { $0.show(.volume(reading)) }
+        let bump = limit.map { limit -> VolumeBump in
+            bumpCount += 1
+            return VolumeBump(limit: limit, count: bumpCount)
+        }
+        islands.values.forEach { $0.show(.volume(reading, bump)) }
     }
 
     private func preferencesChanged() {

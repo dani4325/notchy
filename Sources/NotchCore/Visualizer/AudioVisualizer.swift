@@ -10,7 +10,8 @@ public final class AudioVisualizer {
         case simulated
     }
 
-    public private(set) var levels = [Float](repeating: 0, count: SystemAudioTap.bandCount)
+    @ObservationIgnored public private(set) var levels = [Float](repeating: 0, count: SystemAudioTap.bandCount)
+    @ObservationIgnored private var listeners: [UUID: ([Float]) -> Void] = [:]
     public private(set) var mode = Mode.live
 
     @ObservationIgnored private var tap: SystemAudioTap?
@@ -51,6 +52,7 @@ public final class AudioVisualizer {
         guard viewers == 0 else { return }
         stopTap()
         levels = levels.map { _ in 0 }
+        publish()
     }
 
     private func startTap() {
@@ -86,5 +88,20 @@ public final class AudioVisualizer {
             silentSince = nil
         }
         levels = SpectrumAnalyzer.smooth(previous: levels, next: newLevels)
+        publish()
+    }
+
+    func observeLevels(_ handler: @escaping ([Float]) -> Void) -> UUID {
+        let id = UUID()
+        listeners[id] = handler
+        return id
+    }
+
+    func stopObservingLevels(_ id: UUID) {
+        listeners[id] = nil
+    }
+
+    private func publish() {
+        listeners.values.forEach { $0(levels) }
     }
 }

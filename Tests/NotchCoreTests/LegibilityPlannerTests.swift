@@ -31,7 +31,7 @@ struct LegibilityPlannerTests {
     }
 
     @Test func whiteTextOverAWhiteImageGetsJustEnoughDarkening() throws {
-        let sample = try #require(BackgroundSample.measuring(solid(255), crop: .standard, size: CGSize(width: 8, height: 8)))
+        let sample = try #require(BackgroundSample.measuring(solid(255))).framed(crop: .standard, targetAspect: 1)
         let text = zone([.init(color: white, opacity: 1, use: .text)])
 
         let strength = LegibilityPlanner.strength(for: text, over: sample, scrim: black, atLeast: 0)
@@ -41,14 +41,14 @@ struct LegibilityPlannerTests {
     }
 
     @Test func darkImagesKeepTheUserMinimum() throws {
-        let sample = try #require(BackgroundSample.measuring(solid(0), crop: .standard, size: CGSize(width: 8, height: 8)))
+        let sample = try #require(BackgroundSample.measuring(solid(0))).framed(crop: .standard, targetAspect: 1)
         let text = zone([.init(color: white, opacity: 1, use: .text)])
 
         #expect(LegibilityPlanner.strength(for: text, over: sample, scrim: black, atLeast: 0.2) == 0.2)
     }
 
     @Test func translucentTextNeedsMoreDarkeningThanOpaqueText() throws {
-        let sample = try #require(BackgroundSample.measuring(solid(255), crop: .standard, size: CGSize(width: 8, height: 8)))
+        let sample = try #require(BackgroundSample.measuring(solid(255))).framed(crop: .standard, targetAspect: 1)
         let opaque = zone([.init(color: white, opacity: 1, use: .text)])
         let translucent = zone([.init(color: white, opacity: 0.72, use: .text)])
 
@@ -57,7 +57,7 @@ struct LegibilityPlannerTests {
     }
 
     @Test func graphicsOnlyNeedThreeToOne() throws {
-        let sample = try #require(BackgroundSample.measuring(solid(255), crop: .standard, size: CGSize(width: 8, height: 8)))
+        let sample = try #require(BackgroundSample.measuring(solid(255))).framed(crop: .standard, targetAspect: 1)
         let text = zone([.init(color: white, opacity: 1, use: .text)])
         let graphic = zone([.init(color: white, opacity: 1, use: .graphic)])
 
@@ -68,7 +68,7 @@ struct LegibilityPlannerTests {
     }
 
     @Test func darkTextOverALightPanelHandlesDarkImages() throws {
-        let sample = try #require(BackgroundSample.measuring(solid(0), crop: .standard, size: CGSize(width: 8, height: 8)))
+        let sample = try #require(BackgroundSample.measuring(solid(0))).framed(crop: .standard, targetAspect: 1)
         let text = zone([.init(color: HexColor("#111111")!.rgb, opacity: 1, use: .text)])
 
         let strength = LegibilityPlanner.strength(for: text, over: sample, scrim: lightPanel, atLeast: 0)
@@ -79,7 +79,7 @@ struct LegibilityPlannerTests {
 
     @Test func onlyThePixelsBehindTheZoneCount() throws {
         let halves = image(width: 16, height: 4) { x, _ in x < 8 ? (255, 255, 255) : (0, 0, 0) }
-        let sample = try #require(BackgroundSample.measuring(halves, crop: .standard, size: CGSize(width: 16, height: 4)))
+        let sample = try #require(BackgroundSample.measuring(halves)).framed(crop: .standard, targetAspect: 4)
         let rightText = zone([.init(color: white, opacity: 1, use: .text)], horizontal: 0.5...1)
 
         #expect(LegibilityPlanner.strength(for: rightText, over: sample, scrim: black, atLeast: 0) == 0)
@@ -88,22 +88,21 @@ struct LegibilityPlannerTests {
     @Test func theCropDecidesWhichPartOfTheImageIsMeasured() throws {
         let halves = image(width: 32, height: 8) { x, _ in x < 16 ? (255, 255, 255) : (0, 0, 0) }
         let darkHalf = MediaCrop(zoom: 2, focusX: 0.75, focusY: 0.5)
-        let sample = try #require(BackgroundSample.measuring(halves, crop: darkHalf, size: CGSize(width: 16, height: 8)))
+        let sample = try #require(BackgroundSample.measuring(halves)).framed(crop: darkHalf, targetAspect: 2)
         let text = zone([.init(color: white, opacity: 1, use: .text)])
 
         #expect(LegibilityPlanner.strength(for: text, over: sample, scrim: black, atLeast: 0) == 0)
     }
 
     @Test func animationFramesAreCombinedKeepingTheWorstPixels() throws {
-        let size = CGSize(width: 8, height: 8)
-        let dark = try #require(BackgroundSample.measuring(solid(0), crop: .standard, size: size))
-        let bright = try #require(BackgroundSample.measuring(solid(255), crop: .standard, size: size))
+        let dark = try #require(BackgroundSample.measuring(solid(0)))
+        let bright = try #require(BackgroundSample.measuring(solid(255)))
         let text = zone([.init(color: white, opacity: 1, use: .text)])
 
-        let combined = dark.merged(with: bright)
+        let combined = dark.merged(with: bright).framed(crop: .standard, targetAspect: 1)
 
         #expect(LegibilityPlanner.strength(for: text, over: combined, scrim: black, atLeast: 0)
-            == LegibilityPlanner.strength(for: text, over: bright, scrim: black, atLeast: 0))
+            == LegibilityPlanner.strength(for: text, over: bright.framed(crop: .standard, targetAspect: 1), scrim: black, atLeast: 0))
     }
 
     func renderedLuminance(scrim: RGB, over background: RGB, strength: Double, gamma: Double) -> Double {
@@ -120,7 +119,7 @@ struct LegibilityPlannerTests {
 
     @Test(arguments: [1.0, 1.8, 2.2, 2.4])
     func theStrengthHoldsWhateverGammaTheSystemBlendsWith(gamma: Double) throws {
-        let sample = try #require(BackgroundSample.measuring(solid(255), crop: .standard, size: CGSize(width: 8, height: 8)))
+        let sample = try #require(BackgroundSample.measuring(solid(255))).framed(crop: .standard, targetAspect: 1)
         let panel = HexColor("#120A1E")!.rgb
         let text = zone([.init(color: white, opacity: 1, use: .text)])
 
@@ -128,6 +127,27 @@ struct LegibilityPlannerTests {
         let background = renderedLuminance(scrim: panel, over: white, strength: strength, gamma: gamma)
 
         #expect((1 + 0.05) / (background + 0.05) >= 4.5, "gamma \(gamma): \((1 + 0.05) / (background + 0.05))")
+    }
+
+    @Test func aMeasurementSurvivesBeingSavedAndLoaded() throws {
+        let halves = image(width: 16, height: 4) { x, _ in x < 8 ? (255, 255, 255) : (0, 0, 0) }
+        let measurement = BackgroundMeasurement(sample: try #require(BackgroundSample.measuring(halves)), framesChecked: 1, coversEveryFrame: true)
+
+        let restored = try JSONDecoder().decode(BackgroundMeasurement.self, from: JSONEncoder().encode(measurement))
+
+        #expect(restored == measurement)
+    }
+
+    @Test func zoomingIntoTheDarkHalfNeedsNoNewMeasurement() throws {
+        let halves = image(width: 64, height: 16) { x, _ in x < 32 ? (255, 255, 255) : (0, 0, 0) }
+        let sample = try #require(BackgroundSample.measuring(halves))
+        let text = zone([.init(color: white, opacity: 1, use: .text)])
+
+        let wide = LegibilityPlanner.strength(for: text, over: sample.framed(crop: .standard, targetAspect: 4), scrim: black, atLeast: 0)
+        let zoomed = LegibilityPlanner.strength(for: text, over: sample.framed(crop: MediaCrop(zoom: 3, focusX: 0.85, focusY: 0.5), targetAspect: 4), scrim: black, atLeast: 0)
+
+        #expect(wide > 0)
+        #expect(zoomed == 0)
     }
 
     @Test func stopsKeepEveryZoneAtLeastAtItsStrength() {

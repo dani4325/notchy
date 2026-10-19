@@ -103,6 +103,12 @@ private struct BackgroundSection: View {
 
     var body: some View {
         Section {
+            if editor.isMeasuringBackground {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text("Preparando el fondo…").foregroundStyle(.secondary)
+                }
+            }
             if let background = theme.background {
                 HStack(spacing: 12) {
                     MediaView(

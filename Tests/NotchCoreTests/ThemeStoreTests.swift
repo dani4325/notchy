@@ -62,7 +62,7 @@ struct ThemeStoreTests {
         let copy = try store.duplicate(themeID: Theme.notchyDefault.id)
         store.activate(themeID: copy.id)
 
-        try store.delete(themeID: copy.id)
+        _ = try store.delete(themeID: copy.id)
 
         #expect(store.activeTheme.id == Theme.notchyDefault.id)
         #expect(!FileManager.default.fileExists(atPath: store.folder(for: copy.id).path))
@@ -72,7 +72,7 @@ struct ThemeStoreTests {
         let store = makeStore()
 
         #expect(throws: ThemeStore.StoreError.lastTheme) {
-            try store.delete(themeID: Theme.notchyDefault.id)
+            _ = try store.delete(themeID: Theme.notchyDefault.id)
         }
     }
 
@@ -214,5 +214,95 @@ struct MediaKindTests {
         try Data().write(to: clip)
 
         #expect(try MediaKind.detect(at: clip) == .video)
+    }
+}
+
+@MainActor
+struct ThemeMeasurementStorageTests {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent("notchy-measure-\(UUID().uuidString)")
+    let defaults = UserDefaults(suiteName: "notchy-measure-\(UUID().uuidString)")!
+
+    func makeStore() -> ThemeStore { ThemeStore(directory: directory, defaults: defaults) }
+
+    func makePNG(white: Bool) throws -> URL {
+        let rep = try #require(NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: 16, pixelsHigh: 8, bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        for x in 0..<16 { for y in 0..<8 { rep.setColor(white ? .white : .black, atX: x, y: y) } }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).png")
+        try #require(rep.representation(using: .png, properties: [:])).write(to: url)
+        return url
+    }
+
+    func measured(_ url: URL) async throws -> BackgroundMeasurement {
+        try #require(await BackgroundMeasurer.measure(url, kind: .image))
+    }
+
+    @Test func theMeasurementIsSavedWithTheBackgroundAndSurvivesARestart() async throws {
+        let store = makeStore()
+        let theme = try store.createTheme(named: "Con fondo")
+        let image = try makePNG(white: true)
+        let measurement = try await measured(image)
+
+        _ = try store.setBackground(from: image, themeID: theme.id, measurement: measurement)
+
+        #expect(store.measurement(themeID: theme.id) == measurement)
+        #expect(makeStore().measurement(themeID: theme.id) == measurement)
+    }
+
+    @Test func themesWithoutAMeasurementAreMeasuredInTheBackground() async throws {
+        let store = makeStore()
+        let theme = try store.createTheme(named: "Antiguo")
+        _ = try store.setBackground(from: try makePNG(white: true), themeID: theme.id)
+        #expect(store.measurement(themeID: theme.id) == nil)
+
+        await store.measureMissing()
+
+        #expect(store.measurement(themeID: theme.id) != nil)
+        #expect(makeStore().measurement(themeID: theme.id) != nil)
+    }
+
+    @Test func clearingTheBackgroundRemovesItsMeasurement() async throws {
+        let store = makeStore()
+        let theme = try store.createTheme(named: "Sin fondo")
+        let image = try makePNG(white: false)
+        let updated = try store.setBackground(from: image, themeID: theme.id, measurement: try await measured(image))
+        let file = store.measurementURL(themeID: theme.id, media: try #require(updated.background?.media))
+
+        _ = try store.clearBackground(themeID: theme.id)
+
+        #expect(store.measurement(themeID: theme.id) == nil)
+        #expect(!FileManager.default.fileExists(atPath: file.path))
+    }
+
+    @Test func duplicatesKeepTheMeasurement() async throws {
+        let store = makeStore()
+        let theme = try store.createTheme(named: "Original")
+        let image = try makePNG(white: true)
+        _ = try store.setBackground(from: image, themeID: theme.id, measurement: try await measured(image))
+
+        let copy = try store.duplicate(themeID: theme.id)
+
+        #expect(store.measurement(themeID: copy.id) == store.measurement(themeID: theme.id))
+    }
+
+    @Test func importedArchivesCannotBringTheirOwnMeasurement() async throws {
+        let store = makeStore()
+        let theme = try store.createTheme(named: "Para exportar")
+        let image = try makePNG(white: true)
+        let real = try await measured(image)
+        let updated = try store.setBackground(from: image, themeID: theme.id, measurement: real)
+        let fake = BackgroundMeasurement(sample: try #require(await measured(try makePNG(white: false))).sample, framesChecked: 1, coversEveryFrame: true)
+        try JSONEncoder().encode(fake).write(to: store.measurementURL(themeID: theme.id, media: try #require(updated.background?.media)))
+        let archive = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).notchytheme")
+        let folder = store.folder(for: theme.id)
+        try ThemeArchive.compress(folder: folder, to: archive)
+
+        let imported = try store.importArchive(from: archive)
+        #expect(store.measurement(themeID: imported.id) == nil)
+
+        await store.measureMissing()
+        #expect(store.measurement(themeID: imported.id) == real)
     }
 }

@@ -3,63 +3,63 @@ import SwiftUI
 struct VolumeHUDView: View {
     let layout: IslandLayout
     let reading: VolumeReading
+    var bump: VolumeBump?
 
     @Environment(\.themeAppearance) private var appearance
-
-    private static let segments = Int(VolumeStep.steps)
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var level: Float { reading.isMuted ? 0 : reading.level }
     private var percent: Int { Int((level * 100).rounded()) }
 
-    private var symbol: String {
-        if reading.isMuted || level == 0 { return "speaker.slash.fill" }
-        if level < 0.34 { return "speaker.wave.1.fill" }
-        if level < 0.67 { return "speaker.wave.2.fill" }
-        return "speaker.wave.3.fill"
-    }
-
     var body: some View {
-        HStack(spacing: layout.columnGap) {
-            Image(systemName: symbol)
-                .font(.system(size: layout.artworkSide * 0.34, weight: .semibold))
-                .foregroundStyle(appearance.accentGraphic)
-                .contentTransition(.symbolEffect(.replace))
-                .frame(width: layout.artworkSide * 0.6)
-
-            VStack(alignment: .leading, spacing: layout.textSpacing * 2) {
-                Text(reading.isMuted ? "SILENCIO" as LocalizedStringKey : "VOLUMEN")
-                    .font(appearance.labelFont(layout.labelSize))
-                    .tracking(appearance.theme.typography.labelTracking)
-                    .foregroundStyle(appearance.accentText)
-                HStack(spacing: layout.unit * 0.06) {
-                    ForEach(0..<Self.segments, id: \.self) { index in
-                        let lit = Float(index) < level * Float(Self.segments) - 0.001
-                        Capsule()
-                            .fill(lit ? AnyShapeStyle(LinearGradient(colors: [appearance.accentGraphic, appearance.secondaryGraphic], startPoint: .bottom, endPoint: .top))
-                                      : AnyShapeStyle(appearance.text.opacity(0.14)))
-                            .frame(height: layout.unit * 0.42)
-                            .shadow(color: lit ? appearance.accent.opacity(0.5) : .clear, radius: layout.unit * 0.08)
-                    }
-                }
-                .animation(.snappy(duration: 0.18), value: level)
+        PanelRow(layout: layout, subtitle: outputLine) {
+            PanelTile(layout: layout) {
+                VolumeSymbol(reading: reading, size: layout.artworkSide * 0.34)
+                    .foregroundStyle(appearance.text)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            Group {
-                if appearance.theme.decoration == .nixieTerminal {
-                    NixieReadoutView(text: "\(percent)", height: layout.titleSize * 1.8, glow: appearance.secondaryText)
-                } else {
-                    Text("\(percent)")
-                        .font(appearance.titleFont(layout.titleSize * 1.6))
-                        .monospacedDigit()
-                        .foregroundStyle(appearance.text)
-                }
+        } title: {
+            if reading.isMuted {
+                Text("Silencio")
+            } else if appearance.theme.decoration == .nixieTerminal {
+                NixieReadoutView(text: "\(percent)", height: layout.titleSize * 1.2, glow: appearance.secondaryText)
+            } else {
+                Text("\(percent) %")
+                    .monospacedDigit()
+                    .contentTransition(reduceMotion ? .identity : .numericText(value: Double(percent)))
             }
-            .frame(width: layout.controlsWidth * 0.75, alignment: .trailing)
+        } accessory: {
+            EmptyView()
+        } bar: {
+            PanelLevel(layout: layout, fraction: Double(level), bump: bump)
+        } trailing: {
+            Color.clear
         }
-        .padding(.horizontal, layout.padding)
-        .frame(width: layout.size.width, height: layout.bodyHeight)
+        .animation(reduceMotion ? nil : Self.change, value: percent)
+        .animation(reduceMotion ? nil : Self.change, value: reading.isMuted)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(reading.isMuted ? Text("Sonido silenciado") : Text("Volumen \(percent) por ciento"))
+        .accessibilityValue(reading.output.map { Text(verbatim: $0.name) } ?? Text(verbatim: ""))
+    }
+
+    private static let change = Animation.snappy(duration: 0.25)
+
+    private var outputLine: Text? {
+        reading.output.map { Text(Image(systemName: $0.kind.symbol)) + Text(verbatim: " " + $0.name) }
+    }
+}
+
+struct VolumeSymbol: View {
+    let reading: VolumeReading
+    let size: CGFloat
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Image(
+            systemName: reading.isMuted ? "speaker.slash.fill" : "speaker.wave.3.fill",
+            variableValue: reading.isMuted ? nil : Double(reading.level)
+        )
+        .font(.system(size: size, weight: .semibold))
+        .contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))
     }
 }

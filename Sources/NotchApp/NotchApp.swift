@@ -87,6 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        Task { await themes.measureMissing() }
         if let fonts = FontRegistry.bundledFontsDirectory {
             FontRegistry.register(directory: fonts)
         }
@@ -97,7 +98,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         power.onEvent = { [weak self] event in self?.notchController.show(event) }
         power.start()
         autoThemes.start()
-        volumeHUD.onShow = { [weak self] reading in self?.notchController.show(reading) }
+        volumeHUD.onShow = { [weak self] reading, limit in self?.notchController.show(reading, limit: limit) }
         volumeHUD.start()
         onboarding.onTryPanel = { [weak self] in self?.notchController.greet() }
     }

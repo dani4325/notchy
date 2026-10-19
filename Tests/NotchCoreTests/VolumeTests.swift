@@ -38,6 +38,7 @@ struct VolumeReadingTests {
 
         #expect(!VolumeReading.isChange(from: reading, to: VolumeReading(level: 0.5, isMuted: false)))
         #expect(VolumeReading.isChange(from: reading, to: VolumeReading(level: 0.5625, isMuted: false)))
+        #expect(!VolumeReading.isChange(from: reading, to: VolumeReading(level: 0.5, isMuted: false, output: AudioOutput(name: "Auriculares", kind: .headphones))))
         #expect(VolumeReading.isChange(from: reading, to: VolumeReading(level: 0.5, isMuted: true)))
         #expect(!VolumeReading.isChange(from: nil, to: reading))
     }

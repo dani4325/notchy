@@ -39,19 +39,108 @@ struct PanelPreviewRenderTests {
                     legibility: 0
                 )
                 let source = MediaSource(url: url, kind: .image)
-                await measureBackground(source, theme: themed, notch: notch)
-                try render(name: "\(name)-\(suffix)", notch: notch, theme: themed, background: source)
+                let measurement = await BackgroundMeasurer.measure(url, kind: .image)
+                try render(name: "\(name)-\(suffix)", notch: notch, theme: themed, background: source, measurement: measurement)
             }
         }
     }
 
-    private func measureBackground(_ source: MediaSource, theme: Theme, notch: CGSize) async {
+    @Test func renderReviewOfEveryPanelView() async throws {
+        FontRegistry.register(directory: RepoPaths.fonts)
+        try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+        let notch = IslandLayout.referenceNotch
+        let theme = Theme.notchyDefault
+        let playing = NowPlayingInfo(
+            title: "Everything In Its Right Place", artist: "Radiohead", album: nil, duration: 251,
+            elapsed: 83, timestamp: .now, playbackRate: 1, isPlaying: true, appBundleID: "com.apple.Music", artworkData: nil
+        )
+        let paused = NowPlayingInfo(
+            title: "Everything In Its Right Place", artist: "Radiohead", album: nil, duration: 251,
+            elapsed: 83, timestamp: .now, playbackRate: 0, isPlaying: false, appBundleID: "com.apple.Music", artworkData: nil
+        )
+        try render(name: "revision-01-musica", notch: notch, theme: theme, background: nil, info: playing)
+        try render(name: "revision-02-musica-pausa", notch: notch, theme: theme, background: nil, info: paused)
+        try render(name: "revision-03-reposo", notch: notch, theme: theme, background: nil, info: nil)
+        try render(name: "revision-04-carga-conectado", notch: notch, theme: theme, background: nil, power: .connected(percent: 78), info: nil)
+        try render(name: "revision-05-carga-baja", notch: notch, theme: theme, background: nil, power: .low(percent: 12), info: nil)
+        try render(name: "revision-06-carga-completa", notch: notch, theme: theme, background: nil, power: .full, info: nil)
+        try render(name: "revision-07-volumen", notch: notch, theme: theme, background: nil, volume: VolumeReading(level: 0.5625, isMuted: false, output: AudioOutput(name: "Altavoces del MacBook Pro", kind: .builtInSpeakers)), info: nil)
+        try render(name: "revision-08-silencio", notch: notch, theme: theme, background: nil, volume: VolumeReading(level: 0.5625, isMuted: true, output: AudioOutput(name: "Altavoces del MacBook Pro", kind: .builtInSpeakers)), info: nil)
+        try render(name: "revision-09-saludo", notch: notch, theme: theme, background: nil, greeting: true, info: nil)
+        let base = FileManager.default.temporaryDirectory.appendingPathComponent("review-shelf-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        let files = try ["Guion.pdf", "captura del notch.png", "notas de la reunión.txt"].map { name -> URL in
+            let url = base.appendingPathComponent(name)
+            try Data("x".utf8).write(to: url)
+            return url
+        }
+        let empty = ShelfStore(directory: base.appendingPathComponent("vacia"))
+        let full = ShelfStore(directory: base.appendingPathComponent("llena"))
+        full.add(files)
+        try render(name: "revision-10-estanteria-vacia", notch: notch, theme: theme, background: nil, shelf: (empty, false), info: nil)
+        try render(name: "revision-11-estanteria-archivos", notch: notch, theme: theme, background: nil, shelf: (full, false), info: nil)
+        try renderWings(name: "revision-12-alas-sin-musica", notch: notch, theme: theme)
+    }
+
+    @Test func renderVolumeSequence() throws {
+        FontRegistry.register(directory: RepoPaths.fonts)
+        try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+        let notch = IslandLayout.referenceNotch
+        let speakers = AudioOutput(name: "Altavoces del MacBook Pro", kind: .builtInSpeakers)
+        let airPods = AudioOutput(name: "AirPods Pro de Dani", kind: .airPods(.pro))
+        let steps: [(String, VolumeReading)] = [
+            ("volumen-secuencia-1-subir-50", VolumeReading(level: 0.5, isMuted: false, output: speakers)),
+            ("volumen-secuencia-2-subir-56", VolumeReading(level: 0.5625, isMuted: false, output: speakers)),
+            ("volumen-secuencia-3-al-100", VolumeReading(level: 1, isMuted: false, output: speakers)),
+            ("volumen-secuencia-5-silencio", VolumeReading(level: 0.5625, isMuted: true, output: speakers)),
+            ("volumen-secuencia-6-airpods", VolumeReading(level: 0.3125, isMuted: false, output: airPods)),
+        ]
+        for (name, reading) in steps {
+            try render(name: name, notch: notch, theme: .notchyDefault, background: nil, volume: reading, info: nil)
+        }
+        try render(
+            name: "volumen-secuencia-4-pulsar-otra-vez-en-el-100", notch: notch, theme: .notchyDefault, background: nil,
+            volume: VolumeReading(level: 1, isMuted: false, output: speakers), info: nil
+        ) { host in
+            for bar in Self.levelBars(in: host) {
+                CATransaction.begin()
+                CATransaction.setDisableActions(true)
+                bar.barLayer.anchorPoint = CGPoint(x: 0, y: 0.5)
+                bar.barLayer.position = CGPoint(x: 0, y: bar.bounds.midY)
+                bar.barLayer.transform = CATransform3DMakeScale(LevelBarView.stretchScale, 1, 1)
+                CATransaction.commit()
+            }
+        }
+        try renderWings(name: "volumen-secuencia-7-compacto", notch: notch, theme: .notchyDefault, volume: VolumeReading(level: 0.5625, isMuted: false, output: speakers))
+    }
+
+    private static func levelBars(in view: NSView) -> [LevelBarView] {
+        (view as? LevelBarView).map { [$0] } ?? view.subviews.flatMap(levelBars)
+    }
+
+    private func renderWings(name: String, notch: CGSize, theme: Theme, volume: VolumeReading? = nil) throws {
         let model = IslandModel(kind: .notch, collapsedSize: notch, stripHeight: notch.height)
         model.shapeStyle = theme.shape
-        model.state = .expanded
-        let size = CGSize(width: model.currentSize.width, height: max(model.currentSize.height - model.stemHeight, 0))
-        let key = BackgroundMeasurements.key(for: source, crop: theme.background!.media.crop, size: size, backdrop: ScrimPlan.backdrop)
-        await BackgroundMeasurements.shared.measure(key)
+        model.state = .compact
+        let appearance = ThemeAppearance(theme: theme, background: nil)
+        let companion = CompanionStore(
+            directory: FileManager.default.temporaryDirectory.appendingPathComponent("wings-\(UUID().uuidString)"),
+            defaults: UserDefaults(suiteName: "wings-\(UUID().uuidString)")!
+        )
+        let size = model.currentSize
+        let scene = ZStack(alignment: .top) {
+            LinearGradient(colors: [Color(white: 0.82), Color(white: 0.62)], startPoint: .top, endPoint: .bottom)
+            Color(white: 0.93).frame(height: notch.height)
+            ZStack(alignment: .top) {
+                IslandSurface(model: model, appearance: appearance, showOutline: false)
+                CompactWingsView(nowPlaying: NowPlayingStore(), companion: companion, wing: model.compactWing, height: size.height, volume: volume)
+                    .frame(width: size.width, height: size.height)
+            }
+            .environment(\.themeAppearance, appearance)
+            .padding(.top, 0)
+        }
+        .frame(width: size.width + notch.height * 4, height: size.height + notch.height * 2)
+        try writeSnapshot(scene, size: CGSize(width: size.width + notch.height * 4, height: size.height + notch.height * 2), name: name)
     }
 
     @Test func renderAnimeTemplates() throws {
@@ -154,7 +243,7 @@ struct PanelPreviewRenderTests {
                 host.layoutSubtreeIfNeeded()
                 try await Task.sleep(for: .milliseconds(80))
             }
-            let rep = try #require(host.bitmapImageRepForCachingDisplay(in: host.bounds))
+        let rep = try #require(host.bitmapImageRepForCachingDisplay(in: host.bounds))
             host.cacheDisplay(in: host.bounds, to: rep)
             let png = try #require(rep.representation(using: .png, properties: [:]))
             try png.write(to: outputDirectory.appendingPathComponent("bienvenida-\(step.rawValue + 1).png"))
@@ -179,13 +268,14 @@ struct PanelPreviewRenderTests {
 
     private func render(
         name: String, notch: CGSize, theme: Theme, background: MediaSource?, power: PowerEvent? = nil, volume: VolumeReading? = nil, shelf: (ShelfStore, Bool)? = nil, pill: Bool = false, greeting: Bool = false,
-        info: NowPlayingInfo? = PanelPreviewRenderTests.info, openingProgress: Double? = nil
+        info: NowPlayingInfo? = PanelPreviewRenderTests.info, openingProgress: Double? = nil, measurement: BackgroundMeasurement? = nil,
+        adjust: ((NSView) -> Void)? = nil
     ) throws {
         let model = IslandModel(kind: pill ? .pill : .notch, collapsedSize: notch, stripHeight: pill ? notch.height + 2 : notch.height)
         model.shapeStyle = theme.shape
         model.state = .expanded
         let layout = model.layout
-        let appearance = ThemeAppearance(theme: theme, background: background)
+        let appearance = ThemeAppearance(theme: theme, background: background, measurement: measurement)
         let margin = layout.unit * 1.5
 
         let scene = ZStack(alignment: .top) {
@@ -226,11 +316,23 @@ struct PanelPreviewRenderTests {
         }
         .frame(width: layout.size.width + 2 * margin, height: layout.size.height + margin)
 
-        let renderer = ImageRenderer(content: scene)
-        renderer.scale = 2
-        let image = try #require(renderer.nsImage)
-        let tiff = try #require(image.tiffRepresentation)
-        let rep = try #require(NSBitmapImageRep(data: tiff))
+        try writeSnapshot(scene, size: CGSize(width: layout.size.width + 2 * margin, height: layout.size.height + margin), name: name, adjust: adjust)
+    }
+
+    private func writeSnapshot<Scene: View>(_ scene: Scene, size: CGSize, name: String, adjust: ((NSView) -> Void)? = nil) throws {
+        _ = NSApplication.shared
+        let host = NSHostingView(rootView: scene)
+        let window = NSWindow(contentRect: CGRect(origin: CGPoint(x: -10_000, y: -10_000), size: size), styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = host
+        window.orderFrontRegardless()
+        for _ in 0..<5 {
+            host.layoutSubtreeIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        }
+        adjust?(host)
+        let rep = try #require(host.bitmapImageRepForCachingDisplay(in: host.bounds))
+        host.cacheDisplay(in: host.bounds, to: rep)
+        window.orderOut(nil)
         let png = try #require(rep.representation(using: .png, properties: [:]))
         try png.write(to: outputDirectory.appendingPathComponent("\(name).png"))
     }

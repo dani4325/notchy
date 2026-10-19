@@ -4,10 +4,16 @@ import SwiftUI
 public struct ThemeAppearance: Sendable {
     public let theme: Theme
     public let background: MediaSource?
+    let measurement: BackgroundMeasurement?
 
     public init(theme: Theme, background: MediaSource?) {
+        self.init(theme: theme, background: background, measurement: nil)
+    }
+
+    init(theme: Theme, background: MediaSource?, measurement: BackgroundMeasurement?) {
         self.theme = theme
         self.background = background
+        self.measurement = measurement
     }
 
     var accent: Color { Color(theme.palette.accent) }
@@ -16,6 +22,9 @@ public struct ThemeAppearance: Sendable {
     var text: Color { Color(theme.palette.text) }
 
     var hasLightText: Bool { theme.palette.text.rgb.brightness > 0.5 }
+
+    static let secondaryTextOpacity = 0.78
+    var secondaryTextColor: Color { text.opacity(Self.secondaryTextOpacity) }
 
     var accentText: Color { color(theme.palette.accent, for: .text) }
     var accentGraphic: Color { color(theme.palette.accent, for: .graphic) }
@@ -38,6 +47,20 @@ public struct ThemeAppearance: Sendable {
         return Color(.sRGB, red: value.red, green: value.green, blue: value.blue)
     }
 
+    func nsColor(_ base: HexColor, opacity: Double = 1, for use: ContrastCorrection.Use) -> NSColor {
+        let value = effective(base, opacity: opacity, for: use)
+        return NSColor(srgbRed: value.red, green: value.green, blue: value.blue, alpha: 1)
+    }
+
+    var accentBarColor: NSColor { nsColor(theme.palette.accent, for: .graphic) }
+
+    var barTrackColor: NSColor {
+        let text = theme.palette.text
+        return NSColor(srgbRed: text.red, green: text.green, blue: text.blue, alpha: Self.barTrackOpacity)
+    }
+
+    static let barTrackOpacity = 0.18
+
     func effective(_ base: HexColor, opacity: Double = 1, for use: ContrastCorrection.Use) -> RGB {
         let panel = theme.palette.panel.rgb
         let mixed = HexColor(rgb: RGB(
@@ -58,9 +81,6 @@ public struct ThemeAppearance: Sendable {
         Color(.sRGB, red: scrimRGB.red, green: scrimRGB.green, blue: scrimRGB.blue)
     }
 
-    var textShadow: Color {
-        background == nil ? .clear : scrimColor.opacity(0.55)
-    }
 
     func titleFont(_ size: CGFloat) -> Font {
         font(size: size, weight: theme.typography.titleWeight.fontWeight)
@@ -90,7 +110,7 @@ public struct ThemeAppearance: Sendable {
         let background = theme.background.map {
             MediaSource(url: store.mediaURL(themeID: theme.id, media: $0.media), kind: $0.media.kind)
         }
-        return ThemeAppearance(theme: theme, background: background)
+        return ThemeAppearance(theme: theme, background: background, measurement: store.measurement(themeID: theme.id))
     }
 }
 

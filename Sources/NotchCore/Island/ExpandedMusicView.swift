@@ -20,41 +20,38 @@ struct ExpandedMusicView: View {
     @AppStorage(Preferences.Key.visualizer) private var showsVisualizer = true
 
     var body: some View {
-        HStack(spacing: layout.columnGap) {
+        PanelRow(layout: layout, subtitle: Text(verbatim: info.artist ?? info.album ?? " ")) {
             ArtworkView(image: artwork, size: layout.artworkSide, cornerRadius: layout.artworkCorner)
                 .shadow(color: appearance.accent.opacity(appearance.theme.effects.glow), radius: layout.unit * 0.35)
-
-            VStack(alignment: .leading, spacing: layout.textSpacing) {
-                HStack(alignment: .bottom) {
-                    Text((appName ?? String(localized: "Ahora suena")).uppercased())
-                        .font(appearance.labelFont(layout.labelSize))
-                        .tracking(appearance.theme.typography.labelTracking)
-                        .foregroundStyle(appearance.accentText)
-                    Spacer(minLength: layout.textSpacing)
-                    if showsVisualizer, info.isPlaying {
-                        VisualizerView(visualizer: visualizer, height: layout.labelSize * IslandLayout.lineHeightFactor)
-                    }
-                }
-                Text(info.title)
-                    .font(appearance.titleFont(layout.titleSize))
-                    .foregroundStyle(appearance.text)
-                Text(info.artist ?? info.album ?? " ")
-                    .font(appearance.bodyFont(layout.subtitleSize))
-                    .foregroundStyle(appearance.text.opacity(0.78))
-                Spacer(minLength: layout.progressGap)
-                ProgressRow(layout: layout, info: info)
+                .overlay(alignment: .bottomTrailing) { sourceBadge }
+        } title: {
+            Text(verbatim: info.title)
+        } accessory: {
+            if showsVisualizer, info.isPlaying {
+                VisualizerView(visualizer: visualizer, height: layout.labelSize * IslandLayout.lineHeightFactor)
+                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] }
             }
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .shadow(color: appearance.textShadow, radius: layout.unit * 0.08)
-            .frame(width: max(layout.textWidth, 0), height: layout.artworkSide, alignment: .leading)
-
+        } bar: {
+            ProgressRow(layout: layout, info: info)
+        } trailing: {
             TransportControls(layout: layout, controls: controls, isPlaying: info.isPlaying)
         }
-        .padding(.leading, layout.padding)
-        .padding(.trailing, layout.trailingPadding)
-        .frame(width: layout.size.width, height: layout.bodyHeight)
     }
+
+    @ViewBuilder
+    private var sourceBadge: some View {
+        if let icon = AppIconCache.icon(forBundleID: info.appBundleID) {
+            Image(nsImage: icon)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: layout.artworkSide * Self.badgeRatio, height: layout.artworkSide * Self.badgeRatio)
+                .offset(x: layout.artworkSide * Self.badgeOffsetRatio, y: layout.artworkSide * Self.badgeOffsetRatio)
+                .accessibilityLabel(Text(verbatim: appName ?? ""))
+        }
+    }
+
+    private static let badgeRatio: CGFloat = 0.34
+    private static let badgeOffsetRatio: CGFloat = 0.08
 }
 
 private struct ProgressRow: View {
@@ -63,36 +60,29 @@ private struct ProgressRow: View {
 
     @Environment(\.themeAppearance) private var appearance
 
-    private static let tick: TimeInterval = 0.5
+    private static let tick: TimeInterval = 1
 
     var body: some View {
         if info.isPlaying {
             TimelineView(.periodic(from: .now, by: Self.tick)) { context in
-                content(at: context.date)
-                    .animation(.linear(duration: Self.tick), value: context.date)
+                content(at: context.date, barTarget: context.date.addingTimeInterval(Self.tick), transition: Self.tick)
             }
         } else {
-            content(at: Date())
+            content(at: Date(), barTarget: Date(), transition: 0)
         }
     }
 
-    private func content(at date: Date) -> some View {
+    private func content(at date: Date, barTarget: Date, transition: TimeInterval) -> some View {
         let position = info.position(at: date)
-        let progress = info.progress(at: date) ?? 0
 
         return VStack(spacing: layout.textSpacing) {
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(appearance.text.opacity(0.22))
-                    Capsule()
-                        .fill(LinearGradient(
-                            colors: [appearance.accentGraphic, appearance.secondaryGraphic],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ))
-                        .frame(width: max(proxy.size.width * progress, layout.progressHeight))
-                }
-            }
+            LevelBar(
+                fraction: info.progress(at: barTarget) ?? 0,
+                fill: appearance.accentBarColor,
+                track: appearance.barTrackColor,
+                height: layout.progressHeight,
+                transition: transition
+            )
             .frame(height: layout.progressHeight)
 
             if appearance.theme.decoration == .nixieTerminal {
@@ -112,7 +102,7 @@ private struct ProgressRow: View {
                     }
                 }
                 .font(appearance.numericFont(layout.timeSize))
-                .foregroundStyle(appearance.text.opacity(0.72))
+                .foregroundStyle(appearance.secondaryTextColor)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -152,12 +142,11 @@ private struct TransportControls: View {
             .accessibilityLabel("Siguiente")
         }
         .buttonStyle(TransportButtonStyle(diameter: layout.controlDiameter, tint: appearance.text, pressed: appearance.accentGraphic))
-        .shadow(color: appearance.textShadow, radius: layout.unit * 0.08)
         .frame(width: layout.controlsWidth)
     }
 }
 
-private struct TransportButtonStyle: ButtonStyle {
+struct TransportButtonStyle: ButtonStyle {
     let diameter: CGFloat
     let tint: Color
     let pressed: Color

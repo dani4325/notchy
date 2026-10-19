@@ -17,6 +17,22 @@
         }
       }
     },
+    "%lld %%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%%"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld %%"
+          }
+        }
+      }
+    },
     "Abrir Notchy al iniciar sesión": {
       "localizations": {
         "en": {
@@ -173,22 +189,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ahora mismo"
-          }
-        }
-      }
-    },
-    "Ahora suena": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Now playing"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ahora suena"
           }
         }
       }
@@ -545,22 +545,6 @@
         }
       }
     },
-    "BATERÍA BAJA": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LOW BATTERY"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "BATERÍA BAJA"
-          }
-        }
-      }
-    },
     "Borde": {
       "localizations": {
         "en": {
@@ -621,54 +605,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Buscar actualizaciones…"
-          }
-        }
-      }
-    },
-    "CARGA COMPLETA": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "FULLY CHARGED"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CARGA COMPLETA"
-          }
-        }
-      }
-    },
-    "CARGANDO": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CHARGING"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CARGANDO"
-          }
-        }
-      }
-    },
-    "CON BATERÍA": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ON BATTERY"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CON BATERÍA"
           }
         }
       }
@@ -737,22 +673,6 @@
         }
       }
     },
-    "Cargador conectado": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Charger connected"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargador conectado"
-          }
-        }
-      }
-    },
     "Cargador desconectado": {
       "localizations": {
         "en": {
@@ -765,6 +685,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cargador desconectado"
+          }
+        }
+      }
+    },
+    "Cargando": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charging"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando"
           }
         }
       }
@@ -957,6 +893,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Desde"
+          }
+        }
+      }
+    },
+    "Deshacer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deshacer"
           }
         }
       }
@@ -1713,22 +1665,6 @@
         }
       }
     },
-    "HOLA": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HELLO"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HOLA"
-          }
-        }
-      }
-    },
     "Imagen": {
       "localizations": {
         "en": {
@@ -1969,6 +1905,22 @@
         }
       }
     },
+    "Mover a la Papelera": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move to Trash"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mover a la Papelera"
+          }
+        }
+      }
+    },
     "Muelle": {
       "localizations": {
         "en": {
@@ -2013,22 +1965,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Música"
-          }
-        }
-      }
-    },
-    "NADA SONANDO": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NOTHING PLAYING"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NADA SONANDO"
           }
         }
       }
@@ -2109,6 +2045,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nixie y terminal"
+          }
+        }
+      }
+    },
+    "No se ha podido convertir el GIF a vídeo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The GIF couldn't be converted to video."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha podido convertir el GIF a vídeo."
           }
         }
       }
@@ -2209,6 +2161,22 @@
         }
       }
     },
+    "No se ha podido medir el fondo para garantizar el contraste. Prueba con otro archivo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The background couldn't be measured to guarantee contrast. Try another file."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha podido medir el fondo para garantizar el contraste. Prueba con otro archivo."
+          }
+        }
+      }
+    },
     "No se ha podido quitar el fondo.": {
       "localizations": {
         "en": {
@@ -2221,6 +2189,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "No se ha podido quitar el fondo."
+          }
+        }
+      }
+    },
+    "No se ha podido recuperar el tema de la Papelera.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The theme couldn't be recovered from the Trash."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha podido recuperar el tema de la Papelera."
           }
         }
       }
@@ -2561,6 +2545,22 @@
         }
       }
     },
+    "Para tenerlos a mano desde el notch.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To keep them handy from the notch."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para tenerlos a mano desde el notch."
+          }
+        }
+      }
+    },
     "Pasa el ratón por el notch cuando quieras": {
       "localizations": {
         "en": {
@@ -2673,22 +2673,6 @@
         }
       }
     },
-    "Pon algo de música y aparecerá aquí": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play some music and it'll show up here"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pon algo de música y aparecerá aquí"
-          }
-        }
-      }
-    },
     "Portón": {
       "localizations": {
         "en": {
@@ -2733,6 +2717,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Posición vertical"
+          }
+        }
+      }
+    },
+    "Preparando el fondo…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing the background…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparando el fondo…"
           }
         }
       }
@@ -2945,22 +2945,6 @@
         }
       }
     },
-    "SILENCIO": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MUTED"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SILENCIO"
-          }
-        }
-      }
-    },
     "Salir de %@": {
       "localizations": {
         "en": {
@@ -3005,22 +2989,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Se borran el tema y los archivos que importaste para él. No se puede deshacer."
-          }
-        }
-      }
-    },
-    "Se guardan como accesos, sin copiarlos": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kept as references, not copies"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se guardan como accesos, sin copiarlos"
           }
         }
       }
@@ -3133,6 +3101,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Siguiente"
+          }
+        }
+      }
+    },
+    "Silencio": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muted"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Silencio"
           }
         }
       }
@@ -3521,34 +3505,18 @@
         }
       }
     },
-    "VOLUMEN": {
+    "Vaciar la estantería": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "VOLUME"
+            "value": "Clear Shelf"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "VOLUMEN"
-          }
-        }
-      }
-    },
-    "Vaciar": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Empty"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vaciar"
+            "value": "Vaciar la estantería"
           }
         }
       }
@@ -3725,6 +3693,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "v%@ · ajustes"
+          }
+        }
+      }
+    },
+    "«%@» está en la Papelera.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” is in the Trash."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» está en la Papelera."
           }
         }
       }

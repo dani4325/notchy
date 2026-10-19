@@ -13,7 +13,7 @@ Notchy convierte el notch de tu MacBook en un panel vivo, al estilo Dynamic Isla
 | **Música** | Carátula, título, artista, progreso y controles de cualquier app (Spotify, Música, el navegador…). Visualizador que reacciona al audio real. |
 | **16 plantillas de anime** | Steins;Gate, Attack on Titan, JoJo's Bizarre Adventure, Bleach, Orb, Tokyo Ghoul, 86, Black Clover, Jujutsu Kaisen, Chainsaw Man, Fullmetal Alchemist, Frieren, One Piece, Naruto, Violet Evergarden y Mob Psycho 100. Cada una con su paleta, tipografía, apertura animada y objeto icónico. |
 | **Tus temas** | Duplica una plantilla y pon tu imagen, GIF o vídeo del personaje que quieras. Encuadre arrastrando, paleta automática y exportar/importar como `.notchytheme`. |
-| **Estantería** | Arrastra archivos al notch, sácalos arrastrando o compártelos por AirDrop. |
+| **Estantería** | Arrastra archivos al notch, sácalos arrastrando o compártelos por AirDrop. Notchy guarda un acceso a cada archivo, no una copia; si mandas el original a la Papelera, guarda una copia (hasta 200 MB) para que no lo pierdas. Al quitarlo de la estantería, esa copia va a la Papelera. |
 | **Avisos** | Cargador conectado o desconectado, batería baja, carga completa y volumen con el estilo del tema. |
 | **Temas automáticos** | Un tema de día y otro de noche, o uno distinto según la app que uses. |
 | **Sin notch** | En MacBook Air sin notch, Mac mini, iMac o monitores externos aparece una píldora flotante con las mismas funciones. |

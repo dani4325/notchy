@@ -36,6 +36,8 @@ class ExtractionTests(unittest.TestCase):
             'logger.error("export failed: \\(error)")\n'
             'defaults.bool(forKey: "visualizer")\n'
             'let font = Font.custom("Share Tech Mono", size: 12)\n'
+            'Self.legibilityLogger.error("saving measurement failed: \\(error)")\n'
+            'throw DecodingError.dataCorruptedError(forKey: .rows, in: container, debugDescription: "empty measurement")\n'
         )})
         with folder:
             found = extract.literals([root])

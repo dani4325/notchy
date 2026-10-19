@@ -29,6 +29,11 @@ public final class ThemeStore {
     public private(set) var themes: [Theme] = []
     public private(set) var activeThemeID: String
     public private(set) var overrideThemeID: String?
+    private(set) var measurements: [String: BackgroundMeasurement] = [:]
+
+    func setMeasurement(_ measurement: BackgroundMeasurement?, themeID: String) {
+        measurements[themeID] = measurement
+    }
 
     @ObservationIgnored private let directory: URL
     @ObservationIgnored private let defaults: UserDefaults
@@ -98,6 +103,7 @@ public final class ThemeStore {
             try copyFolder(from: folder(for: original.id), to: folder(for: copy.id))
         }
         try save(copy)
+        setMeasurement(measurements[original.id], themeID: copy.id)
         return copy
     }
 
@@ -107,9 +113,18 @@ public final class ThemeStore {
         guard themes.filter({ !isBuiltIn($0.id) }).count > 1 else { throw StoreError.lastTheme }
         try? FileManager.default.removeItem(at: folder(for: themeID))
         themes = themes.filter { $0.id != themeID }
+        setMeasurement(nil, themeID: themeID)
         if activeThemeID == themeID, let first = themes.first {
             activate(themeID: first.id)
         }
+    }
+
+    func setBackground(from source: URL, themeID: String, measurement: BackgroundMeasurement) throws -> Theme {
+        let theme = try setBackground(from: source, themeID: themeID)
+        if let media = theme.background?.media {
+            saveMeasurement(measurement, themeID: themeID, media: media)
+        }
+        return theme
     }
 
     public func setBackground(from source: URL, themeID: String) throws -> Theme {
@@ -141,7 +156,7 @@ public final class ThemeStore {
         )
         try save(theme)
         if let previous {
-            try? FileManager.default.removeItem(at: mediaURL(themeID: themeID, media: previous))
+            removeMedia(previous, themeID: themeID)
         }
         return theme
     }
@@ -153,7 +168,7 @@ public final class ThemeStore {
         theme.background = nil
         try save(theme)
         if let previous {
-            try? FileManager.default.removeItem(at: mediaURL(themeID: themeID, media: previous))
+            removeMedia(previous, themeID: themeID)
         }
         return theme
     }
@@ -198,6 +213,7 @@ public final class ThemeStore {
     nonisolated static func stageImport(archive: URL, into destination: URL) throws -> Theme {
         let (extracted, folder) = try ThemeArchive.extract(archive)
         defer { try? FileManager.default.removeItem(at: folder) }
+        discardMeasurements(in: folder)
         try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         try FileManager.default.copyItem(at: folder, to: destination)
         return extracted
@@ -230,6 +246,7 @@ public final class ThemeStore {
         if theme(id: activeThemeID) == nil, let first = themes.first {
             activeThemeID = first.id
         }
+        measurements = loadMeasurements()
     }
 
     private func loadAll() -> [Theme] {

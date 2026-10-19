@@ -10,6 +10,8 @@ public final class VolumeController {
     public var onChange: ((VolumeReading) -> Void)?
 
     private var device = AudioObjectID(kAudioObjectUnknown)
+    private var output: AudioOutput?
+    private var sourceListener: AudioObjectPropertyListenerBlock?
     private var last: VolumeReading?
     private var deviceListener: AudioObjectPropertyListenerBlock?
     private var valueListener: AudioObjectPropertyListenerBlock?
@@ -21,6 +23,11 @@ public final class VolumeController {
     )
     private static var volumeAddress = AudioObjectPropertyAddress(
         mSelector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
+        mScope: kAudioDevicePropertyScopeOutput,
+        mElement: kAudioObjectPropertyElementMain
+    )
+    private static var dataSourceAddress = AudioObjectPropertyAddress(
+        mSelector: kAudioDevicePropertyDataSource,
         mScope: kAudioDevicePropertyScopeOutput,
         mElement: kAudioObjectPropertyElementMain
     )
@@ -74,6 +81,15 @@ public final class VolumeController {
             return
         }
         device = newDevice
+        output = Self.describe(newDevice)
+        let sourceChanged: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.output = Self.describe(self.device)
+            }
+        }
+        sourceListener = sourceChanged
+        AudioObjectAddPropertyListenerBlock(newDevice, &Self.dataSourceAddress, .main, sourceChanged)
         let listener: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
             Task { @MainActor [weak self] in self?.valueChanged() }
         }
@@ -88,6 +104,10 @@ public final class VolumeController {
             AudioObjectRemovePropertyListenerBlock(device, &Self.volumeAddress, .main, valueListener)
             AudioObjectRemovePropertyListenerBlock(device, &Self.muteAddress, .main, valueListener)
         }
+        if let sourceListener, device != kAudioObjectUnknown {
+            AudioObjectRemovePropertyListenerBlock(device, &Self.dataSourceAddress, .main, sourceListener)
+        }
+        sourceListener = nil
         valueListener = nil
         device = AudioObjectID(kAudioObjectUnknown)
     }
@@ -107,7 +127,38 @@ public final class VolumeController {
         var muted = UInt32(0)
         size = UInt32(MemoryLayout<UInt32>.size)
         let hasMute = AudioObjectGetPropertyData(device, &Self.muteAddress, 0, nil, &size, &muted) == noErr
-        return VolumeReading(level: level, isMuted: hasMute && muted != 0)
+        return VolumeReading(level: level, isMuted: hasMute && muted != 0, output: output)
+    }
+
+    private static func describe(_ device: AudioObjectID) -> AudioOutput? {
+        guard let name = name(of: device) else { return nil }
+        let transport = value(kAudioDevicePropertyTransportType, scope: kAudioObjectPropertyScopeGlobal, of: device) ?? 0
+        let dataSource = value(kAudioDevicePropertyDataSource, scope: kAudioDevicePropertyScopeOutput, of: device)
+        return AudioOutput(name: name, kind: AudioOutputKind.classify(transport: transport, dataSource: dataSource, name: name))
+    }
+
+    private static func value(_ selector: AudioObjectPropertySelector, scope: AudioObjectPropertyScope, of device: AudioObjectID) -> UInt32? {
+        var address = AudioObjectPropertyAddress(mSelector: selector, mScope: scope, mElement: kAudioObjectPropertyElementMain)
+        guard AudioObjectHasProperty(device, &address) else { return nil }
+        var value = UInt32(0)
+        var size = UInt32(MemoryLayout<UInt32>.size)
+        return AudioObjectGetPropertyData(device, &address, 0, nil, &size, &value) == noErr ? value : nil
+    }
+
+    private static func name(of device: AudioObjectID) -> String? {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioObjectPropertyName,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var name: Unmanaged<CFString>?
+        var size = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
+        let status = AudioObjectGetPropertyData(device, &address, 0, nil, &size, &name)
+        guard status == noErr, let name else {
+            logger.error("output name unavailable (\(status))")
+            return nil
+        }
+        return name.takeRetainedValue() as String
     }
 
     private func setLevel(_ level: Float) {

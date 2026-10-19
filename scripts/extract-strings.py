@@ -6,9 +6,9 @@ SOURCES = [ROOT / "Sources"]
 LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
 STRING = r'"(?:[^"\\\n]|\\.)*"'
 TECHNICAL_ARGUMENTS = re.compile(
-    r'(?:systemName|systemImage|forKey|forResource|withExtension|subsystem|category|family|fileExtension|named|identifier|bundleIdentifier):\s*' + STRING
+    r'(?:systemName|systemImage|forKey|forResource|withExtension|subsystem|category|family|fileExtension|named|identifier|bundleIdentifier|debugDescription):\s*' + STRING
     + r'|(?:HexColor|URL\(fileURLWithPath:|Notification\.Name|UTType|appendingPathComponent|\.custom|NSDeviceDescriptionKey|Selector)\(\s*' + STRING
-    + r'|(?:logger|Self\.logger)\.\w+\(\s*' + STRING
+    + r'|(?:Self\.)?\w*[lL]ogger\.\w+\(\s*' + STRING
     + r'|Logger\([^)]*\)'
     + r'|' + r'"com\.[^"\n]*"'
     + r'|case\s+\w+\s*=\s*' + STRING

@@ -12,36 +12,65 @@ struct ShelfView: View {
     private var iconSide: CGFloat { layout.artworkSide * 0.52 }
 
     var body: some View {
-        HStack(spacing: layout.columnGap) {
-            Group {
-                if shelf.items.isEmpty {
-                    dropHint
-                } else {
+        Group {
+            if shelf.items.isEmpty {
+                PanelRow(
+                    layout: layout,
+                    subtitle: Text("Para tenerlos a mano desde el notch."),
+                    subtitleLines: 2,
+                    showsBar: false
+                ) {
+                    PanelSymbol(layout: layout, systemName: "tray.and.arrow.down")
+                } title: {
+                    Text("Suelta archivos aquí")
+                } accessory: {
+                    EmptyView()
+                } bar: {
+                    EmptyView()
+                } trailing: {
+                    Color.clear
+                }
+            } else {
+                HStack(spacing: layout.columnGap) {
                     ViewThatFits(in: .horizontal) {
                         tileRow
                         ScrollView(.horizontal, showsIndicators: false) { tileRow }
                     }
+                    .frame(width: layout.artworkSide + layout.columnGap + max(layout.textWidth, 0), height: layout.artworkSide, alignment: .leading)
+                    actions
+                        .frame(width: layout.controlsWidth)
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: layout.artworkSide)
-            .overlay {
-                RoundedRectangle(cornerRadius: layout.artworkCorner, style: .continuous)
-                    .strokeBorder(isDropTargeted ? appearance.color(appearance.theme.palette.accent, opacity: 0.9, for: .graphic) : .clear, style: StrokeStyle(lineWidth: max(layout.unit * 0.05, 1), dash: [layout.unit * 0.15]))
-            }
-
-            if !shelf.items.isEmpty {
-                VStack(spacing: layout.textSpacing * 2) {
-                    ShelfActionButton(title: "AirDrop", symbol: "airplayaudio", layout: layout) {
-                        Self.airDrop(shelf.items.compactMap(shelf.resolvedURL(for:)))
-                    }
-                    ShelfActionButton(title: "Vaciar", symbol: "trash", layout: layout, action: shelf.clear)
-                }
-                .frame(width: layout.controlsWidth * 0.7)
+                .padding(.leading, layout.padding)
+                .padding(.trailing, layout.trailingPadding)
+                .frame(width: layout.size.width, height: layout.bodyHeight)
             }
         }
-        .padding(.horizontal, layout.padding)
-        .frame(width: layout.size.width, height: layout.bodyHeight)
+        .overlay {
+            if isDropTargeted {
+                RoundedRectangle(cornerRadius: layout.artworkCorner, style: .continuous)
+                    .strokeBorder(appearance.accentGraphic, style: StrokeStyle(lineWidth: max(layout.unit * 0.05, 1), dash: [layout.unit * 0.15]))
+                    .padding(layout.padding * 0.5)
+            }
+        }
         .onAppear(perform: shelf.refresh)
+    }
+
+    private var actions: some View {
+        HStack(spacing: layout.controlSpacing) {
+            Button {
+                Self.airDrop(shelf.items.compactMap(shelf.resolvedURL(for:)))
+            } label: {
+                Image(systemName: "square.and.arrow.up").font(.system(size: layout.skipIconSize))
+            }
+            .accessibilityLabel("Compartir por AirDrop")
+            .help("Compartir por AirDrop")
+            Button(action: shelf.clear) {
+                Image(systemName: "trash").font(.system(size: layout.skipIconSize))
+            }
+            .accessibilityLabel("Vaciar la estantería")
+            .help("Vaciar la estantería")
+        }
+        .buttonStyle(TransportButtonStyle(diameter: layout.controlDiameter, tint: appearance.text, pressed: appearance.accentGraphic))
     }
 
     private var tileRow: some View {
@@ -59,25 +88,6 @@ struct ShelfView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var dropHint: some View {
-        VStack(spacing: layout.textSpacing * 2) {
-            Image(systemName: "tray.and.arrow.down")
-                .font(.system(size: layout.artworkSide * 0.3, weight: .medium))
-                .foregroundStyle(appearance.accentGraphic)
-            Text("Suelta archivos aquí")
-                .font(appearance.titleFont(layout.subtitleSize))
-                .foregroundStyle(appearance.text)
-            Text("Se guardan como accesos, sin copiarlos")
-                .font(appearance.bodyFont(layout.timeSize))
-                .foregroundStyle(appearance.text.opacity(0.6))
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: layout.artworkCorner, style: .continuous)
-                .strokeBorder(appearance.text.opacity(0.25), style: StrokeStyle(lineWidth: 1, dash: [layout.unit * 0.12]))
-        )
     }
 
     static func airDrop(_ urls: [URL]) {
@@ -117,27 +127,6 @@ private struct ShelfTile: View {
         .help(name)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(name)
-    }
-}
-
-private struct ShelfActionButton: View {
-    let title: LocalizedStringKey
-    let symbol: String
-    let layout: IslandLayout
-    let action: () -> Void
-
-    @Environment(\.themeAppearance) private var appearance
-
-    var body: some View {
-        Button(action: action) {
-            Label(title, systemImage: symbol)
-                .font(appearance.bodyFont(layout.timeSize))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, layout.textSpacing * 1.5)
-                .background(appearance.accent.opacity(0.16), in: Capsule())
-                .foregroundStyle(appearance.text)
-        }
-        .buttonStyle(.plain)
     }
 }
 

@@ -38,7 +38,7 @@ struct IslandView: View {
                     .frame(width: size.width, height: size.height, alignment: .top)
                     .transition(contentTransition(policy))
             case .compact:
-                CompactWingsView(nowPlaying: nowPlaying, companion: companion, wing: model.compactWing, height: size.height)
+                CompactWingsView(nowPlaying: nowPlaying, companion: companion, wing: model.compactWing, height: size.height, volume: compactVolume)
                     .frame(width: size.width, height: size.height)
                     .transition(.opacity.animation(policy.contentAnimation))
             case .collapsed:
@@ -57,12 +57,17 @@ struct IslandView: View {
         .environment(\.themeAppearance, appearance)
     }
 
+    private var compactVolume: VolumeReading? {
+        if case .volume(let reading, _) = model.activity { return reading }
+        return nil
+    }
+
     @ViewBuilder
     private var expandedContent: some View {
         if case .power(let event) = model.activity {
             ChargingView(layout: model.layout, event: event)
-        } else if case .volume(let reading) = model.activity {
-            VolumeHUDView(layout: model.layout, reading: reading)
+        } else if case .volume(let reading, let bump) = model.activity {
+            VolumeHUDView(layout: model.layout, reading: reading, bump: bump)
         } else if model.activity == .greeting {
             GreetingView(layout: model.layout)
         } else if shelfEnabled, model.page == .shelf {

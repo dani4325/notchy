@@ -23,6 +23,7 @@ final class IslandPanelController {
     private var pendingResize: Task<Void, Never>?
     private var isClosed = false
     private var activityTimer: Task<Void, Never>?
+    private var volumePresentation: VolumePresentation?
 
     init(
         collapsedFrame: CGRect,
@@ -95,6 +96,11 @@ final class IslandPanelController {
         if !isHovering {
             pendingHover?.cancel()
         }
+        if case .volume = activity {
+            showVolume(activity)
+            return
+        }
+        volumePresentation = nil
         let isUpdate = activity.isSameKind(as: model.activity) && model.isExpanded
         model.activity = activity
         if !isUpdate {
@@ -109,6 +115,46 @@ final class IslandPanelController {
             guard !Task.isCancelled, let self else { return }
             self.endActivity()
         }
+    }
+
+    private func showVolume(_ activity: IslandActivity) {
+        var presentation = volumePresentation ?? VolumePresentation(
+            allowsCompact: model.kind == .notch && wings.allowsCompactActivity && !isHovering
+        )
+        let wait = presentation.press()
+        volumePresentation = presentation
+        let wasShowingVolume = model.activity?.isSameKind(as: activity) == true
+        model.activity = activity
+        switch presentation.phase {
+        case .expanded where !model.isExpanded:
+            transition(to: .expanded, animated: true)
+        case .expanded where !wasShowingVolume:
+            model.openCount += 1
+        case .compact where model.state != .compact:
+            transition(to: .compact, animated: true)
+        default:
+            break
+        }
+        scheduleVolumeTick(after: wait)
+    }
+
+    private func scheduleVolumeTick(after wait: Duration) {
+        activityTimer = Task { [weak self] in
+            try? await Task.sleep(for: wait)
+            guard !Task.isCancelled, let self else { return }
+            self.volumeTick()
+        }
+    }
+
+    private func volumeTick() {
+        guard var presentation = volumePresentation, !isHovering, let wait = presentation.tick() else {
+            volumePresentation = nil
+            endActivity()
+            return
+        }
+        volumePresentation = presentation
+        transition(to: .compact, animated: true)
+        scheduleVolumeTick(after: wait)
     }
 
     private func resetPageIfLeaving(_ target: IslandState) {
@@ -126,6 +172,7 @@ final class IslandPanelController {
 
     func close() {
         activityTimer?.cancel()
+        volumePresentation = nil
         isClosed = true
         cancelPending()
         model.activity = nil

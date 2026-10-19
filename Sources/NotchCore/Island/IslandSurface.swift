@@ -45,7 +45,7 @@ struct IslandBody: View {
                 if let source = appearance.background, let settings = appearance.theme.background {
                     BackgroundMediaView(source: source, crop: settings.media.crop, size: proxy.size)
                     LegibilityScrim(
-                        appearance: appearance, layout: layout, source: source, crop: settings.media.crop,
+                        appearance: appearance, layout: layout, crop: settings.media.crop,
                         minimum: settings.legibility, coversWholeWidth: coversWholeWidth, size: proxy.size
                     )
                 } else {
