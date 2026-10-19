@@ -53,3 +53,23 @@ struct BatteryLevelEventTests {
         #expect(PowerTransition.event(from: snapshot(21, external: false), to: snapshot(20, external: true)) == .connected(percent: 20))
     }
 }
+
+struct PowerSubscriptionPolicyTests {
+    @Test func onBatteryOnlyCoarseNotificationsAreUsed() {
+        #expect(!PowerSubscriptionPolicy.needsFineGrainedUpdates(PowerSnapshot(isExternalPower: false, percent: 64, isCharging: false)))
+    }
+
+    @Test func chargingBelowFullListensForTheFullChargeEvent() {
+        #expect(PowerSubscriptionPolicy.needsFineGrainedUpdates(PowerSnapshot(isExternalPower: true, percent: 80, isCharging: true)))
+    }
+
+    @Test func fullOrBatterylessMacsStopFineGrainedUpdates() {
+        #expect(!PowerSubscriptionPolicy.needsFineGrainedUpdates(PowerSnapshot(isExternalPower: true, percent: 100, isCharging: false)))
+        #expect(!PowerSubscriptionPolicy.needsFineGrainedUpdates(PowerSnapshot(isExternalPower: true, percent: nil, isCharging: false)))
+    }
+
+    @Test func systemLowBatteryWarningBecomesALowEventOnlyOnBattery() {
+        #expect(PowerSubscriptionPolicy.lowBatteryEvent(PowerSnapshot(isExternalPower: false, percent: 18, isCharging: false)) == .low(percent: 18))
+        #expect(PowerSubscriptionPolicy.lowBatteryEvent(PowerSnapshot(isExternalPower: true, percent: 18, isCharging: true)) == nil)
+    }
+}

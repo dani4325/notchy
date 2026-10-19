@@ -10,6 +10,7 @@ public struct SettingsView: View {
     private let autoThemes: AutoThemeController
     private let shelf: ShelfStore
     private let onboarding: OnboardingModel
+    private let updater: SoftwareUpdating?
 
     @Environment(\.openWindow) private var openWindow
 
@@ -22,8 +23,10 @@ public struct SettingsView: View {
         loginItem: LoginItem,
         autoThemes: AutoThemeController,
         shelf: ShelfStore,
-        onboarding: OnboardingModel
+        onboarding: OnboardingModel,
+        updater: SoftwareUpdating? = nil
     ) {
+        self.updater = updater
         self.shelf = shelf
         self.onboarding = onboarding
         self.autoThemes = autoThemes
@@ -44,7 +47,8 @@ public struct SettingsView: View {
                 ThemesSettingsView(editor: editor, nowPlaying: nowPlaying)
             case .general:
                 GeneralSettingsView(nowPlaying: nowPlaying, companion: companion, accessibility: accessibility,
-                                    loginItem: loginItem, autoThemes: autoThemes, themes: editor.store, shelf: shelf)
+                                    loginItem: loginItem, autoThemes: autoThemes, themes: editor.store, shelf: shelf,
+                                    updater: updater)
                     .onAppear(perform: loginItem.refresh)
             }
         }

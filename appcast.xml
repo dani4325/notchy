@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Notchy</title>
+    <item>
+      <title>1.0.0</title>
+      <pubDate>Mon, 19 Oct 2026 08:02:36 GMT</pubDate>
+      <sparkle:version>1</sparkle:version>
+      <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <enclosure url="https://github.com/TU_USUARIO/notchy/releases/download/v1.0.0/Notchy-1.0.0.zip" type="application/octet-stream" sparkle:edSignature="lle/RqrAR2a/jtfmJVHCdm0oP2i82LxpmwMv9k7paS8NyS52CXw1riTG13pc6M7uAdOi9Kp+m7HCqxFjldZoAA==" length="4170315" />
+    </item>
+  </channel>
+</rss>

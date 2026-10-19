@@ -18,11 +18,14 @@ struct GeneralSettingsView: View {
     private let autoThemes: AutoThemeController
     private let themes: ThemeStore
     private let shelf: ShelfStore
+    private let updater: SoftwareUpdating?
 
     init(
         nowPlaying: NowPlayingStore, companion: CompanionStore, accessibility: AccessibilityPermission,
-        loginItem: LoginItem, autoThemes: AutoThemeController, themes: ThemeStore, shelf: ShelfStore
+        loginItem: LoginItem, autoThemes: AutoThemeController, themes: ThemeStore, shelf: ShelfStore,
+        updater: SoftwareUpdating? = nil
     ) {
+        self.updater = updater
         self.shelf = shelf
         self.loginItem = loginItem
         self.autoThemes = autoThemes
@@ -47,6 +50,12 @@ struct GeneralSettingsView: View {
                     }
                     if let message = loginItem.message {
                         Text(message).font(.system(size: 11)).foregroundStyle(.red)
+                    }
+                    if let updater {
+                        Toggle("Buscar actualizaciones automáticamente", isOn: Binding(
+                            get: { updater.automaticallyChecksForUpdates },
+                            set: { updater.automaticallyChecksForUpdates = $0 }
+                        ))
                     }
                     Toggle("Animación al conectar o desconectar el cargador", isOn: $chargingAnimation)
                     Toggle("Visualizador de música", isOn: $visualizer)

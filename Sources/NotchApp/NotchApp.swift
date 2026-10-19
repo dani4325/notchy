@@ -7,7 +7,7 @@ struct NotchApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            StatusMenu()
+            StatusMenu(updater: appDelegate.updater)
         } label: {
             Image(nsImage: MenuBarIcon.image)
         }
@@ -22,7 +22,8 @@ struct NotchApp: App {
                 loginItem: appDelegate.loginItem,
                 autoThemes: appDelegate.autoThemes,
                 shelf: appDelegate.shelf,
-                onboarding: appDelegate.onboarding
+                onboarding: appDelegate.onboarding,
+                updater: appDelegate.updater
             )
         }
         .windowResizability(.contentSize)
@@ -46,6 +47,8 @@ struct NotchApp: App {
 struct StatusMenu: View {
     static let settingsWindowID = "settings"
 
+    let updater: SparkleUpdater
+
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
@@ -54,6 +57,7 @@ struct StatusMenu: View {
             NSApp.activate()
         }
         .keyboardShortcut(",")
+        Button("Buscar actualizaciones…", action: updater.checkForUpdates)
         Divider()
         Button("Salir de \(AppInfo.name)") {
             NSApp.terminate(nil)
@@ -73,6 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let settingsRouter = SettingsRouter()
     let loginItem = LoginItem()
     let onboarding = OnboardingModel()
+    let updater = SparkleUpdater()
     private let power = PowerMonitor()
     private let volumeHUD = VolumeHUDCoordinator()
     lazy var autoThemes = AutoThemeController(store: themes)

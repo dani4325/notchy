@@ -3,9 +3,12 @@ set -euo pipefail
 
 APP_NAME="Notchy"
 BUNDLE_ID="com.danirubio.notchy"
-VERSION="0.1.0"
-BUILD_NUMBER="1"
+VERSION="${NOTCHY_VERSION:-1.0.0}"
+BUILD_NUMBER="${NOTCHY_BUILD:-1}"
 MIN_MACOS="15.0"
+SIGN_IDENTITY_NAME="Notchy Self-Signed Code Signing"
+FEED_URL="${NOTCHY_FEED_URL:-https://raw.githubusercontent.com/TU_USUARIO/notchy/main/appcast.xml}"
+SPARKLE_PUBLIC_KEY="+KFJVUJ6PNEn2LeQ1tZci7c8ADYMTV7ag4sd2zP3SVs="
 
 ROOT="${0:A:h:h}"
 OUT="$ROOT/build"
@@ -27,6 +30,10 @@ cp "$ADAPTER_OUT/MediaRemoteAdapterTestClient" "$APP/Contents/MacOS/"
 cp "$ADAPTER_OUT/mediaremote-adapter.pl" "$APP/Contents/Resources/"
 cp "$ROOT/Vendor/mediaremote-adapter/LICENSE" "$APP/Contents/Resources/MediaRemoteAdapter-LICENSE.txt"
 cp -R "$ROOT/Resources/Fonts" "$APP/Contents/Resources/Fonts"
+cp "$ROOT/THIRD_PARTY_NOTICES.md" "$APP/Contents/Resources/"
+SPARKLE_FRAMEWORK="$ROOT/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
+ditto "$SPARKLE_FRAMEWORK" "$APP/Contents/Frameworks/Sparkle.framework"
+rm -rf "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices" "$APP/Contents/Frameworks/Sparkle.framework/XPCServices"
 python3 -I "$ROOT/scripts/build-localizations.py" "$ROOT/Resources/Localization" "$APP/Contents/Resources"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
@@ -46,6 +53,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <key>LSUIElement</key><true/>
 <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
 <key>NSHighResolutionCapable</key><true/>
+<key>SUFeedURL</key><string>$FEED_URL</string>
+<key>SUPublicEDKey</key><string>$SPARKLE_PUBLIC_KEY</string>
 <key>UTExportedTypeDeclarations</key><array><dict>
 <key>UTTypeIdentifier</key><string>$BUNDLE_ID.theme</string>
 <key>UTTypeDescription</key><string>Tema de $APP_NAME</string>
@@ -63,8 +72,18 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </dict></plist>
 PLIST
 
-codesign --force --sign - "$APP/Contents/MacOS/MediaRemoteAdapterTestClient"
-codesign --force --sign - "$APP/Contents/Frameworks/MediaRemoteAdapter.framework"
-codesign --force --sign - "$APP"
-codesign --verify --strict "$APP"
+if security find-identity -p codesigning | grep -q "$SIGN_IDENTITY_NAME"; then
+  IDENTITY="$SIGN_IDENTITY_NAME"
+else
+  IDENTITY="-"
+  echo "Aviso: no se encuentra «$SIGN_IDENTITY_NAME»; se firma ad-hoc."
+fi
+SPARKLE_IN_APP="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+codesign --force --sign "$IDENTITY" "$SPARKLE_IN_APP/Autoupdate"
+codesign --force --sign "$IDENTITY" "$SPARKLE_IN_APP/Updater.app"
+codesign --force --sign "$IDENTITY" "$APP/Contents/Frameworks/Sparkle.framework"
+codesign --force --sign "$IDENTITY" "$APP/Contents/MacOS/MediaRemoteAdapterTestClient"
+codesign --force --sign "$IDENTITY" "$APP/Contents/Frameworks/MediaRemoteAdapter.framework"
+codesign --force --sign "$IDENTITY" "$APP"
+codesign --verify --strict --deep "$APP"
 echo "OK -> $APP"

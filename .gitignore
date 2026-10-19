@@ -4,3 +4,18 @@ build/
 *.app
 .DS_Store
 preview/
+dist/
+tools/
+
+# Claves y certificados: nunca en el repositorio
+Notchy-claves-PRIVADAS/
+secrets/
+*.p12
+*.pfx
+*.pem
+*.key
+*.cer
+*.certSigningRequest
+*private-key*
+*private_key*
+*password*
