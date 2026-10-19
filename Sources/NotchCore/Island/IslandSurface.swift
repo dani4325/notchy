@@ -13,7 +13,7 @@ struct IslandSurface: View {
         ZStack(alignment: .top) {
             Color.black
             if model.isExpanded {
-                IslandBody(appearance: appearance, layout: model.layout)
+                IslandBody(appearance: appearance, layout: model.layout, coversWholeWidth: model.page == .shelf)
                     .frame(width: size.width, height: max(size.height - stem, 0))
                     .padding(.top, stem)
                     .transition(.opacity)
@@ -23,12 +23,12 @@ struct IslandSurface: View {
         .clipShape(shape)
         .overlay {
             if model.isExpanded, appearance.theme.effects.borderWidth > 0 {
-                shape.stroke(appearance.accent.opacity(0.7), lineWidth: appearance.theme.effects.borderWidth)
+                shape.stroke(appearance.color(appearance.theme.palette.accent, opacity: 0.7, for: .graphic), lineWidth: appearance.theme.effects.borderWidth)
             }
         }
         .overlay {
             if showOutline {
-                shape.stroke(NotchyStyle.accent, lineWidth: 1)
+                shape.stroke(NotchyStyle.brand, lineWidth: 1)
             }
         }
     }
@@ -37,13 +37,17 @@ struct IslandSurface: View {
 struct IslandBody: View {
     let appearance: ThemeAppearance
     let layout: IslandLayout
+    let coversWholeWidth: Bool
 
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .top) {
                 if let source = appearance.background, let settings = appearance.theme.background {
                     BackgroundMediaView(source: source, crop: settings.media.crop, size: proxy.size)
-                    LegibilityScrim(appearance: appearance, layout: layout, strength: settings.legibility)
+                    LegibilityScrim(
+                        appearance: appearance, layout: layout, source: source, crop: settings.media.crop,
+                        minimum: settings.legibility, coversWholeWidth: coversWholeWidth, size: proxy.size
+                    )
                 } else {
                     LinearGradient(colors: [.black, appearance.panel], startPoint: .top, endPoint: .bottom)
                 }
@@ -62,33 +66,6 @@ struct IslandBody: View {
             }
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
         }
-    }
-}
-
-struct LegibilityScrim: View {
-    let appearance: ThemeAppearance
-    let layout: IslandLayout
-    let strength: Double
-
-    static let artworkShare = 0.75
-    static let controlsShare = 0.85
-
-    var body: some View {
-        let width = max(layout.size.width, 1)
-        let textStart = (layout.padding + layout.artworkSide + layout.columnGap) / width
-        let textEnd = textStart + layout.textWidth / width
-        let color = appearance.scrimColor
-
-        LinearGradient(
-            stops: [
-                .init(color: color.opacity(strength * Self.artworkShare), location: 0),
-                .init(color: color.opacity(strength), location: textStart),
-                .init(color: color.opacity(strength), location: textEnd),
-                .init(color: color.opacity(strength * Self.controlsShare), location: 1),
-            ],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
     }
 }
 

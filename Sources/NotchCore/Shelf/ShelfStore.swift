@@ -29,8 +29,11 @@ public final class ShelfStore {
     private var indexURL: URL { directory.appendingPathComponent("shelf.json") }
     private var copiesDirectory: URL { directory.appendingPathComponent("copies", isDirectory: true) }
 
-    public init(directory: URL = ShelfStore.defaultDirectory, limit: Int = ShelfStore.defaultLimit) {
+    @ObservationIgnored private let discard: @MainActor (URL) throws -> Void
+
+    public init(directory: URL = ShelfStore.defaultDirectory, limit: Int = ShelfStore.defaultLimit, discard: @escaping @MainActor (URL) throws -> Void = ShelfStore.moveToTrash) {
         self.directory = directory
+        self.discard = discard
         self.limit = limit.clamped(to: Self.limitRange)
         load()
         refresh()
@@ -118,9 +121,18 @@ public final class ShelfStore {
         return Array(list.suffix(limit))
     }
 
+    public static func moveToTrash(_ url: URL) throws {
+        try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+    }
+
     private func deleteCopy(_ item: ShelfItem) {
         guard let copy = item.copyFileName, ThemeMedia.isSafeFileName(copy) else { return }
-        try? FileManager.default.removeItem(at: copiesDirectory.appendingPathComponent(copy))
+        let url = copiesDirectory.appendingPathComponent(copy)
+        do {
+            try discard(url)
+        } catch {
+            Self.logger.error("moving shelf copy to the Trash failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private func commit(_ updated: [ShelfItem]) {

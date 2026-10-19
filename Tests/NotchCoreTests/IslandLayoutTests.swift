@@ -104,12 +104,20 @@ struct ThemeShapeMigrationTests {
         #expect(crop == MediaCrop(zoom: 2, focusX: 0.3, focusY: 0.7))
     }
 
-    @Test func legacyDimBecomesLegibilityWithMinimum() throws {
+    @Test func legacyDimBecomesExtraDarkening() throws {
         let json = #"{"media":{"kind":"image","file":"a.png","crop":{"zoom":1,"focusX":0.5,"focusY":0.5}},"dim":0.1}"#
 
         let background = try JSONDecoder().decode(ThemeBackground.self, from: Data(json.utf8))
 
-        #expect(background.legibility == ThemeBackground.legibilityRange.lowerBound)
+        #expect(background.legibility == 0.1)
+    }
+
+    @Test func extraDarkeningIsClampedToItsRange() throws {
+        let json = #"{"media":{"kind":"image","file":"a.png","crop":{"zoom":1,"focusX":0.5,"focusY":0.5}},"legibility":3}"#
+
+        let background = try JSONDecoder().decode(ThemeBackground.self, from: Data(json.utf8))
+
+        #expect(background.legibility == ThemeBackground.legibilityRange.upperBound)
     }
 }
 

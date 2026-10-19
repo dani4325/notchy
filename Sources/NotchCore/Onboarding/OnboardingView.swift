@@ -211,7 +211,6 @@ private struct PermissionRow: View {
 private struct ThemeStep: View {
     let themes: ThemeStore
 
-    private let columns = [GridItem(.adaptive(minimum: 128), spacing: 10)]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -220,14 +219,17 @@ private struct ThemeStep: View {
             Text("Puedes cambiarlo cuando quieras y añadir tus propias imágenes, GIF o vídeos.")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(themes.themes) { theme in
-                        ThemeChip(theme: theme, isActive: themes.activeThemeID == theme.id)
-                            .onTapGesture { themes.activate(themeID: theme.id) }
-                    }
+            List(selection: Binding(
+                get: { themes.activeThemeID as String? },
+                set: { if let id = $0 { themes.activate(themeID: id) } }
+            )) {
+                ForEach(themes.themes) { theme in
+                    ThemeChip(theme: theme, isActive: themes.activeThemeID == theme.id)
+                        .tag(theme.id as String?)
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
     }
 }

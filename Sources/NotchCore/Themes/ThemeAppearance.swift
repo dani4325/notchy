@@ -17,9 +17,45 @@ public struct ThemeAppearance: Sendable {
 
     var hasLightText: Bool { theme.palette.text.rgb.brightness > 0.5 }
 
+    var accentText: Color { color(theme.palette.accent, for: .text) }
+    var accentGraphic: Color { color(theme.palette.accent, for: .graphic) }
+    var secondaryText: Color { color(theme.palette.secondary, for: .text) }
+    var secondaryGraphic: Color { color(theme.palette.secondary, for: .graphic) }
+
+    var colorsReachMinimumOnPanel: Bool {
+        let palette = theme.palette
+        let checks: [(HexColor, Double, ContrastCorrection.Use)] = ScrimPlan.textOpacities.map { (palette.text, $0, .text) } + [
+            (palette.text, 1, .graphic), (palette.accent, 1, .text), (palette.accent, 1, .graphic),
+            (palette.secondary, 1, .text), (palette.secondary, 1, .graphic),
+        ]
+        return checks.allSatisfy { color, opacity, use in
+            effective(color, opacity: opacity, for: use).contrastRatio(with: palette.panel.rgb) >= use.minimumRatio
+        }
+    }
+
+    func color(_ base: HexColor, opacity: Double = 1, for use: ContrastCorrection.Use) -> Color {
+        let value = effective(base, opacity: opacity, for: use)
+        return Color(.sRGB, red: value.red, green: value.green, blue: value.blue)
+    }
+
+    func effective(_ base: HexColor, opacity: Double = 1, for use: ContrastCorrection.Use) -> RGB {
+        let panel = theme.palette.panel.rgb
+        let mixed = HexColor(rgb: RGB(
+            red: opacity * base.red + (1 - opacity) * panel.red,
+            green: opacity * base.green + (1 - opacity) * panel.green,
+            blue: opacity * base.blue + (1 - opacity) * panel.blue
+        ))
+        guard theme.palette.source == .automatic else { return mixed.rgb }
+        return ContrastCorrection.corrected(mixed, against: theme.palette.panel, for: use).rgb
+    }
+
+    var scrimRGB: RGB {
+        guard hasLightText else { return RGB(red: 1, green: 1, blue: 1) }
+        return theme.palette.panel.rgb.brightness < 0.2 ? theme.palette.panel.rgb : RGB(red: 0, green: 0, blue: 0)
+    }
+
     var scrimColor: Color {
-        guard hasLightText else { return .white }
-        return theme.palette.panel.rgb.brightness < 0.2 ? panel : .black
+        Color(.sRGB, red: scrimRGB.red, green: scrimRGB.green, blue: scrimRGB.blue)
     }
 
     var textShadow: Color {

@@ -9,6 +9,29 @@ struct ThemeEditorModelTests {
         defaults: UserDefaults(suiteName: "notchy-editor-\(UUID().uuidString)")!
     )
 
+    @Test func deletingAsksFirstAndOnlyDeletesAfterConfirming() throws {
+        let editor = ThemeEditorModel(store: store)
+        let theme = try store.createTheme(named: "Para borrar")
+
+        editor.requestDeletion(themeID: theme.id)
+
+        #expect(editor.pendingDeletion?.id == theme.id)
+        #expect(store.theme(id: theme.id) != nil)
+
+        editor.confirmDeletion()
+
+        #expect(editor.pendingDeletion == nil)
+        #expect(store.theme(id: theme.id) == nil)
+    }
+
+    @Test func builtInThemesCannotBeQueuedForDeletion() throws {
+        let editor = ThemeEditorModel(store: store)
+
+        editor.requestDeletion(themeID: try #require(Theme.builtIns.first).id)
+
+        #expect(editor.pendingDeletion == nil)
+    }
+
     @Test func startsEditingTheActiveTheme() {
         let editor = ThemeEditorModel(store: store)
 

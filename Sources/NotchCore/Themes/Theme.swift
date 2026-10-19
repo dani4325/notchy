@@ -160,8 +160,8 @@ public struct ThemeMedia: Codable, Equatable, Sendable {
 }
 
 public struct ThemeBackground: Codable, Equatable, Sendable {
-    public static let legibilityRange: ClosedRange<Double> = 0.55...0.9
-    public static let defaultLegibility = 0.65
+    public static let legibilityRange: ClosedRange<Double> = 0...0.9
+    public static let defaultLegibility = 0.3
 
     public var media: ThemeMedia
     public var legibility: Double

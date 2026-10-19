@@ -40,7 +40,7 @@ private struct Bars: View {
         HStack(alignment: .bottom, spacing: height * 0.16) {
             ForEach(Array(levels.enumerated()), id: \.offset) { _, level in
                 Capsule()
-                    .fill(LinearGradient(colors: [appearance.accent, appearance.secondary], startPoint: .bottom, endPoint: .top))
+                    .fill(LinearGradient(colors: [appearance.accentGraphic, appearance.secondaryGraphic], startPoint: .bottom, endPoint: .top))
                     .frame(width: height * 0.2, height: max(height * CGFloat(level), height * 0.14))
             }
         }

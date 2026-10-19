@@ -29,6 +29,16 @@ public struct RGB: Equatable, Sendable {
 
     public var brightness: Double { max(red, green, blue) }
 
+    public var relativeLuminance: Double {
+        0.2126 * OKLCH.linear(red) + 0.7152 * OKLCH.linear(green) + 0.0722 * OKLCH.linear(blue)
+    }
+
+    public func contrastRatio(with other: RGB) -> Double {
+        let lighter = max(relativeLuminance, other.relativeLuminance)
+        let darker = min(relativeLuminance, other.relativeLuminance)
+        return (lighter + 0.05) / (darker + 0.05)
+    }
+
     public var saturation: Double {
         let maximum = brightness
         return maximum == 0 ? 0 : (maximum - min(red, green, blue)) / maximum
@@ -89,4 +99,8 @@ public struct HexColor: Codable, Hashable, Sendable {
     public var alpha: Double { hex.count == 9 ? component(3) : 1 }
 
     public var rgb: RGB { RGB(red: red, green: green, blue: blue) }
+
+    public var relativeLuminance: Double { rgb.relativeLuminance }
+
+    public func contrastRatio(with other: HexColor) -> Double { rgb.contrastRatio(with: other.rgb) }
 }

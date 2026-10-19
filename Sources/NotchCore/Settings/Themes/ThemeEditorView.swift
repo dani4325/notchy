@@ -122,7 +122,9 @@ private struct BackgroundSection: View {
                     }
                 }
                 LabeledSlider("Zoom", value: editor.backgroundBinding(\.media.crop.zoom, fallback: 1), range: MediaCrop.zoomRange, unit: "×")
-                LabeledSlider("Legibilidad", value: editor.backgroundBinding(\.legibility, fallback: ThemeBackground.defaultLegibility), range: ThemeBackground.legibilityRange)
+                LabeledSlider("Posición horizontal", value: editor.backgroundBinding(\.media.crop.focusX, fallback: 0.5), range: 0...1)
+                LabeledSlider("Posición vertical", value: editor.backgroundBinding(\.media.crop.focusY, fallback: 0.5), range: 0...1)
+                LabeledSlider("Oscurecer más", value: editor.backgroundBinding(\.legibility, fallback: ThemeBackground.defaultLegibility), range: ThemeBackground.legibilityRange)
             } else {
                 Button(action: editor.chooseBackground) {
                     Label("Elegir imagen, GIF o vídeo…", systemImage: "photo.on.rectangle.angled")
@@ -131,8 +133,27 @@ private struct BackgroundSection: View {
         } header: {
             Text("Fondo")
         } footer: {
-            Text("Arrastra la imagen en la vista previa para encuadrarla y pellizca para acercarla. La legibilidad oscurece el fondo detrás del texto y nunca baja del mínimo que garantiza el contraste. El fondo solo se reproduce con el panel abierto.")
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Arrastra la imagen en la vista previa para encuadrarla y pellizca para acercarla. El fondo solo se reproduce con el panel abierto.")
+                if let kind = theme.background?.media.kind {
+                    Text(Self.contrastNote(kind: kind, appearance: ThemeAppearance(theme: theme, background: nil)))
+                }
+            }
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    private static func contrastNote(kind: MediaKind, appearance: ThemeAppearance) -> LocalizedStringKey {
+        guard appearance.colorsReachMinimumOnPanel else {
+            return "Con los colores actuales el contraste no está garantizado: algún color no llega al mínimo ni sobre el panel liso."
+        }
+        switch kind {
+        case .image:
+            return "Notchy mide la imagen detrás de cada texto y la oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo."
+        case .animatedImage:
+            return "Notchy mide todos los fotogramas del GIF detrás de cada texto y los oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo."
+        case .video:
+            return "Notchy mide un fotograma del vídeo cada medio segundo y lo oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. Entre esos fotogramas el contraste no está garantizado."
         }
     }
 
@@ -227,13 +248,13 @@ private struct ShapeSection: View {
 }
 
 private struct LabeledSlider: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: Binding<Double>
     let range: ClosedRange<Double>
     let unit: String
     let step: Double?
 
-    init(_ title: String, value: Binding<Double>, range: ClosedRange<Double>, unit: String = "", step: Double? = nil) {
+    init(_ title: LocalizedStringKey, value: Binding<Double>, range: ClosedRange<Double>, unit: String = "", step: Double? = nil) {
         self.title = title
         self.value = value
         self.range = range

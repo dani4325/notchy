@@ -3,33 +3,49 @@ import SwiftUI
 struct ThemeGalleryView: View {
     let editor: ThemeEditorModel
 
+    private var pendingName: String { editor.pendingDeletion?.name ?? "" }
+
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                LazyVStack(spacing: 10) {
-                    ForEach(editor.store.themes) { theme in
-                        ThemeCard(
-                            theme: theme,
-                            appearance: ThemeAppearance.resolve(theme, in: editor.store),
-                            isSelected: editor.draft?.id == theme.id,
-                            isActive: editor.store.activeThemeID == theme.id,
-                            isBuiltIn: editor.store.isBuiltIn(theme.id)
-                        )
-                        .onTapGesture { editor.select(themeID: theme.id) }
-                        .contextMenu {
-                            Button("Usar este tema") {
-                                editor.select(themeID: theme.id)
-                                editor.activate()
-                            }
-                            Button("Duplicar") { editor.duplicate(themeID: theme.id) }
-                            Button("Exportar…") { editor.exportTheme(themeID: theme.id) }
-                            Divider()
-                            Button("Eliminar", role: .destructive) { editor.delete(themeID: theme.id) }
-                                .disabled(editor.store.isBuiltIn(theme.id))
+            List(selection: Binding(
+                get: { editor.draft?.id as String? },
+                set: { if let id = $0 { editor.select(themeID: id) } }
+            )) {
+                ForEach(editor.store.themes) { theme in
+                    ThemeCard(
+                        theme: theme,
+                        appearance: ThemeAppearance.resolve(theme, in: editor.store),
+                        isSelected: editor.draft?.id == theme.id,
+                        isActive: editor.store.activeThemeID == theme.id,
+                        isBuiltIn: editor.store.isBuiltIn(theme.id)
+                    )
+                    .tag(theme.id as String?)
+                    .listRowInsets(EdgeInsets(top: 5, leading: 8, bottom: 5, trailing: 8))
+                    .contextMenu {
+                        Button("Usar este tema") {
+                            editor.select(themeID: theme.id)
+                            editor.activate()
                         }
+                        Button("Duplicar") { editor.duplicate(themeID: theme.id) }
+                        Button("Exportar…") { editor.exportTheme(themeID: theme.id) }
+                        Divider()
+                        Button("Eliminar…", role: .destructive) { editor.requestDeletion(themeID: theme.id) }
+                            .disabled(editor.store.isBuiltIn(theme.id))
                     }
                 }
-                .padding(12)
+            }
+            .listStyle(.plain)
+            .onDeleteCommand {
+                if let id = editor.draft?.id { editor.requestDeletion(themeID: id) }
+            }
+            .confirmationDialog(
+                Text("¿Eliminar «\(pendingName)»?"),
+                isPresented: Binding(get: { editor.pendingDeletion != nil }, set: { if !$0 { editor.pendingDeletion = nil } }),
+                titleVisibility: .visible
+            ) {
+                Button("Eliminar", role: .destructive, action: editor.confirmDeletion)
+            } message: {
+                Text("Se borran el tema y los archivos que importaste para él. No se puede deshacer.")
             }
             Divider()
             HStack {
@@ -61,7 +77,7 @@ private struct ThemeCard: View {
                     .fill(LinearGradient(colors: [.black, appearance.panel], startPoint: .top, endPoint: .bottom))
                 if let background = appearance.background, let settings = theme.background {
                     MediaView(source: background, crop: settings.media.crop, isActive: false)
-                        .overlay(appearance.scrimColor.opacity(settings.legibility * LegibilityScrim.artworkShare))
+                        .overlay(appearance.scrimColor.opacity(settings.legibility))
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 HStack(spacing: 4) {

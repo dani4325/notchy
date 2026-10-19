@@ -29,7 +29,7 @@ struct ExpandedMusicView: View {
                     Text((appName ?? String(localized: "Ahora suena")).uppercased())
                         .font(appearance.labelFont(layout.labelSize))
                         .tracking(appearance.theme.typography.labelTracking)
-                        .foregroundStyle(appearance.accent)
+                        .foregroundStyle(appearance.accentText)
                     Spacer(minLength: layout.textSpacing)
                     if showsVisualizer, info.isPlaying {
                         VisualizerView(visualizer: visualizer, height: layout.labelSize * IslandLayout.lineHeightFactor)
@@ -86,7 +86,7 @@ private struct ProgressRow: View {
                     Capsule().fill(appearance.text.opacity(0.22))
                     Capsule()
                         .fill(LinearGradient(
-                            colors: [appearance.accent, appearance.secondary],
+                            colors: [appearance.accentGraphic, appearance.secondaryGraphic],
                             startPoint: .leading,
                             endPoint: .trailing
                         ))
@@ -97,10 +97,10 @@ private struct ProgressRow: View {
 
             if appearance.theme.decoration == .nixieTerminal {
                 HStack {
-                    NixieReadoutView(text: Self.format(position), height: layout.nixieHeight, glow: appearance.secondary)
+                    NixieReadoutView(text: Self.format(position), height: layout.nixieHeight, glow: appearance.secondaryText)
                     Spacer(minLength: 0)
                     if let duration = info.duration {
-                        NixieReadoutView(text: "-" + Self.format(max(duration - position, 0)), height: layout.nixieHeight, glow: appearance.secondary)
+                        NixieReadoutView(text: "-" + Self.format(max(duration - position, 0)), height: layout.nixieHeight, glow: appearance.secondaryText)
                     }
                 }
             } else {
@@ -151,7 +151,7 @@ private struct TransportControls: View {
             }
             .accessibilityLabel("Siguiente")
         }
-        .buttonStyle(TransportButtonStyle(diameter: layout.controlDiameter, tint: appearance.text, pressed: appearance.accent))
+        .buttonStyle(TransportButtonStyle(diameter: layout.controlDiameter, tint: appearance.text, pressed: appearance.accentGraphic))
         .shadow(color: appearance.textShadow, radius: layout.unit * 0.08)
         .frame(width: layout.controlsWidth)
     }

@@ -8,6 +8,7 @@ import UniformTypeIdentifiers
 @Observable
 public final class ThemeEditorModel {
     public private(set) var draft: Theme?
+    public var pendingDeletion: Theme?
     public private(set) var message: String?
     public private(set) var isExtracting = false
     public private(set) var backgroundAspect: Double?
@@ -159,6 +160,17 @@ public final class ThemeEditorModel {
         perform(String(localized: "No se ha podido duplicar el tema.")) {
             select(themeID: try store.duplicate(themeID: themeID).id)
         }
+    }
+
+    public func requestDeletion(themeID: String) {
+        guard !store.isBuiltIn(themeID) else { return }
+        pendingDeletion = store.theme(id: themeID)
+    }
+
+    public func confirmDeletion() {
+        guard let theme = pendingDeletion else { return }
+        pendingDeletion = nil
+        delete(themeID: theme.id)
     }
 
     public func delete(themeID: String) {

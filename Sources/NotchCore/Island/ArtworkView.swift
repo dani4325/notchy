@@ -21,7 +21,7 @@ struct ArtworkView: View {
                 } else {
                     Image(systemName: "music.note")
                         .font(.system(size: size * 0.32, weight: .semibold))
-                        .foregroundStyle(appearance.accent)
+                        .foregroundStyle(appearance.accentGraphic)
                 }
             }
             .frame(width: size, height: size)

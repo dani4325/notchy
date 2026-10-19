@@ -1,6 +1,6 @@
 import CoreGraphics
 
-public struct MediaCrop: Codable, Equatable, Sendable {
+public struct MediaCrop: Codable, Hashable, Sendable {
     public static let zoomRange: ClosedRange<Double> = 1...4
     public static let standard = MediaCrop(zoom: 1, focusX: 0.5, focusY: 0.5)
 

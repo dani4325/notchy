@@ -26,7 +26,7 @@ struct ShelfView: View {
             .frame(maxWidth: .infinity, maxHeight: layout.artworkSide)
             .overlay {
                 RoundedRectangle(cornerRadius: layout.artworkCorner, style: .continuous)
-                    .strokeBorder(appearance.accent.opacity(isDropTargeted ? 0.9 : 0), style: StrokeStyle(lineWidth: max(layout.unit * 0.05, 1), dash: [layout.unit * 0.15]))
+                    .strokeBorder(isDropTargeted ? appearance.color(appearance.theme.palette.accent, opacity: 0.9, for: .graphic) : .clear, style: StrokeStyle(lineWidth: max(layout.unit * 0.05, 1), dash: [layout.unit * 0.15]))
             }
 
             if !shelf.items.isEmpty {
@@ -65,7 +65,7 @@ struct ShelfView: View {
         VStack(spacing: layout.textSpacing * 2) {
             Image(systemName: "tray.and.arrow.down")
                 .font(.system(size: layout.artworkSide * 0.3, weight: .medium))
-                .foregroundStyle(appearance.accent)
+                .foregroundStyle(appearance.accentGraphic)
             Text("Suelta archivos aquí")
                 .font(appearance.titleFont(layout.subtitleSize))
                 .foregroundStyle(appearance.text)

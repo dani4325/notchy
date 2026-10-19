@@ -15,8 +15,54 @@ struct ShelfStoreTests {
         return url
     }
 
-    func makeStore(limit: Int = 3) -> ShelfStore {
-        ShelfStore(directory: storage, limit: limit)
+    func makeStore(limit: Int = 3, discarded: DiscardedCopies? = nil) -> ShelfStore {
+        guard let discarded else { return ShelfStore(directory: storage, limit: limit) }
+        return ShelfStore(directory: storage, limit: limit, discard: discarded.record)
+    }
+
+    func storeWithPreservedCopies(_ names: [String], limit: Int = 3, discarded: DiscardedCopies) throws -> ShelfStore {
+        let store = makeStore(limit: limit, discarded: discarded)
+        let trash = root.appendingPathComponent(".Trash")
+        try FileManager.default.createDirectory(at: trash, withIntermediateDirectories: true)
+        for name in names {
+            let file = try makeFile(name)
+            store.add([file])
+            try FileManager.default.moveItem(at: file, to: trash.appendingPathComponent(name))
+        }
+        store.refresh()
+        try FileManager.default.removeItem(at: trash)
+        return store
+    }
+
+    @Test func clearingSendsPreservedCopiesToTheTrashInsteadOfDeletingThem() throws {
+        let discarded = DiscardedCopies()
+        let store = try storeWithPreservedCopies(["unica.txt"], discarded: discarded)
+        let copy = try #require(store.resolvedURL(for: store.items[0]))
+
+        store.clear()
+
+        #expect(discarded.urls.map(\.lastPathComponent) == [copy.lastPathComponent])
+        #expect(store.items.isEmpty)
+    }
+
+    @Test func removingOneItemSendsItsCopyToTheTrash() throws {
+        let discarded = DiscardedCopies()
+        let store = try storeWithPreservedCopies(["a.txt", "b.txt"], discarded: discarded)
+
+        store.remove(store.items[0].id)
+
+        #expect(discarded.urls.count == 1)
+        #expect(store.items.map(\.name) == ["b.txt"])
+    }
+
+    @Test func loweringTheLimitSendsDroppedCopiesToTheTrash() throws {
+        let discarded = DiscardedCopies()
+        let store = try storeWithPreservedCopies(["a.txt", "b.txt", "c.txt"], discarded: discarded)
+
+        store.setLimit(1)
+
+        #expect(discarded.urls.count == 2)
+        #expect(store.items.map(\.name) == ["c.txt"])
     }
 
     @Test func addingFilesKeepsReferencesNotCopies() throws {
@@ -106,5 +152,14 @@ struct ShelfStoreTests {
         store.setLimit(1)
 
         #expect(store.items.map(\.name) == ["3.txt"])
+    }
+}
+
+@MainActor
+final class DiscardedCopies {
+    private(set) var urls: [URL] = []
+
+    func record(_ url: URL) throws {
+        urls.append(url)
     }
 }

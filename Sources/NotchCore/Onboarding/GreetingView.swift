@@ -13,7 +13,7 @@ struct GreetingView: View {
                 } else {
                     Image(systemName: "sparkles")
                         .font(.system(size: layout.artworkSide * 0.4, weight: .semibold))
-                        .foregroundStyle(appearance.accent)
+                        .foregroundStyle(appearance.accentGraphic)
                 }
             }
             .frame(width: layout.artworkSide, height: layout.artworkSide)
@@ -22,7 +22,7 @@ struct GreetingView: View {
                 Text("HOLA")
                     .font(appearance.labelFont(layout.labelSize))
                     .tracking(appearance.theme.typography.labelTracking)
-                    .foregroundStyle(appearance.accent)
+                    .foregroundStyle(appearance.accentText)
                 Text("Esto es Notchy")
                     .font(appearance.titleFont(layout.titleSize * 1.3))
                     .foregroundStyle(appearance.text)

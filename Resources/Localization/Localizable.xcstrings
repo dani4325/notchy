@@ -145,6 +145,22 @@
         }
       }
     },
+    "Activo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activo"
+          }
+        }
+      }
+    },
     "Ahora mismo": {
       "localizations": {
         "en": {
@@ -369,18 +385,18 @@
         }
       }
     },
-    "Arrastra la imagen en la vista previa para encuadrarla y pellizca para acercarla. La legibilidad oscurece el fondo detrás del texto y nunca baja del mínimo que garantiza el contraste. El fondo solo se reproduce con el panel abierto.": {
+    "Arrastra la imagen en la vista previa para encuadrarla y pellizca para acercarla. El fondo solo se reproduce con el panel abierto.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drag the image in the preview to frame it and pinch to zoom. Legibility darkens the background behind the text and never drops below the minimum that guarantees contrast. The background only plays while the panel is open."
+            "value": "Drag the image in the preview to frame it and pinch to zoom. The background only plays while the panel is open."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Arrastra la imagen en la vista previa para encuadrarla y pellizca para acercarla. La legibilidad oscurece el fondo detrás del texto y nunca baja del mínimo que garantiza el contraste. El fondo solo se reproduce con el panel abierto."
+            "value": "Arrastra la imagen en la vista previa para encuadrarla y pellizca para acercarla. El fondo solo se reproduce con el panel abierto."
           }
         }
       }
@@ -493,6 +509,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Automática usa MediaRemote (cualquier app, incluido el navegador) y pasa sola a AppleScript (Spotify y Música) si deja de funcionar."
+          }
+        }
+      }
+    },
+    "Añadir app…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add App…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir app…"
+          }
+        }
+      }
+    },
+    "Añadir franja horaria": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Time Slot"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir franja horaria"
           }
         }
       }
@@ -765,6 +813,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Compartir por AirDrop"
+          }
+        }
+      }
+    },
+    "Con los colores actuales el contraste no está garantizado: algún color no llega al mínimo ni sobre el panel liso.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "With the current colors contrast isn't guaranteed: some color doesn't reach the minimum even on the plain panel."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Con los colores actuales el contraste no está garantizado: algún color no llega al mínimo ni sobre el panel liso."
           }
         }
       }
@@ -1121,6 +1185,22 @@
         }
       }
     },
+    "Elige un tema": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a Theme"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige un tema"
+          }
+        }
+      }
+    },
     "Elige una imagen, un GIF o un vídeo para acompañar al notch": {
       "localizations": {
         "en": {
@@ -1165,6 +1245,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Eliminar"
+          }
+        }
+      }
+    },
+    "Eliminar…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar…"
           }
         }
       }
@@ -1745,22 +1841,6 @@
         }
       }
     },
-    "Legibilidad": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Legibility"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Legibilidad"
-          }
-        }
-      }
-    },
     "Manual": {
       "localizations": {
         "en": {
@@ -2257,6 +2337,54 @@
         }
       }
     },
+    "Notchy mide la imagen detrás de cada texto y la oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy measures the image behind each text and darkens it just enough for text to reach 4.5:1 and bars and icons 3:1. “Darken more” adds darkness on top of that minimum."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy mide la imagen detrás de cada texto y la oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo."
+          }
+        }
+      }
+    },
+    "Notchy mide todos los fotogramas del GIF detrás de cada texto y los oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy measures every frame of the GIF behind each text and darkens it just enough for text to reach 4.5:1 and bars and icons 3:1. “Darken more” adds darkness on top of that minimum."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy mide todos los fotogramas del GIF detrás de cada texto y los oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo."
+          }
+        }
+      }
+    },
+    "Notchy mide un fotograma del vídeo cada medio segundo y lo oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. Entre esos fotogramas el contraste no está garantizado.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy measures one video frame every half second and darkens it just enough for text to reach 4.5:1 and bars and icons 3:1. Between those frames contrast isn't guaranteed."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy mide un fotograma del vídeo cada medio segundo y lo oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. Entre esos fotogramas el contraste no está garantizado."
+          }
+        }
+      }
+    },
     "Now Playing con MediaRemoteAdapter © 2025 Jonas van den Berg y colaboradores · BSD-3-Clause": {
       "localizations": {
         "en": {
@@ -2349,6 +2477,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Olas"
+          }
+        }
+      }
+    },
+    "Oscurecer más": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Darken more"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oscurecer más"
           }
         }
       }
@@ -2557,6 +2701,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Portón"
+          }
+        }
+      }
+    },
+    "Posición horizontal": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Horizontal Position"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posición horizontal"
+          }
+        }
+      }
+    },
+    "Posición vertical": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vertical Position"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posición vertical"
           }
         }
       }
@@ -2813,6 +2989,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saltar"
+          }
+        }
+      }
+    },
+    "Se borran el tema y los archivos que importaste para él. No se puede deshacer.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This deletes the theme and the files you imported for it. It can't be undone."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se borran el tema y los archivos que importaste para él. No se puede deshacer."
           }
         }
       }
@@ -3533,6 +3725,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "v%@ · ajustes"
+          }
+        }
+      }
+    },
+    "¿Eliminar «%@»?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete “%@”?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar «%@»?"
           }
         }
       }

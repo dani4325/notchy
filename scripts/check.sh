@@ -47,6 +47,7 @@ SECRET_CONTENT=$(tracked_text_files | xargs grep -l -E "BEGIN [A-Z ]*PRIVATE KEY
 
 print "Idiomas"
 python3 -I scripts/check-localization.py >/dev/null && pass "todos los textos en el catálogo y traducidos" || fail "faltan textos en el catálogo (python3 scripts/check-localization.py)"
+python3 -I scripts/tests/test_localization_checks.py >/dev/null 2>&1 && pass "las comprobaciones de idioma detectan sus casos de prueba" || fail "fallan los tests de las comprobaciones (python3 scripts/tests/test_localization_checks.py)"
 
 if [[ "$MODE" == "--full" ]]; then
   print "Compilación y tests"

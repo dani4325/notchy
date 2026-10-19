@@ -17,10 +17,10 @@ struct ChargingView: View {
                 Text(headline)
                     .font(appearance.labelFont(layout.labelSize))
                     .tracking(appearance.theme.typography.labelTracking)
-                    .foregroundStyle(appearance.accent)
+                    .foregroundStyle(appearance.accentText)
                 Group {
                     if appearance.theme.decoration == .nixieTerminal {
-                        NixieReadoutView(text: "\(event.percent)", height: layout.titleSize * 2.2, glow: appearance.secondary)
+                        NixieReadoutView(text: "\(event.percent)", height: layout.titleSize * 2.2, glow: appearance.secondaryText)
                     } else {
                         Text("\(event.percent) %")
                             .font(appearance.titleFont(layout.titleSize * 2.1))
@@ -68,7 +68,7 @@ private struct BatteryGlyph: View {
     var body: some View {
         let width = height * 2
         let corner = height * 0.22
-        let fill: Color = level <= 0.2 && !isConnected ? .red : appearance.accent
+        let fill: Color = level <= 0.2 && !isConnected ? .red : appearance.accentGraphic
 
         HStack(spacing: height * 0.06) {
             ZStack(alignment: .leading) {

@@ -8,7 +8,7 @@ struct IdleContentView: View {
     var body: some View {
         HStack(spacing: layout.columnGap) {
             if appearance.theme.decoration == .nixieTerminal {
-                NixieReadoutView(text: Self.divergence, height: layout.artworkSide * 0.5, glow: appearance.secondary)
+                NixieReadoutView(text: Self.divergence, height: layout.artworkSide * 0.5, glow: appearance.secondaryText)
             } else {
                 placeholder
             }
@@ -23,7 +23,7 @@ struct IdleContentView: View {
     private var placeholder: some View {
             RoundedRectangle(cornerRadius: layout.artworkCorner, style: .continuous)
                 .strokeBorder(
-                    appearance.accent.opacity(0.6),
+                    appearance.color(appearance.theme.palette.accent, opacity: 0.6, for: .graphic),
                     style: StrokeStyle(lineWidth: layout.unit * 0.04, dash: [layout.unit * 0.11, layout.unit * 0.11])
                 )
                 .frame(width: layout.artworkSide, height: layout.artworkSide)
@@ -33,7 +33,7 @@ struct IdleContentView: View {
                     } else {
                         Image(systemName: "music.note")
                             .font(.system(size: layout.artworkSide * 0.3, weight: .semibold))
-                            .foregroundStyle(appearance.accent)
+                            .foregroundStyle(appearance.accentGraphic)
                     }
                 }
     }
@@ -43,7 +43,7 @@ struct IdleContentView: View {
                 Text("NADA SONANDO")
                     .font(appearance.labelFont(layout.labelSize))
                     .tracking(appearance.theme.typography.labelTracking)
-                    .foregroundStyle(appearance.accent)
+                    .foregroundStyle(appearance.accentText)
                 Text("Pon algo de música y aparecerá aquí")
                     .font(appearance.titleFont(layout.titleSize))
                     .foregroundStyle(appearance.text)

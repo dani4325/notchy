@@ -4,26 +4,33 @@ import re, sys, json, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SOURCES = [ROOT / "Sources"]
 LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
-SKIP_LINE = re.compile(r'logger\.|Logger\(|systemName:|systemImage:|forKey|Notification\.Name|subsystem:|category:|HexColor\(|\.custom\(|family:|withExtension|forResource|URL\(|appendingPathComponent|bundleIdentifier|static let .*Key|case .* = "|fileExtension|kAudio|"com\.|label: "com|#expect|UTType')
+STRING = r'"(?:[^"\\\n]|\\.)*"'
+TECHNICAL_ARGUMENTS = re.compile(
+    r'(?:systemName|systemImage|forKey|forResource|withExtension|subsystem|category|family|fileExtension|named|identifier|bundleIdentifier):\s*' + STRING
+    + r'|(?:HexColor|URL\(fileURLWithPath:|Notification\.Name|UTType|appendingPathComponent|\.custom|NSDeviceDescriptionKey|Selector)\(\s*' + STRING
+    + r'|(?:logger|Self\.logger)\.\w+\(\s*' + STRING
+    + r'|Logger\([^)]*\)'
+    + r'|' + r'"com\.[^"\n]*"'
+    + r'|case\s+\w+\s*=\s*' + STRING
+    + r'|static let \w*Key\w*\s*=\s*' + STRING
+)
 TECHNICAL = re.compile(r'^[A-Za-z0-9_.\-/:%@#\\()\[\]]*$')
 
 def interpolate(text):
     return re.sub(r'\\\((.*?)\)', '%@', text)
 
-def literals():
+def literals(bases=None):
     found = {}
-    for base in SOURCES:
+    for base in bases or SOURCES:
         for path in sorted(base.rglob("*.swift")):
             for number, line in enumerate(path.read_text().splitlines(), 1):
-                if SKIP_LINE.search(line):
-                    continue
-                for match in LITERAL.finditer(line):
+                for match in LITERAL.finditer(TECHNICAL_ARGUMENTS.sub("", line)):
                     raw = match.group(1)
                     if not raw or TECHNICAL.match(raw.replace(' ', '_')) and ' ' not in raw and not re.search(r'[áéíóúñÁÉÍÓÚÑ¿¡]', raw):
                         if not re.fullmatch(r'[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+', raw):
                             continue
                     key = interpolate(raw)
-                    found.setdefault(key, []).append(f"{path.relative_to(ROOT)}:{number}")
+                    found.setdefault(key, []).append(f"{path.name}:{number}")
     return found
 
 if __name__ == "__main__":

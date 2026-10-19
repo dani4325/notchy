@@ -52,7 +52,7 @@ struct CompactWingsView: View {
         } else {
             Image(systemName: "sparkle")
                 .font(.system(size: mediaSize * 0.5, weight: .bold))
-                .foregroundStyle(appearance.accent.opacity(nowPlaying.isPlaying ? 1 : 0.45))
+                .foregroundStyle(appearance.color(appearance.theme.palette.accent, opacity: nowPlaying.isPlaying ? 1 : 0.45, for: .graphic))
         }
     }
 }

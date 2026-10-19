@@ -10,13 +10,14 @@ ZIP="$DIST/Notchy-$VERSION.zip"
 REPO_URL="${NOTCHY_REPO_URL:-https://github.com/dani4325/notchy}"
 FEED_URL="${NOTCHY_FEED_URL:-https://raw.githubusercontent.com/dani4325/notchy/main/appcast.xml}"
 SIGN_IDENTITY_NAME="Notchy Self-Signed Code Signing"
+NOTES="$ROOT/docs/release-notes/$VERSION.md"
+MARKERS='TU_USUARIO|YOUR_USER|SHA256_DEL_ZIP|SHA256_OF_THE_ZIP|PENDIENTE|TODO'
 
 cd "$ROOT"
 [[ "$BUILD" =~ ^[0-9]+$ ]] || { echo "El número de build debe ser un entero."; exit 1; }
-if [[ "$REPO_URL$FEED_URL" == *TU_USUARIO* && "${NOTCHY_ALLOW_PLACEHOLDER:-0}" != 1 ]]; then
-  echo "Las URL aún tienen TU_USUARIO. Define NOTCHY_REPO_URL y NOTCHY_FEED_URL (o NOTCHY_ALLOW_PLACEHOLDER=1 para una prueba local)."
-  exit 1
-fi
+[[ -f "$NOTES" ]] || { echo "Faltan las notas de versión: $NOTES"; exit 1; }
+NOTE_MARKERS="$(grep -n -E "$MARKERS" "$NOTES" | grep -v -E 'SHA256_DEL_ZIP|SHA256_OF_THE_ZIP' || true)"
+[[ -z "$NOTE_MARKERS" ]] || { echo "Las notas de versión tienen marcadores sin rellenar:"; echo "$NOTE_MARKERS"; exit 1; }
 LAST_BUILD=$(grep -o '<sparkle:version>[0-9]*' appcast.xml 2>/dev/null | grep -o '[0-9]*$' | sort -n | tail -1)
 if [[ -n "$LAST_BUILD" ]] && ! grep -q "<sparkle:shortVersionString>$VERSION<" appcast.xml && (( BUILD <= LAST_BUILD )); then
   echo "El build $BUILD no es mayor que el último publicado ($LAST_BUILD): Sparkle no ofrecería la actualización."
@@ -40,6 +41,10 @@ mkdir -p "$DIST"
 rm -f "$ZIP" "$ZIP.sha256"
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
 (cd "$DIST" && shasum -a 256 "$(basename "$ZIP")" > "$(basename "$ZIP").sha256")
+SHA="$(cut -d' ' -f1 "$ZIP.sha256")"
+perl -i -pe "s/SHA256_DEL_ZIP|SHA256_OF_THE_ZIP/$SHA/g" "$NOTES"
+LEFT="$(grep -n -E "$MARKERS" "$NOTES" || true)"
+[[ -z "$LEFT" ]] || { echo "Quedan marcadores en las notas:"; echo "$LEFT"; exit 1; }
 
 SPARKLE_TOOLS="$(./scripts/fetch-sparkle-tools.sh | tail -1)"
 SIGNATURE="$("$SPARKLE_TOOLS/bin/sign_update" --account notchy "$ZIP")"
@@ -50,3 +55,4 @@ echo "Release lista:"
 echo "  $ZIP ($(du -h "$ZIP" | cut -f1))"
 echo "  SHA-256: $(cut -d' ' -f1 "$ZIP.sha256")"
 echo "  appcast.xml actualizado (firma EdDSA incluida)"
+echo "  $NOTES con el SHA-256 rellenado"

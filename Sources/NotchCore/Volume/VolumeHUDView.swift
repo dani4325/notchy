@@ -22,7 +22,7 @@ struct VolumeHUDView: View {
         HStack(spacing: layout.columnGap) {
             Image(systemName: symbol)
                 .font(.system(size: layout.artworkSide * 0.34, weight: .semibold))
-                .foregroundStyle(appearance.accent)
+                .foregroundStyle(appearance.accentGraphic)
                 .contentTransition(.symbolEffect(.replace))
                 .frame(width: layout.artworkSide * 0.6)
 
@@ -30,12 +30,12 @@ struct VolumeHUDView: View {
                 Text(reading.isMuted ? "SILENCIO" as LocalizedStringKey : "VOLUMEN")
                     .font(appearance.labelFont(layout.labelSize))
                     .tracking(appearance.theme.typography.labelTracking)
-                    .foregroundStyle(appearance.accent)
+                    .foregroundStyle(appearance.accentText)
                 HStack(spacing: layout.unit * 0.06) {
                     ForEach(0..<Self.segments, id: \.self) { index in
                         let lit = Float(index) < level * Float(Self.segments) - 0.001
                         Capsule()
-                            .fill(lit ? AnyShapeStyle(LinearGradient(colors: [appearance.accent, appearance.secondary], startPoint: .bottom, endPoint: .top))
+                            .fill(lit ? AnyShapeStyle(LinearGradient(colors: [appearance.accentGraphic, appearance.secondaryGraphic], startPoint: .bottom, endPoint: .top))
                                       : AnyShapeStyle(appearance.text.opacity(0.14)))
                             .frame(height: layout.unit * 0.42)
                             .shadow(color: lit ? appearance.accent.opacity(0.5) : .clear, radius: layout.unit * 0.08)
@@ -47,7 +47,7 @@ struct VolumeHUDView: View {
 
             Group {
                 if appearance.theme.decoration == .nixieTerminal {
-                    NixieReadoutView(text: "\(percent)", height: layout.titleSize * 1.8, glow: appearance.secondary)
+                    NixieReadoutView(text: "\(percent)", height: layout.titleSize * 1.8, glow: appearance.secondaryText)
                 } else {
                     Text("\(percent)")
                         .font(appearance.titleFont(layout.titleSize * 1.6))

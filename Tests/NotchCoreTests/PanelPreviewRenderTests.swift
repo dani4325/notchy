@@ -21,9 +21,9 @@ struct PanelPreviewRenderTests {
 
     let outputDirectory = URL(fileURLWithPath: ProcessInfo.processInfo.environment["NOTCHY_PREVIEW_DIR"] ?? "/tmp")
 
-    @Test func renderAllVariants() throws {
+    @Test func renderAllVariants() async throws {
         try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
-        let backgroundURL = try Self.makeFaceImage()
+        let backgrounds = [("con-fondo", try Self.makeFaceImage()), ("fondo-blanco", try Self.makeSolidImage(white: 1))]
 
         for (name, notch) in Self.notches {
             try render(name: "\(name)-sin-fondo", notch: notch, theme: .notchyDefault, background: nil)
@@ -33,13 +33,25 @@ struct PanelPreviewRenderTests {
                 accent: HexColor("#7CF5C4")!, secondary: HexColor("#F5D27C")!,
                 panel: HexColor("#120A1E")!, text: HexColor("#FFFFFF")!, source: .manual
             )
-            themed.background = ThemeBackground(
-                media: ThemeMedia(kind: .image, file: "face.png", crop: MediaCrop(zoom: 1.4, focusX: 0.72, focusY: 0.3)),
-                legibility: ThemeBackground.legibilityRange.lowerBound
-            )
-            try render(name: "\(name)-con-fondo", notch: notch, theme: themed,
-                       background: MediaSource(url: backgroundURL, kind: .image))
+            for (suffix, url) in backgrounds {
+                themed.background = ThemeBackground(
+                    media: ThemeMedia(kind: .image, file: url.lastPathComponent, crop: MediaCrop(zoom: 1.4, focusX: 0.72, focusY: 0.3)),
+                    legibility: 0
+                )
+                let source = MediaSource(url: url, kind: .image)
+                await measureBackground(source, theme: themed, notch: notch)
+                try render(name: "\(name)-\(suffix)", notch: notch, theme: themed, background: source)
+            }
         }
+    }
+
+    private func measureBackground(_ source: MediaSource, theme: Theme, notch: CGSize) async {
+        let model = IslandModel(kind: .notch, collapsedSize: notch, stripHeight: notch.height)
+        model.shapeStyle = theme.shape
+        model.state = .expanded
+        let size = CGSize(width: model.currentSize.width, height: max(model.currentSize.height - model.stemHeight, 0))
+        let key = BackgroundMeasurements.key(for: source, crop: theme.background!.media.crop, size: size, backdrop: ScrimPlan.backdrop)
+        await BackgroundMeasurements.shared.measure(key)
     }
 
     @Test func renderAnimeTemplates() throws {
@@ -221,6 +233,20 @@ struct PanelPreviewRenderTests {
         let rep = try #require(NSBitmapImageRep(data: tiff))
         let png = try #require(rep.representation(using: .png, properties: [:]))
         try png.write(to: outputDirectory.appendingPathComponent("\(name).png"))
+    }
+
+    private static func makeSolidImage(white: Double) throws -> URL {
+        let context = try #require(CGContext(
+            data: nil, width: 800, height: 450, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.setFillColor(CGColor(srgbRed: white, green: white, blue: white, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: 800, height: 450))
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("solido-\(white).png")
+        let destination = try #require(CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil))
+        CGImageDestinationAddImage(destination, try #require(context.makeImage()), nil)
+        #expect(CGImageDestinationFinalize(destination))
+        return url
     }
 
     private static func makeFaceImage() throws -> URL {
