@@ -35,7 +35,7 @@ final class MediaContainerView: NSView {
     private var mediaAspect: Double = 1
     private(set) var imageView: NSView?
     private var playerView: NSView?
-    private var player: AVQueuePlayer?
+    private(set) var player: AVQueuePlayer?
     private var looper: AVPlayerLooper?
     private(set) var loadTask: Task<Void, Never>?
 
@@ -57,7 +57,6 @@ final class MediaContainerView: NSView {
         if source != self.source {
             tearDown()
             self.source = source
-            self.isActive = isActive
             load(source)
         }
         if crop != self.crop {

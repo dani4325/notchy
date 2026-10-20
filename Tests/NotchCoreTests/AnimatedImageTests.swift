@@ -77,6 +77,30 @@ struct AnimatedLayerViewTests {
         #expect(layer.speed == 1)
     }
 
+    @Test func aVideoShownWhileActiveStartsPlayingAndShowsItsPoster() async throws {
+        let video = try await GIFTranscoder.transcode(GIFFixture.make())
+        let view = MediaContainerView()
+        view.frame = CGRect(x: 0, y: 0, width: 120, height: 120)
+
+        view.configure(source: MediaSource(url: video, kind: .video), crop: .standard, isActive: true)
+        await view.loadTask?.value
+
+        #expect(view.player?.rate == 1)
+        #expect(view.player != nil)
+    }
+
+    @Test func aVideoShownWhileInactiveKeepsItsPosterVisible() async throws {
+        let video = try await GIFTranscoder.transcode(GIFFixture.make())
+        let view = MediaContainerView()
+        view.frame = CGRect(x: 0, y: 0, width: 120, height: 120)
+
+        view.configure(source: MediaSource(url: video, kind: .video), crop: .standard, isActive: false)
+        await view.loadTask?.value
+
+        #expect(view.player == nil)
+        #expect(view.imageView?.isHidden == false)
+    }
+
     @Test func staticImagesNeverAnimate() async throws {
         let url = try GIFFixture.make(frames: 1)
         let view = MediaContainerView()
