@@ -30,6 +30,7 @@ public final class ThemeStore {
     public private(set) var activeThemeID: String
     public private(set) var overrideThemeID: String?
     private(set) var measurements: [String: BackgroundMeasurement] = [:]
+    public private(set) var unreadableThemes = 0
 
     func setMeasurement(_ measurement: BackgroundMeasurement?, themeID: String) {
         measurements[themeID] = measurement
@@ -277,6 +278,8 @@ public final class ThemeStore {
     }
 
     private func loadAll() -> [Theme] {
+        var unreadable = 0
+        defer { unreadableThemes = unreadable }
         let folders = (try? FileManager.default.contentsOfDirectory(
             at: directory, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]
         )) ?? []
@@ -289,6 +292,7 @@ public final class ThemeStore {
                 return theme
             } catch {
                 Self.logger.error("skipping invalid theme at \(folder.lastPathComponent, privacy: .public)")
+                unreadable += 1
                 return nil
             }
         }

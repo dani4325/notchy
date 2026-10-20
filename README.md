@@ -2,7 +2,7 @@
 
 **Español** · [English](README.en.md)
 
-Notchy convierte el notch de tu MacBook en un panel vivo, al estilo Dynamic Island, pensado para fans del anime: tu música con visualizador, plantillas de tus series favoritas, tus propias imágenes, GIF o vídeos de fondo, una estantería de archivos y avisos de batería y volumen. Gasta 0 % de CPU en reposo.
+Notchy convierte el notch de tu MacBook en un panel vivo, al estilo Dynamic Island, pensado para fans del anime: tu música con visualizador, plantillas de tus series favoritas, tus propias imágenes, GIF o vídeos de fondo, una estantería de archivos y avisos de batería y volumen. En reposo gasta como mucho un 0,1 % de CPU.
 
 ![Notchy con la plantilla Steins;Gate](docs/images/plantilla-steins-gate.png)
 
@@ -81,7 +81,7 @@ Todos son opcionales. Sin ellos Notchy funciona; solo se pierde la función conc
 
 ## Consumo
 
-Notchy no usa temporizadores ni consultas periódicas: todo funciona por eventos del sistema. Con el panel recogido mide 0,00 % de CPU y 0 despertares por minuto. Las animaciones, el vídeo de fondo y el visualizador solo existen mientras el panel está abierto. Detalle en [docs/ENERGIA.md](docs/ENERGIA.md).
+Notchy no usa temporizadores ni consultas periódicas: todo funciona por eventos del sistema. Medido en un MacBook con M4: con el panel recogido, entre 0,00 % y 0,10 % de CPU y de 0 a 3 despertares por minuto; con el panel abierto y música sonando, 1,65 %. El fondo animado y el visualizador solo se mueven con el panel abierto. El acompañante de las alas se mueve mientras suena música, también con el panel recogido. Detalle en [docs/ENERGIA.md](docs/ENERGIA.md).
 
 ## Compilar
 

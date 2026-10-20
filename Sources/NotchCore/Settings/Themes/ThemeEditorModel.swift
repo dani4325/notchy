@@ -11,6 +11,7 @@ public final class ThemeEditorModel {
     public private(set) var undoableDeletion: Theme?
     @ObservationIgnored private var trashedFolder: URL?
     public private(set) var message: String?
+    public private(set) var messageIsError = false
     public private(set) var isExtracting = false
     public private(set) var isMeasuringBackground = false
     public private(set) var backgroundAspect: Double?
@@ -34,6 +35,10 @@ public final class ThemeEditorModel {
         previewModel = IslandModel(kind: .notch, collapsedSize: notch, stripHeight: notch.height)
         previewModel.state = .expanded
         select(themeID: store.activeThemeID)
+        if store.unreadableThemes > 0 {
+            let count = store.unreadableThemes.formatted()
+            fail(String(localized: "\(count) temas no se han podido leer y no aparecen en la lista."))
+        }
     }
 
     public var isEditingActiveTheme: Bool {
@@ -112,7 +117,7 @@ public final class ThemeEditorModel {
         do {
             try store.save(draft)
         } catch {
-            message = String(localized: "No se ha podido guardar el tema.")
+            fail(String(localized: "No se ha podido guardar el tema."))
         }
     }
 
@@ -142,6 +147,18 @@ public final class ThemeEditorModel {
                 self?.setColor(keyPath, to: HexColor(rgb: rgb))
             }
         )
+    }
+
+    var contrastIssues: [PaletteContrastIssue] {
+        draft.map { PaletteContrastCheck.issues(in: $0.palette) } ?? []
+    }
+
+    func applyCorrection(_ issue: PaletteContrastIssue) {
+        switch issue.role {
+        case .accent: setColor(\.accent, to: issue.corrected)
+        case .secondary: setColor(\.secondary, to: issue.corrected)
+        case .text: setColor(\.text, to: issue.corrected)
+        }
     }
 
     public func activate() {
@@ -177,7 +194,7 @@ public final class ThemeEditorModel {
     public func delete(themeID: String) {
         guard !store.isBuiltIn(themeID), let theme = store.theme(id: themeID) else { return }
         flush()
-        perform(String(localized: "No se puede borrar el único tema que queda.")) {
+        perform(String(localized: "No se ha podido mover el tema a la Papelera.")) {
             trashedFolder = try store.delete(themeID: themeID)
             undoableDeletion = theme
             if draft?.id == themeID {
@@ -198,7 +215,7 @@ public final class ThemeEditorModel {
 
     func applyBackground(from original: URL, themeID: String) async {
         guard var kind = try? MediaKind.detect(at: original) else {
-            message = String(localized: "Ese archivo no se puede usar como fondo.")
+            fail(String(localized: "Ese archivo no se puede usar como fondo."))
             return
         }
         isMeasuringBackground = true
@@ -210,7 +227,7 @@ public final class ThemeEditorModel {
             } catch {
                 isMeasuringBackground = false
                 Self.logger.error("gif transcoding failed: \(String(describing: error), privacy: .public)")
-                message = String(localized: "No se ha podido convertir el GIF a vídeo.")
+                fail(String(localized: "No se ha podido convertir el GIF a vídeo."))
                 return
             }
         }
@@ -218,7 +235,7 @@ public final class ThemeEditorModel {
         let measurement = await BackgroundMeasurer.measureInBackground(url, kind: kind)
         isMeasuringBackground = false
         guard let measurement else {
-            message = String(localized: "No se ha podido medir el fondo para garantizar el contraste. Prueba con otro archivo.")
+            fail(String(localized: "No se ha podido medir el fondo para garantizar el contraste. Prueba con otro archivo."))
             return
         }
         perform(String(localized: "Ese archivo no se puede usar como fondo.")) {
@@ -250,7 +267,7 @@ public final class ThemeEditorModel {
             guard let self else { return }
             self.isExtracting = false
             guard self.draft?.id == theme.id, !clusters.isEmpty else {
-                if clusters.isEmpty { self.message = String(localized: "No se han podido leer los colores del fondo.") }
+                if clusters.isEmpty { self.fail(String(localized: "No se han podido leer los colores del fondo.")) }
                 return
             }
             self.applyExtracted(PaletteBuilder.palette(from: clusters), force: force)
@@ -271,10 +288,10 @@ public final class ThemeEditorModel {
                 try await Task.detached(priority: .userInitiated) {
                     try ThemeStore.writeArchive(theme: payload, mediaURL: media, to: url)
                 }.value
-                self?.message = String(localized: "Tema exportado.")
+                self?.inform(String(localized: "Tema exportado."))
             } catch {
                 Self.logger.error("export failed: \(String(describing: error), privacy: .public)")
-                self?.message = String(localized: "No se ha podido exportar el tema.")
+                self?.fail(String(localized: "No se ha podido exportar el tema."))
             }
         }
     }
@@ -297,13 +314,13 @@ public final class ThemeEditorModel {
             }.value
             let theme = try store.finishImport(staged, id: destination.id)
             select(themeID: theme.id)
-            message = String(localized: "Tema «\(theme.name)» importado.")
+            inform(String(localized: "Tema «\(theme.name)» importado."))
             Task { await store.measureMissing() }
             return true
         } catch {
             Self.logger.error("import failed: \(String(describing: error), privacy: .public)")
             try? FileManager.default.removeItem(at: destination.folder)
-            message = String(localized: "Ese archivo no es un tema válido de Notchy.")
+            fail(String(localized: "Ese archivo no es un tema válido de Notchy."))
             return false
         }
     }
@@ -344,7 +361,28 @@ public final class ThemeEditorModel {
             try action()
         } catch {
             Self.logger.error("\(failure, privacy: .public): \(String(describing: error), privacy: .public)")
-            message = failure
+            fail(Self.describe(error, fallback: failure))
+        }
+    }
+
+    func fail(_ text: String) {
+        message = text
+        messageIsError = true
+    }
+
+    func inform(_ text: String) {
+        message = text
+        messageIsError = false
+    }
+
+    static func describe(_ error: Error, fallback: String) -> String {
+        switch error as? ThemeStore.StoreError {
+        case .lastTheme: String(localized: "No se puede borrar el único tema que queda.")
+        case .unsupportedMedia: String(localized: "Ese archivo no es una imagen, un GIF ni un vídeo compatible.")
+        case .mediaTooLarge: String(localized: "El archivo supera los 200 MB.")
+        case .builtInTheme: String(localized: "Los temas incluidos no se pueden cambiar. Duplica el tema para editarlo.")
+        case .writeFailed: String(localized: "\(fallback) No se ha podido escribir en el disco. Comprueba que queda espacio libre.")
+        case .unknownTheme, nil: fallback
         }
     }
 }

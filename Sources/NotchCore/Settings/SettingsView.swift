@@ -39,56 +39,38 @@ public struct SettingsView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            header
-            Divider().overlay(NotchyStyle.accent.opacity(0.4))
-            switch router.section {
-            case .themes:
-                ThemesSettingsView(editor: editor, nowPlaying: nowPlaying)
-            case .general:
-                GeneralSettingsView(nowPlaying: nowPlaying, companion: companion, accessibility: accessibility,
-                                    loginItem: loginItem, autoThemes: autoThemes, themes: editor.store, shelf: shelf,
-                                    updater: updater)
-                    .onAppear(perform: loginItem.refresh)
-            }
+        TabView(selection: Bindable(router).section) {
+            ThemesSettingsView(editor: editor, nowPlaying: nowPlaying)
+                .frame(width: Self.themesSize.width, height: Self.themesSize.height)
+                .tabItem { Label(SettingsSection.themes.title, systemImage: "paintpalette") }
+                .tag(SettingsSection.themes)
+            GeneralSettingsView(
+                nowPlaying: nowPlaying, companion: companion, accessibility: accessibility,
+                loginItem: loginItem, autoThemes: autoThemes, themes: editor.store, shelf: shelf,
+                updater: updater, showWelcome: showWelcome
+            )
+            .frame(width: Self.generalSize.width, height: Self.generalSize.height)
+            .onAppear(perform: loginItem.refresh)
+            .tabItem { Label(SettingsSection.general.title, systemImage: "gearshape") }
+            .tag(SettingsSection.general)
         }
-        .frame(width: 900, height: 680)
-        .background(Color(nsColor: .windowBackgroundColor))
         .tint(NotchyStyle.accent)
         .onDisappear { editor.flush() }
     }
 
-    private var header: some View {
-        HStack(spacing: 12) {
-            Image(nsImage: MenuBarIcon.image)
-                .renderingMode(.template)
-                .foregroundStyle(NotchyStyle.accent)
-                .scaleEffect(1.6)
-                .frame(width: 36, height: 36)
-                .background(.black, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(AppInfo.name.uppercased())
-                    .font(.system(size: 15, weight: .black, design: .rounded))
-                    .tracking(2)
-                Text("v\(AppInfo.version) · ajustes")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button("Ver la bienvenida") {
-                onboarding.restart()
-                openWindow(id: OnboardingModel.windowID)
-            }
-            .buttonStyle(.borderless)
-            Picker("Sección", selection: Bindable(router).section) {
-                ForEach(SettingsSection.allCases, id: \.self) { section in
-                    Text(section.title).tag(section)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(width: 220)
-        }
-        .padding(16)
+    private static let themesSize = CGSize(width: 900, height: 640)
+    private static let generalSize = CGSize(width: 560, height: 640)
+
+    private func showWelcome() {
+        onboarding.restart()
+        openWindow(id: OnboardingModel.windowID)
+    }
+}
+
+extension View {
+    func settingsFooter() -> some View {
+        foregroundStyle(.secondary)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

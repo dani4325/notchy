@@ -65,6 +65,17 @@ struct ShelfStoreTests {
         #expect(store.items.map(\.name) == ["c.txt"])
     }
 
+    @Test func filesThatCannotBeBookmarkedAreNotCountedAndLeaveAVisibleError() {
+        let store = makeStore()
+        let missing = files.appendingPathComponent("no-existe-\(UUID().uuidString).txt")
+
+        let added = store.add([missing])
+
+        #expect(added == 0)
+        #expect(store.items.isEmpty)
+        #expect(store.lastError != nil)
+    }
+
     @Test func addingFilesKeepsReferencesNotCopies() throws {
         let store = makeStore()
         let file = try makeFile("notas.txt")

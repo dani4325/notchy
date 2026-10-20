@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 import os
@@ -86,9 +87,21 @@ public final class AudioVisualizer {
             }
         } else {
             silentSince = nil
+            confirmCapture()
         }
         levels = SpectrumAnalyzer.smooth(previous: levels, next: newLevels)
         publish()
+    }
+
+    public static let captureSettingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AudioCapture")!
+
+    public static func openCaptureSettings() {
+        NSWorkspace.shared.open(captureSettingsURL)
+    }
+
+    private func confirmCapture() {
+        guard !UserDefaults.standard.bool(forKey: Preferences.Key.audioCaptureConfirmed) else { return }
+        UserDefaults.standard.set(true, forKey: Preferences.Key.audioCaptureConfirmed)
     }
 
     func observeLevels(_ handler: @escaping ([Float]) -> Void) -> UUID {

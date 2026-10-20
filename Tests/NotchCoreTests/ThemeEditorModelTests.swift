@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import Testing
 @testable import NotchCore
 
@@ -59,6 +60,40 @@ struct ThemeEditorModelTests {
 
         #expect(companion.source?.kind == .video)
         #expect(companion.lastError == nil)
+    }
+
+    @Test func aManualAccentThatFailsShowsAWarningUntilTheCorrectionIsApplied() throws {
+        let editor = ThemeEditorModel(store: store)
+        let theme = try store.createTheme(named: "Colores")
+        editor.select(themeID: theme.id)
+
+        editor.colorBinding(\.accent).wrappedValue = Color(.sRGB, red: 0x1E / 255, green: 0x3A / 255, blue: 0xFF / 255)
+
+        let issue = try #require(editor.contrastIssues.first { $0.role == .accent })
+        editor.applyCorrection(issue)
+
+        #expect(editor.contrastIssues.contains { $0.role == .accent } == false)
+        #expect(editor.draft?.palette.source == .manual)
+    }
+
+    @Test func storeErrorsBecomeMessagesThatSayWhatHappened() {
+        let fallback = "No se ha podido crear el tema."
+
+        #expect(ThemeEditorModel.describe(ThemeStore.StoreError.lastTheme, fallback: fallback).contains("único tema"))
+        #expect(ThemeEditorModel.describe(ThemeStore.StoreError.mediaTooLarge, fallback: fallback).contains("200 MB"))
+        #expect(ThemeEditorModel.describe(ThemeStore.StoreError.writeFailed, fallback: fallback).hasPrefix(fallback))
+        #expect(ThemeEditorModel.describe(CocoaError(.fileNoSuchFile), fallback: fallback) == fallback)
+    }
+
+    @Test func deletingTheOnlyThemeExplainsWhyAndIsShownAsAnError() throws {
+        let editor = ThemeEditorModel(store: store)
+        let onlyTheme = try #require(store.themes.first { !store.isBuiltIn($0.id) })
+
+        editor.delete(themeID: onlyTheme.id)
+
+        #expect(editor.message?.contains("único tema") == true)
+        #expect(editor.messageIsError)
+        #expect(store.theme(id: onlyTheme.id) != nil)
     }
 
     @Test func startsEditingTheActiveTheme() {

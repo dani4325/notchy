@@ -7,6 +7,7 @@ public struct OnboardingView: View {
     private let themes: ThemeStore
 
     @Environment(\.dismissWindow) private var dismissWindow
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(model: OnboardingModel, accessibility: AccessibilityPermission, loginItem: LoginItem, themes: ThemeStore) {
         self.model = model
@@ -21,7 +22,7 @@ public struct OnboardingView: View {
                 .padding(.top, 22)
             Group {
                 switch model.step {
-                case .welcome: WelcomeStep()
+                case .welcome: WelcomeStep(themes: themes)
                 case .permissions: PermissionsStep(accessibility: accessibility, loginItem: loginItem)
                 case .theme: ThemeStep(themes: themes)
                 case .tryIt: TryStep(model: model)
@@ -30,7 +31,7 @@ public struct OnboardingView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, 36)
             .transition(.opacity)
-            .animation(.smooth(duration: 0.25), value: model.step)
+            .animation(reduceMotion ? nil : .smooth(duration: 0.25), value: model.step)
 
             HStack {
                 if model.step != .welcome {
@@ -55,10 +56,7 @@ public struct OnboardingView: View {
             .padding(20)
         }
         .frame(width: 640, height: 500)
-        .background(
-            LinearGradient(colors: [Color(white: 0.12), Color(white: 0.06)], startPoint: .top, endPoint: .bottom)
-        )
-        .environment(\.colorScheme, .dark)
+        .background(Color(nsColor: .windowBackgroundColor))
         .tint(NotchyStyle.accent)
     }
 }
@@ -66,70 +64,70 @@ public struct OnboardingView: View {
 private struct StepDots: View {
     let current: OnboardingStep
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         HStack(spacing: 8) {
             ForEach(OnboardingStep.allCases, id: \.self) { step in
                 Capsule()
-                    .fill(step == current ? NotchyStyle.accent : Color.white.opacity(0.2))
+                    .fill(step == current ? AnyShapeStyle(NotchyStyle.accent) : AnyShapeStyle(.quaternary))
                     .frame(width: step == current ? 22 : 8, height: 8)
             }
         }
-        .animation(.snappy, value: current)
+        .animation(reduceMotion ? nil : .snappy, value: current)
         .accessibilityHidden(true)
     }
 }
 
 private struct WelcomeStep: View {
+    let themes: ThemeStore
+
     var body: some View {
-        VStack(spacing: 22) {
-            NotchSketch()
-                .frame(width: 300, height: 110)
-            VStack(spacing: 8) {
+        VStack(spacing: 24) {
+            PanelPreview(themes: themes)
+            VStack(spacing: 10) {
                 Text("Tu notch, a tu manera")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
-                Text("Notchy convierte el notch en un panel vivo con tu música, tus temas y tus archivos.")
-                    .font(.system(size: 14))
+                    .font(.largeTitle.bold())
+                Text("Muestra la canción que suena con sus controles, guarda los archivos que arrastras al notch y avisa del cargador y del volumen.")
+                    .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-            }
-            HStack(alignment: .top, spacing: 18) {
-                Feature(symbol: "music.note", title: "Música", detail: "Carátula, controles y visualizador")
-                Feature(symbol: "paintpalette", title: "Temas", detail: "Plantillas de anime y tus propias imágenes")
-                Feature(symbol: "tray.full", title: "Estantería", detail: "Deja archivos en el notch")
+                    .frame(maxWidth: 460)
             }
         }
     }
 }
 
-private struct Feature: View {
-    let symbol: String
-    let title: LocalizedStringKey
-    let detail: LocalizedStringKey
+private struct PanelPreview: View {
+    let themes: ThemeStore
+
+    private static let scale: CGFloat = 0.8
+    private static let sample = NowPlayingInfo(
+        title: String(localized: "Canción de ejemplo"), artist: String(localized: "Tu artista favorito"), album: nil, duration: 214,
+        elapsed: 71, timestamp: .now, playbackRate: 0, isPlaying: false, appBundleID: "", artworkData: nil
+    )
 
     var body: some View {
-        VStack(spacing: 6) {
-            Image(systemName: symbol)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(NotchyStyle.accent)
-            Text(title).font(.system(size: 13, weight: .semibold))
-            Text(detail)
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+        let theme = themes.activeTheme
+        let appearance = ThemeAppearance.resolve(theme, in: themes)
+        let model = IslandModel(kind: .notch, collapsedSize: IslandLayout.referenceNotch, stripHeight: IslandLayout.referenceNotch.height)
+        model.shapeStyle = theme.shape
+        model.state = .expanded
+        let size = model.currentSize
+        let layout = model.layout
+
+        return ZStack(alignment: .top) {
+            IslandSurface(model: model, appearance: appearance, showOutline: false)
+            ExpandedMusicView(layout: layout, info: Self.sample, artwork: nil, appName: nil, controls: .inert)
+                .allowsHitTesting(false)
+                .padding(.top, layout.stem.height)
         }
-        .frame(width: 150)
-    }
-}
-
-private struct NotchSketch: View {
-    var body: some View {
-        let layout = IslandLayout(notch: CGSize(width: 110, height: 22), shape: .standard)
-        layout.islandShape
-            .fill(.black)
-            .overlay(layout.islandShape.stroke(NotchyStyle.accent.opacity(0.6), lineWidth: 1))
-            .frame(width: layout.size.width, height: layout.size.height)
-            .shadow(color: NotchyStyle.accent.opacity(0.35), radius: 18)
-            .accessibilityHidden(true)
+        .frame(width: size.width, height: size.height, alignment: .top)
+        .environment(\.themeAppearance, appearance)
+        .scaleEffect(Self.scale, anchor: .top)
+        .frame(width: size.width * Self.scale, height: size.height * Self.scale, alignment: .top)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Vista previa del panel con una canción de ejemplo")
     }
 }
 
@@ -137,87 +135,95 @@ private struct PermissionsStep: View {
     let accessibility: AccessibilityPermission
     let loginItem: LoginItem
 
+    @AppStorage(Preferences.Key.audioCaptureConfirmed) private var audioConfirmed = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Permisos")
-                .font(.system(size: 24, weight: .black, design: .rounded))
+                .font(.title.bold())
             Text("Todos son opcionales. Puedes darlos ahora o más tarde desde Ajustes.")
-                .font(.system(size: 13))
+                .font(.body)
                 .foregroundStyle(.secondary)
             PermissionRow(
                 symbol: "hand.raised",
                 title: "Accesibilidad",
                 detail: "Oculta las alas cuando chocan con los menús y sustituye el aviso de volumen de macOS.",
-                isGranted: accessibility.isTrusted,
-                action: accessibility.request
-            )
+                isGranted: accessibility.isTrusted
+            ) {
+                Button("Dar permiso", action: accessibility.request)
+            }
             PermissionRow(
                 symbol: "waveform",
                 title: "Audio del sistema",
-                detail: "Anima el visualizador con la música que suena. No graba ni guarda nada.",
-                isGranted: false,
-                action: AudioVisualizer.requestPermission
-            )
+                detail: "Anima el visualizador con la música que suena. No graba ni guarda nada. Se marca como concedido cuando Notchy recibe audio por primera vez.",
+                isGranted: audioConfirmed,
+                pendingStatus: "Sin comprobar"
+                ) {
+                Button("Pedir permiso", action: AudioVisualizer.requestPermission)
+                Button("Abrir Ajustes", action: AudioVisualizer.openCaptureSettings)
+            }
             PermissionRow(
                 symbol: "power",
                 title: "Abrir al iniciar sesión",
                 detail: "Notchy arranca solo cuando entras en tu Mac.",
-                isGranted: loginItem.state.isOn,
-                buttonTitle: "Activar",
-                action: { loginItem.setEnabled(true) }
-            )
+                isGranted: loginItem.state.isOn
+            ) {
+                Button("Activar") { loginItem.setEnabled(true) }
+            }
             Text("Si algún día falla la lectura de la música, macOS te pedirá permiso para controlar Spotify o Música.")
-                .font(.system(size: 11))
-                .foregroundStyle(.tertiary)
+                .font(.callout)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-private struct PermissionRow: View {
+private struct PermissionRow<Actions: View>: View {
     let symbol: String
     let title: LocalizedStringKey
     let detail: LocalizedStringKey
     let isGranted: Bool
-    var buttonTitle: LocalizedStringKey = "Dar permiso"
-    let action: () -> Void
+    var pendingStatus: LocalizedStringKey?
+    @ViewBuilder let actions: () -> Actions
 
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: symbol)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(NotchyStyle.accent)
-                .frame(width: 34, height: 34)
-                .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .frame(width: 28)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 13, weight: .semibold))
-                Text(detail).font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(title).font(.headline)
+                Text(detail).font(.callout).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             if isGranted {
                 Label("Concedido", systemImage: "checkmark.circle.fill")
-                    .labelStyle(.iconOnly)
                     .foregroundStyle(.green)
-                    .accessibilityLabel("Concedido")
             } else {
-                Button(buttonTitle, action: action)
+                HStack {
+                    if let pendingStatus {
+                        Text(pendingStatus).foregroundStyle(.secondary)
+                    }
+                    actions()
+                }
             }
         }
-        .padding(12)
-        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .padding(.vertical, 4)
     }
 }
 
 private struct ThemeStep: View {
     let themes: ThemeStore
 
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Elige tu tema")
-                .font(.system(size: 24, weight: .black, design: .rounded))
+                .font(.title.bold())
             Text("Puedes cambiarlo cuando quieras y añadir tus propias imágenes, GIF o vídeos.")
-                .font(.system(size: 13))
+                .font(.body)
                 .foregroundStyle(.secondary)
             List(selection: Binding(
                 get: { themes.activeThemeID as String? },
@@ -228,8 +234,7 @@ private struct ThemeStep: View {
                         .tag(theme.id as String?)
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
+            .listStyle(.sidebar)
         }
     }
 }
@@ -240,29 +245,29 @@ private struct ThemeChip: View {
 
     var body: some View {
         let appearance = ThemeAppearance(theme: theme, background: nil)
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 4) {
+        HStack(spacing: 10) {
+            HStack(spacing: 3) {
                 ForEach([appearance.accent, appearance.secondary, appearance.text], id: \.self) { color in
-                    Circle().fill(color).frame(width: 9, height: 9)
-                }
-                Spacer()
-                if let emblem = theme.emblem {
-                    EmblemView(emblem: emblem, size: 22, appearance: appearance)
+                    Circle().fill(color).frame(width: 8, height: 8)
                 }
             }
+            .padding(6)
+            .background(appearance.panel, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .accessibilityHidden(true)
             Text(theme.name)
-                .font(.custom(theme.typography.family ?? "", size: 12).weight(.semibold))
-                .foregroundStyle(appearance.text)
-                .lineLimit(2)
-                .frame(maxWidth: .infinity, minHeight: 30, alignment: .topLeading)
+                .font(appearance.titleFont(13))
+                .lineLimit(1)
+            Spacer()
+            if isActive {
+                Image(systemName: "checkmark")
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
         }
-        .padding(10)
-        .background(LinearGradient(colors: [.black, appearance.panel], startPoint: .top, endPoint: .bottom), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(isActive ? NotchyStyle.accent : Color.white.opacity(0.1), lineWidth: isActive ? 2 : 1))
-        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .padding(.vertical, 2)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(theme.name)
-        .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
+        .accessibilityAddTraits(isActive ? .isSelected : [])
     }
 }
 
@@ -271,17 +276,14 @@ private struct TryStep: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Image(systemName: "cursorarrow.motionlines")
-                .font(.system(size: 42, weight: .semibold))
-                .foregroundStyle(NotchyStyle.accent)
             Text("Pruébalo")
-                .font(.system(size: 26, weight: .black, design: .rounded))
+                .font(.largeTitle.bold())
             Text("Pasa el ratón por el notch para abrir el panel. Arrastra archivos hasta él para guardarlos en la estantería.")
-                .font(.system(size: 14))
+                .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 420)
-            Button("Abrir el panel ahora", systemImage: "sparkles", action: model.tryPanel)
+            Button("Abrir el panel ahora", action: model.tryPanel)
                 .controlSize(.large)
         }
     }

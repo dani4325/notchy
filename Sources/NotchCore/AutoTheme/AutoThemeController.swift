@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 @Observable
 public final class AutoThemeController {
     public private(set) var rules: AutoThemeRules
+    public private(set) var problem: String?
 
     @ObservationIgnored private let store: ThemeStore
     @ObservationIgnored private let defaults: UserDefaults
@@ -21,8 +22,17 @@ public final class AutoThemeController {
     public init(store: ThemeStore, defaults: UserDefaults = .standard) {
         self.store = store
         self.defaults = defaults
-        rules = defaults.data(forKey: Self.rulesKey)
-            .flatMap { try? JSONDecoder().decode(AutoThemeRules.self, from: $0) } ?? .empty
+        guard let data = defaults.data(forKey: Self.rulesKey) else {
+            rules = .empty
+            return
+        }
+        do {
+            rules = try JSONDecoder().decode(AutoThemeRules.self, from: data)
+        } catch {
+            Self.logger.error("unreadable rules: \(error.localizedDescription, privacy: .public)")
+            rules = .empty
+            problem = String(localized: "Las reglas guardadas estaban dañadas y se han reiniciado. Vuelve a crearlas.")
+        }
     }
 
     public func start() {
@@ -104,8 +114,10 @@ public final class AutoThemeController {
         rules = updated
         do {
             defaults.set(try JSONEncoder().encode(updated), forKey: Self.rulesKey)
+            problem = nil
         } catch {
             Self.logger.error("rules save failed: \(error.localizedDescription, privacy: .public)")
+            problem = String(localized: "No se han podido guardar las reglas. Se perderán al cerrar Notchy.")
         }
         evaluate()
     }

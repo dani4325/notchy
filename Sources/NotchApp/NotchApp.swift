@@ -10,9 +10,10 @@ struct NotchApp: App {
             StatusMenu(updater: appDelegate.updater)
         } label: {
             Image(nsImage: MenuBarIcon.image)
+                .accessibilityLabel(AppInfo.name)
         }
 
-        Window(AppInfo.name, id: StatusMenu.settingsWindowID) {
+        Settings {
             SettingsView(
                 nowPlaying: appDelegate.nowPlaying,
                 companion: appDelegate.companion,
@@ -26,8 +27,6 @@ struct NotchApp: App {
                 updater: appDelegate.updater
             )
         }
-        .windowResizability(.contentSize)
-        .defaultLaunchBehavior(.suppressed)
 
         Window(AppInfo.name, id: OnboardingModel.windowID) {
             OnboardingView(
@@ -45,15 +44,13 @@ struct NotchApp: App {
 }
 
 struct StatusMenu: View {
-    static let settingsWindowID = "settings"
-
     let updater: SparkleUpdater
 
-    @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         Button("Ajustes…") {
-            openWindow(id: Self.settingsWindowID)
+            openSettings()
             NSApp.activate()
         }
         .keyboardShortcut(",")

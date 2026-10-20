@@ -93,13 +93,13 @@ struct ThemePreviewView: View {
     private var toolbar: some View {
         HStack(spacing: 10) {
             Text(theme.name)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.headline)
                 .lineLimit(1)
             if let message = editor.message {
                 Text(message)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .font(.callout)
+                    .foregroundStyle(editor.messageIsError ? AnyShapeStyle(.red) : AnyShapeStyle(.secondary))
+                    .lineLimit(2)
             }
             Spacer(minLength: 8)
             Button(action: editor.replayOpening) {
@@ -113,6 +113,6 @@ struct ThemePreviewView: View {
                     .buttonStyle(.borderedProminent)
             }
         }
-        .font(.system(size: 12))
+        .font(.callout)
     }
 }

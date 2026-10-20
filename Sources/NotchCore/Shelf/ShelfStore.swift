@@ -18,6 +18,7 @@ public final class ShelfStore {
 
     public private(set) var items: [ShelfItem] = []
     public private(set) var limit: Int
+    public private(set) var lastError: String?
 
     @ObservationIgnored private let directory: URL
     private static let logger = Logger(subsystem: "com.danirubio.notchy", category: "shelf")
@@ -39,8 +40,10 @@ public final class ShelfStore {
         refresh()
     }
 
-    public func add(_ urls: [URL]) {
+    @discardableResult
+    public func add(_ urls: [URL]) -> Int {
         var updated = items
+        var failed = 0
         for url in urls where url.isFileURL {
             let standardized = url.standardizedFileURL
             guard !updated.contains(where: { resolvedURL(for: $0)?.standardizedFileURL == standardized }) else { continue }
@@ -49,10 +52,17 @@ public final class ShelfStore {
                 updated.append(ShelfItem(id: UUID(), name: standardized.lastPathComponent, bookmark: bookmark, copyFileName: nil))
             } catch {
                 Self.logger.error("bookmark failed: \(error.localizedDescription, privacy: .public)")
+                failed += 1
             }
-        }
-        commit(trimmed(updated))
-    }
+            }
+            let added = updated.count - items.count
+            commit(trimmed(updated))
+            if failed > 0 {
+                let count = failed.formatted()
+            lastError = String(localized: "No se ha podido guardar el acceso a \(count) archivos.")
+            }
+            return added
+            }
 
     public func remove(_ id: UUID) {
         let removed = items.filter { $0.id == id }
@@ -141,9 +151,11 @@ public final class ShelfStore {
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try JSONEncoder().encode(updated).write(to: indexURL, options: .atomic)
-        } catch {
-            Self.logger.error("shelf save failed: \(error.localizedDescription, privacy: .public)")
-        }
+                lastError = nil
+            } catch {
+                Self.logger.error("shelf save failed: \(error.localizedDescription, privacy: .public)")
+                lastError = String(localized: "No se ha podido guardar la estantería. Se perderá al cerrar Notchy.")
+            }
     }
 
     private func load() {

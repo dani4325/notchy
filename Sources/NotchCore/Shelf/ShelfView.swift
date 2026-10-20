@@ -70,7 +70,7 @@ struct ShelfView: View {
             .accessibilityLabel("Vaciar la estantería")
             .help("Vaciar la estantería")
         }
-        .buttonStyle(TransportButtonStyle(diameter: layout.controlDiameter, tint: appearance.text, pressed: appearance.accentGraphic))
+        .buttonStyle(TransportButtonStyle(diameter: layout.controlDiameter, spacing: layout.controlSpacing, tint: appearance.text, pressed: appearance.accentGraphic))
     }
 
     private var tileRow: some View {
@@ -151,8 +151,11 @@ struct PageToggleButton: View {
             .frame(height: layout.unit * 0.48)
             .background(appearance.text.opacity(0.1), in: Capsule())
             .foregroundStyle(appearance.text.opacity(0.85))
-        }
-        .buttonStyle(.plain)
+            .frame(minWidth: TransportButtonStyle.minimumTarget, minHeight: TransportButtonStyle.minimumTarget)
+            .contentShape(Rectangle())
+            .padding(.vertical, (layout.unit * 0.48 - TransportButtonStyle.minimumTarget) / 2)
+            }
+            .buttonStyle(.plain)
         .accessibilityLabel(page == .shelf ? Text("Volver a la música") : Text("Abrir la estantería"))
     }
 }

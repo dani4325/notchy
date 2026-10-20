@@ -49,10 +49,12 @@ struct IslandLayout: Equatable {
     var artworkSide: CGFloat { min(bodyHeight - 2 * padding, unit * Self.maxArtworkRatio) }
     var artworkCorner: CGFloat { artworkSide * Self.artworkCornerRatio }
 
-    var titleSize: CGFloat { unit * Self.titleRatio }
-    var subtitleSize: CGFloat { unit * Self.subtitleRatio }
+    static let minimumTextSize: CGFloat = 10
+
+    var titleSize: CGFloat { max(unit * Self.titleRatio, Self.minimumTextSize) }
+    var subtitleSize: CGFloat { max(unit * Self.subtitleRatio, Self.minimumTextSize) }
     var labelSize: CGFloat { unit * Self.labelRatio }
-    var timeSize: CGFloat { unit * Self.timeRatio }
+    var timeSize: CGFloat { max(unit * Self.timeRatio, Self.minimumTextSize) }
     var textSpacing: CGFloat { unit * Self.textSpacingRatio }
     var progressHeight: CGFloat { unit * Self.progressRatio }
     var progressGap: CGFloat { unit * Self.progressGapRatio }

@@ -43,9 +43,9 @@ struct ThemeEditorView: View {
                 .foregroundStyle(NotchyStyle.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Plantilla incluida")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.headline)
                 Text("Duplícala para añadir tu propia imagen, GIF o vídeo del anime y ajustarla a tu gusto.")
-                    .font(.system(size: 11))
+                    .font(.callout)
                     .foregroundStyle(.secondary)
             }
             Spacer()
@@ -120,7 +120,7 @@ private struct BackgroundSection: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     VStack(alignment: .leading, spacing: 6) {
                         Text(kindLabel(background.media.kind))
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.headline)
                         HStack {
                             Button("Cambiar…", action: editor.chooseBackground)
                             Button("Quitar", role: .destructive, action: editor.clearBackground)
@@ -145,7 +145,7 @@ private struct BackgroundSection: View {
                     Text(Self.contrastNote(kind: kind, appearance: ThemeAppearance(theme: theme, background: nil)))
                 }
             }
-            .foregroundStyle(.secondary)
+            .settingsFooter()
         }
     }
 
@@ -197,12 +197,53 @@ private struct PaletteSection: View {
             ColorPicker("Secundario", selection: editor.colorBinding(\.secondary), supportsOpacity: false)
             ColorPicker("Panel", selection: editor.colorBinding(\.panel), supportsOpacity: false)
             ColorPicker("Texto", selection: editor.colorBinding(\.text), supportsOpacity: false)
+            ForEach(editor.contrastIssues, id: \.role) { issue in
+                ContrastIssueRow(issue: issue) { editor.applyCorrection(issue) }
+            }
         } header: {
             Text("Colores")
         } footer: {
             Text("Al tocar un color la paleta pasa a manual y deja de seguir al fondo.")
-                .foregroundStyle(.secondary)
+                .settingsFooter()
         }
+    }
+}
+
+private struct ContrastIssueRow: View {
+    let issue: PaletteContrastIssue
+    let apply: () -> Void
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.yellow)
+                .accessibilityHidden(true)
+            Text(message)
+                .font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Button("Usar versión corregida", action: apply)
+        }
+    }
+
+    private var ratio: String { issue.ratio.formatted(.number.precision(.fractionLength(1))) }
+
+    private var name: String {
+        switch issue.role {
+        case .accent: String(localized: "El acento")
+        case .secondary: String(localized: "El secundario")
+        case .text: String(localized: "El texto secundario")
+        }
+    }
+
+    private var message: LocalizedStringKey {
+        if issue.role == .text {
+            return "\(name) tiene \(ratio):1 sobre el panel y no llega al mínimo para texto (4,5:1)."
+        }
+        if issue.failsGraphic {
+            return "\(name) tiene \(ratio):1 sobre el panel. No llega al mínimo para texto (4,5:1) ni para barras e iconos (3:1)."
+        }
+        return "\(name) tiene \(ratio):1 sobre el panel. Sirve para barras e iconos (mínimo 3:1), pero no para texto (mínimo 4,5:1)."
     }
 }
 
@@ -229,7 +270,6 @@ private struct TypographySection: View {
                     Text(weight.label).tag(weight)
                 }
             }
-            LabeledSlider("Espaciado de etiquetas", value: editor.binding(\.typography.labelTracking, fallback: 2), range: 0...8)
         }
     }
 }
@@ -248,7 +288,7 @@ private struct ShapeSection: View {
             Text("Forma del panel")
         } footer: {
             Text("Las medidas son proporciones del notch, así que el panel se ve igual en cualquier MacBook.")
-                .foregroundStyle(.secondary)
+                .settingsFooter()
         }
     }
 }
@@ -277,7 +317,7 @@ private struct LabeledSlider: View {
                     Slider(value: value, in: range)
                 }
                 Text(formatted)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.callout.monospacedDigit())
                     .foregroundStyle(.secondary)
                     .frame(width: 44, alignment: .trailing)
             }

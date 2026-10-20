@@ -74,11 +74,13 @@ struct BackgroundMediaView: View {
     let crop: MediaCrop
     let size: CGSize
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         if source.kind == .image, let image = MediaImageCache.image(at: source.url) {
             CroppedImageView(image: image, crop: crop, size: size)
         } else {
-            MediaView(source: source, crop: crop, isActive: true)
+            MediaView(source: source, crop: crop, isActive: !reduceMotion)
                 .frame(width: size.width, height: size.height)
         }
     }

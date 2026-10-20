@@ -17,13 +17,20 @@ enum ContrastCorrection {
     private static let roundingStep = 0.002
 
     static func corrected(_ color: HexColor, against panel: HexColor, for use: Use) -> HexColor {
-        guard color.contrastRatio(with: panel) < use.minimumRatio else { return color }
-        return HexColor(rgb: correctedOKLCH(color, against: panel, for: use).rgb)
+        corrected(color, against: panel, minimum: use.minimumRatio)
+    }
+
+    static func corrected(_ color: HexColor, against panel: HexColor, minimum: Double) -> HexColor {
+        guard color.contrastRatio(with: panel) < minimum else { return color }
+        return HexColor(rgb: correctedOKLCH(color, against: panel, minimum: minimum).rgb)
     }
 
     static func correctedOKLCH(_ color: HexColor, against panel: HexColor, for use: Use) -> OKLCH {
+        correctedOKLCH(color, against: panel, minimum: use.minimumRatio)
+    }
+
+    static func correctedOKLCH(_ color: HexColor, against panel: HexColor, minimum: Double) -> OKLCH {
         let original = OKLCH(color.rgb)
-        let minimum = use.minimumRatio
         guard color.contrastRatio(with: panel) < minimum else { return original }
         let preferred: Double = OKLCH(panel.rgb).lightness < original.lightness ? 1 : 0
         let directions = original.lightness == OKLCH(panel.rgb).lightness ? [1.0, 0.0] : [preferred, 1 - preferred]

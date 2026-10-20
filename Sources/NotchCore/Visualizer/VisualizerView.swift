@@ -5,12 +5,15 @@ struct VisualizerView: View {
     let height: CGFloat
 
     @Environment(\.themeAppearance) private var appearance
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let simulatedFrameRate: TimeInterval = 1.0 / 24
 
     var body: some View {
         Group {
-            if let visualizer, visualizer.mode == .live {
+            if reduceMotion {
+                SpectrumBars(levels: SimulatedSpectrum.levels(at: 3.3, bandCount: SystemAudioTap.bandCount), color: appearance.accentBarColor, height: height)
+            } else if let visualizer, visualizer.mode == .live {
                 SpectrumBars(source: visualizer, color: appearance.accentBarColor, height: height)
             } else if visualizer != nil {
                 TimelineView(.animation(minimumInterval: Self.simulatedFrameRate)) { context in
@@ -24,8 +27,8 @@ struct VisualizerView: View {
                 SpectrumBars(levels: SimulatedSpectrum.levels(at: 3.3, bandCount: SystemAudioTap.bandCount), color: appearance.accentBarColor, height: height)
             }
         }
-        .onAppear { visualizer?.acquire() }
-        .onDisappear { visualizer?.release() }
+        .onAppear { if !reduceMotion { visualizer?.acquire() } }
+        .onDisappear { if !reduceMotion { visualizer?.release() } }
         .accessibilityHidden(true)
     }
 }

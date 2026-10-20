@@ -90,10 +90,6 @@ public struct ThemeAppearance: Sendable {
         font(size: size, weight: .medium)
     }
 
-    func labelFont(_ size: CGFloat) -> Font {
-        font(size: size, weight: .heavy)
-    }
-
     func numericFont(_ size: CGFloat) -> Font {
         font(size: size, weight: .medium).monospacedDigit()
     }

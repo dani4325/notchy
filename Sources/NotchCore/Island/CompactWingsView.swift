@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CompactWingsView: View {
     @Environment(\.themeAppearance) private var appearance
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let nowPlaying: NowPlayingStore
     let companion: CompanionStore
@@ -24,7 +25,7 @@ struct CompactWingsView: View {
         }
         .frame(height: height)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(nowPlaying.info.map { Text("Sonando: \($0.title)") } ?? Text("Nada sonando"))
+        .accessibilityLabel(nowPlaying.info.map { $0.isPlaying ? Text("Sonando: \($0.title)") : Text("En pausa: \($0.title)") } ?? Text("Nada sonando"))
     }
 
     @ViewBuilder
@@ -59,7 +60,7 @@ struct CompactWingsView: View {
             )
             .frame(width: wing * Self.compactBarShare, height: Self.compactBarHeight)
         } else if let source = companion.source {
-            MediaView(source: source, isActive: nowPlaying.isPlaying)
+            MediaView(source: source, isActive: nowPlaying.isPlaying && !reduceMotion)
                 .frame(width: mediaSize, height: mediaSize)
                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         }

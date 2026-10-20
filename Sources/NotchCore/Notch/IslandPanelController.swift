@@ -234,9 +234,9 @@ final class IslandPanelController {
     private func dropped(_ urls: [URL]) -> Bool {
         model.isDropTargeted = false
         guard Preferences.shelf, !urls.isEmpty else { return false }
-        shelf.add(urls)
+        let added = shelf.add(urls)
         model.page = .shelf
-        return true
+        return added > 0
     }
 
     private func hoverChanged(_ isInside: Bool) {

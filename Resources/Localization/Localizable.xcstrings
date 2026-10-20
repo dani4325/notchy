@@ -17,6 +17,102 @@
         }
       }
     },
+    "%@ No se ha podido escribir en el disco. Comprueba que queda espacio libre.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Notchy couldn't write to the disk. Check that there's free space."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ No se ha podido escribir en el disco. Comprueba que queda espacio libre."
+          }
+        }
+      }
+    },
+    "%@ de %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ of %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ de %@"
+          }
+        }
+      }
+    },
+    "%@ temas no se han podido leer y no aparecen en la lista.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ themes couldn't be read and aren't in the list."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ temas no se han podido leer y no aparecen en la lista."
+          }
+        }
+      }
+    },
+    "%@ tiene %@:1 sobre el panel y no llega al mínimo para texto (4,5:1).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ has %@:1 against the panel and doesn't reach the minimum for text (4.5:1)."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ tiene %@:1 sobre el panel y no llega al mínimo para texto (4,5:1)."
+          }
+        }
+      }
+    },
+    "%@ tiene %@:1 sobre el panel. No llega al mínimo para texto (4,5:1) ni para barras e iconos (3:1).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ has %@:1 against the panel. It doesn't reach the minimum for text (4.5:1) or for bars and icons (3:1)."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ tiene %@:1 sobre el panel. No llega al mínimo para texto (4,5:1) ni para barras e iconos (3:1)."
+          }
+        }
+      }
+    },
+    "%@ tiene %@:1 sobre el panel. Sirve para barras e iconos (mínimo 3:1), pero no para texto (mínimo 4,5:1).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ has %@:1 against the panel. It works for bars and icons (minimum 3:1), but not for text (minimum 4.5:1)."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ tiene %@:1 sobre el panel. Sirve para barras e iconos (mínimo 3:1), pero no para texto (mínimo 4,5:1)."
+          }
+        }
+      }
+    },
     "%lld %%": {
       "localizations": {
         "en": {
@@ -29,6 +125,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld %%"
+          }
+        }
+      }
+    },
+    "Abrir Ajustes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Ajustes"
           }
         }
       }
@@ -289,18 +401,18 @@
         }
       }
     },
-    "Anima el visualizador con la música que suena. No graba ni guarda nada.": {
+    "Anima el visualizador con la música que suena. No graba ni guarda nada. Se marca como concedido cuando Notchy recibe audio por primera vez.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drives the visualizer with the music that's playing. Nothing is recorded or saved."
+            "value": "Animates the visualizer with the music that's playing. Nothing is recorded or saved. It shows as granted once Notchy receives audio for the first time."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Anima el visualizador con la música que suena. No graba ni guarda nada."
+            "value": "Anima el visualizador con la música que suena. No graba ni guarda nada. Se marca como concedido cuando Notchy recibe audio por primera vez."
           }
         }
       }
@@ -365,22 +477,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apertura y efectos"
-          }
-        }
-      }
-    },
-    "AppleScript (respaldo)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AppleScript (fallback)"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AppleScript (respaldo)"
           }
         }
       }
@@ -465,22 +561,6 @@
         }
       }
     },
-    "Automática": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatic"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automática"
-          }
-        }
-      }
-    },
     "Automática (del fondo)": {
       "localizations": {
         "en": {
@@ -493,22 +573,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Automática (del fondo)"
-          }
-        }
-      }
-    },
-    "Automática usa MediaRemote (cualquier app, incluido el navegador) y pasa sola a AppleScript (Spotify y Música) si deja de funcionar.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatic uses MediaRemote (any app, including the browser) and switches to AppleScript (Spotify and Music) by itself if it stops working."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automática usa MediaRemote (cualquier app, incluido el navegador) y pasa sola a AppleScript (Spotify y Música) si deja de funcionar."
           }
         }
       }
@@ -541,6 +605,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Añadir franja horaria"
+          }
+        }
+      }
+    },
+    "Bienvenida": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bienvenida"
           }
         }
       }
@@ -705,22 +785,6 @@
         }
       }
     },
-    "Carátula, controles y visualizador": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Artwork, controls and visualizer"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Carátula, controles y visualizador"
-          }
-        }
-      }
-    },
     "Colores": {
       "localizations": {
         "en": {
@@ -749,6 +813,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Compartir por AirDrop"
+          }
+        }
+      }
+    },
+    "Comprobando…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobando…"
           }
         }
       }
@@ -817,6 +897,22 @@
         }
       }
     },
+    "Cualquier app": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Any App"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cualquier app"
+          }
+        }
+      }
+    },
     "Círculo geométrico": {
       "localizations": {
         "en": {
@@ -865,22 +961,6 @@
         }
       }
     },
-    "Deja archivos en el notch": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keep files in the notch"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deja archivos en el notch"
-          }
-        }
-      }
-    },
     "Desde": {
       "localizations": {
         "en": {
@@ -909,22 +989,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Deshacer"
-          }
-        }
-      }
-    },
-    "Destello por defecto": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Default sparkle"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Destello por defecto"
           }
         }
       }
@@ -1025,18 +1089,18 @@
         }
       }
     },
-    "EN USO": {
+    "El acento": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "IN USE"
+            "value": "The accent"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "EN USO"
+            "value": "El acento"
           }
         }
       }
@@ -1053,6 +1117,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "El archivo supera los 200 MB."
+          }
+        }
+      }
+    },
+    "El secundario": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The secondary color"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El secundario"
+          }
+        }
+      }
+    },
+    "El texto secundario": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The secondary text"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El texto secundario"
           }
         }
       }
@@ -1217,12 +1313,28 @@
         }
       }
     },
+    "En pausa: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused: %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En pausa: %@"
+          }
+        }
+      }
+    },
     "En uso": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "In use"
+            "value": "In Use"
           }
         },
         "es": {
@@ -1281,6 +1393,22 @@
         }
       }
     },
+    "Ese archivo no es una imagen, un GIF ni un vídeo compatible.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That file isn't a supported image, GIF or video."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ese archivo no es una imagen, un GIF ni un vídeo compatible."
+          }
+        }
+      }
+    },
     "Ese archivo no se puede usar como fondo.": {
       "localizations": {
         "en": {
@@ -1293,22 +1421,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ese archivo no se puede usar como fondo."
-          }
-        }
-      }
-    },
-    "Espaciado de etiquetas": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Label spacing"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Espaciado de etiquetas"
           }
         }
       }
@@ -1357,22 +1469,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Esquinas superiores"
-          }
-        }
-      }
-    },
-    "Estantería": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shelf"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estantería"
           }
         }
       }
@@ -1713,6 +1809,22 @@
         }
       }
     },
+    "Incluido": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluido"
+          }
+        }
+      }
+    },
     "La del estilo": {
       "localizations": {
         "en": {
@@ -1729,18 +1841,18 @@
         }
       }
     },
-    "Las alas muestran la carátula y tu imagen junto al notch. En «Solo con música» se quedan un minuto tras pausar. Los GIF se mueven solo mientras suena música. Con permiso de Accesibilidad se ocultan cuando la app activa tiene menús que llegan al notch.": {
+    "Las alas muestran la carátula y tu imagen junto al notch. En «Solo con música» se quedan un minuto tras pausar. Los GIF y vídeos se mueven solo mientras suena música. Con permiso de Accesibilidad se ocultan cuando la app activa tiene menús que llegan al notch.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The wings show the artwork and your image next to the notch. In “Only with music” they stay for a minute after pausing. GIFs only move while music is playing. With Accessibility access they hide when the active app's menus reach the notch."
+            "value": "The wings show the artwork and your image next to the notch. With “Only with Music” they stay for a minute after pausing. GIFs and videos move only while music plays. With Accessibility permission they hide when the active app has menus that reach the notch."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Las alas muestran la carátula y tu imagen junto al notch. En «Solo con música» se quedan un minuto tras pausar. Los GIF se mueven solo mientras suena música. Con permiso de Accesibilidad se ocultan cuando la app activa tiene menús que llegan al notch."
+            "value": "Las alas muestran la carátula y tu imagen junto al notch. En «Solo con música» se quedan un minuto tras pausar. Los GIF y vídeos se mueven solo mientras suena música. Con permiso de Accesibilidad se ocultan cuando la app activa tiene menús que llegan al notch."
           }
         }
       }
@@ -1757,6 +1869,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Las medidas son proporciones del notch, así que el panel se ve igual en cualquier MacBook."
+          }
+        }
+      }
+    },
+    "Las reglas guardadas estaban dañadas y se han reiniciado. Vuelve a crearlas.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The saved rules were damaged and have been reset. Create them again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las reglas guardadas estaban dañadas y se han reiniciado. Vuelve a crearlas."
+          }
+        }
+      }
+    },
+    "Lectura de la música con MediaRemoteAdapter © 2025 Jonas van den Berg y colaboradores, licencia BSD-3-Clause.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music reading uses MediaRemoteAdapter © 2025 Jonas van den Berg and contributors, BSD-3-Clause license."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lectura de la música con MediaRemoteAdapter © 2025 Jonas van den Berg y colaboradores, licencia BSD-3-Clause."
+          }
+        }
+      }
+    },
+    "Los temas incluidos no se pueden cambiar. Duplica el tema para editarlo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in themes can't be changed. Duplicate the theme to edit it."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los temas incluidos no se pueden cambiar. Duplica el tema para editarlo."
           }
         }
       }
@@ -1921,6 +2081,22 @@
         }
       }
     },
+    "Muestra la canción que suena con sus controles, guarda los archivos que arrastras al notch y avisa del cargador y del volumen.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shows the song that's playing with its controls, keeps the files you drag onto the notch, and tells you about the charger and the volume."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muestra la canción que suena con sus controles, guarda los archivos que arrastras al notch y avisa del cargador y del volumen."
+          }
+        }
+      }
+    },
     "Máximo de archivos": {
       "localizations": {
         "en": {
@@ -1933,22 +2109,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Máximo de archivos"
-          }
-        }
-      }
-    },
-    "Música": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Music"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Música"
           }
         }
       }
@@ -2113,6 +2273,22 @@
         }
       }
     },
+    "No se ha podido guardar el acceso a %@ archivos.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notchy couldn't keep a shortcut to %@ files."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha podido guardar el acceso a %@ archivos."
+          }
+        }
+      }
+    },
     "No se ha podido guardar el archivo.": {
       "localizations": {
         "en": {
@@ -2145,6 +2321,22 @@
         }
       }
     },
+    "No se ha podido guardar la estantería. Se perderá al cerrar Notchy.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The shelf couldn't be saved. It'll be lost when Notchy quits."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha podido guardar la estantería. Se perderá al cerrar Notchy."
+          }
+        }
+      }
+    },
     "No se ha podido medir el fondo para garantizar el contraste. Prueba con otro archivo.": {
       "localizations": {
         "en": {
@@ -2157,6 +2349,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "No se ha podido medir el fondo para garantizar el contraste. Prueba con otro archivo."
+          }
+        }
+      }
+    },
+    "No se ha podido mover el tema a la Papelera.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The theme couldn't be moved to the Trash."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha podido mover el tema a la Papelera."
           }
         }
       }
@@ -2189,6 +2397,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "No se ha podido recuperar el tema de la Papelera."
+          }
+        }
+      }
+    },
+    "No se han podido guardar las reglas. Se perderán al cerrar Notchy.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The rules couldn't be saved. They'll be lost when Notchy quits."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se han podido guardar las reglas. Se perderán al cerrar Notchy."
           }
         }
       }
@@ -2289,22 +2513,6 @@
         }
       }
     },
-    "Notchy convierte el notch en un panel vivo con tu música, tus temas y tus archivos.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notchy turns the notch into a living panel with your music, your themes and your files."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notchy convierte el notch en un panel vivo con tu música, tus temas y tus archivos."
-          }
-        }
-      }
-    },
     "Notchy mide la imagen detrás de cada texto y la oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo.": {
       "localizations": {
         "en": {
@@ -2349,22 +2557,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notchy mide un fotograma del vídeo cada medio segundo y lo oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. Entre esos fotogramas el contraste no está garantizado."
-          }
-        }
-      }
-    },
-    "Now Playing con MediaRemoteAdapter © 2025 Jonas van den Berg y colaboradores · BSD-3-Clause": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Now Playing with MediaRemoteAdapter © 2025 Jonas van den Berg and contributors · BSD-3-Clause"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Now Playing con MediaRemoteAdapter © 2025 Jonas van den Berg y colaboradores · BSD-3-Clause"
           }
         }
       }
@@ -2593,6 +2785,22 @@
         }
       }
     },
+    "Pedir permiso": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask for Permission"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pedir permiso"
+          }
+        }
+      }
+    },
     "Permisos": {
       "localizations": {
         "en": {
@@ -2637,22 +2845,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plantilla incluida"
-          }
-        }
-      }
-    },
-    "Plantillas de anime y tus propias imágenes": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Anime templates and your own images"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plantillas de anime y tus propias imágenes"
           }
         }
       }
@@ -2733,6 +2925,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Probar apertura"
+          }
+        }
+      }
+    },
+    "Progreso": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progress"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progreso"
           }
         }
       }
@@ -2961,22 +3169,6 @@
         }
       }
     },
-    "Sección": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Section"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sección"
-          }
-        }
-      }
-    },
     "Secundario": {
       "localizations": {
         "en": {
@@ -3089,6 +3281,38 @@
         }
       }
     },
+    "Sin acompañante": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Companion"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin acompañante"
+          }
+        }
+      }
+    },
+    "Sin comprobar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Checked"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin comprobar"
+          }
+        }
+      }
+    },
     "Sin nombre": {
       "localizations": {
         "en": {
@@ -3121,18 +3345,34 @@
         }
       }
     },
-    "Solo AppleScript": {
+    "Solo Spotify y Música": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "AppleScript only"
+            "value": "Spotify and Music Only"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Solo AppleScript"
+            "value": "Solo Spotify y Música"
+          }
+        }
+      }
+    },
+    "Solo Spotify y Música, porque la lectura general falló": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify and Music only, because general reading failed"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo Spotify y Música, porque la lectura general falló"
           }
         }
       }
@@ -3473,6 +3713,22 @@
         }
       }
     },
+    "Usar versión corregida": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Corrected Version"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar versión corregida"
+          }
+        }
+      }
+    },
     "Vaciar la estantería": {
       "localizations": {
         "en": {
@@ -3489,18 +3745,34 @@
         }
       }
     },
-    "Ver la bienvenida": {
+    "Ver de nuevo": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show welcome"
+            "value": "Show Again"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ver la bienvenida"
+            "value": "Ver de nuevo"
+          }
+        }
+      }
+    },
+    "Versión": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versión"
           }
         }
       }
@@ -3517,6 +3789,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vista previa"
+          }
+        }
+      }
+    },
+    "Vista previa del panel con una canción de ejemplo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview of the panel with a sample song"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa del panel con una canción de ejemplo"
           }
         }
       }
@@ -3617,22 +3905,6 @@
         }
       }
     },
-    "comprobando…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "checking…"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "comprobando…"
-          }
-        }
-      }
-    },
     "macOS no ha permitido activar el arranque. Mueve Notchy a Aplicaciones y vuelve a intentarlo.": {
       "localizations": {
         "en": {
@@ -3649,22 +3921,6 @@
         }
       }
     },
-    "v%@ · ajustes": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "v%@ · settings"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "v%@ · ajustes"
-          }
-        }
-      }
-    },
     "«%@» está en la Papelera.": {
       "localizations": {
         "en": {
@@ -3677,6 +3933,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "«%@» está en la Papelera."
+          }
+        }
+      }
+    },
+    "«Cualquier app» lee lo que suena en cualquier reproductor, también en el navegador. Si deja de funcionar, Notchy pasa sola a leer Spotify y Música.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Any App” reads what plays in any player, including the browser. If it stops working, Notchy switches to reading Spotify and Music on its own."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Cualquier app» lee lo que suena en cualquier reproductor, también en el navegador. Si deja de funcionar, Notchy pasa sola a leer Spotify y Música."
           }
         }
       }

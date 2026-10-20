@@ -33,12 +33,15 @@ struct AutoThemeSection: View {
                 }
                 Button("Añadir app…", systemImage: "plus.app", action: controller.addAppFromPanel)
                     .buttonStyle(.borderless)
-            }
+                }
+                if let problem = controller.problem {
+                    Text(problem).font(.callout).foregroundStyle(.red)
+                }
         } header: {
             Text("Temas automáticos")
         } footer: {
             Text("Cada franja empieza a su hora y dura hasta la siguiente. Si la app en primer plano tiene regla, gana sobre el horario. El tema elegido en la galería vuelve cuando ninguna regla aplica.")
-                .foregroundStyle(.secondary)
+                .settingsFooter()
         }
     }
 

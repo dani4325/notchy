@@ -11,6 +11,7 @@ TECHNICAL_ARGUMENTS = re.compile(
     + r'|(?:Self\.)?\w*[lL]ogger\.\w+\(\s*' + STRING
     + r'|Logger\([^)]*\)'
     + r'|' + r'"com\.[^"\n]*"'
+    + r'|' + r'"x-apple\.[^"\n]*"'
     + r'|case\s+\w+\s*=\s*' + STRING
     + r'|static let \w*Key\w*\s*=\s*' + STRING
 )

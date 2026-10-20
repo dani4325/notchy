@@ -8,6 +8,7 @@ struct GeneralSettingsView: View {
     @AppStorage(Preferences.Key.chargingAnimation) private var chargingAnimation = true
     @AppStorage(Preferences.Key.volumeHUD) private var volumeHUD = true
     @AppStorage(Preferences.Key.visualizer) private var visualizer = true
+    @AppStorage(Preferences.Key.audioCaptureConfirmed) private var audioConfirmed = false
     @AppStorage(Preferences.Key.shelf) private var shelfEnabled = true
     @AppStorage(Preferences.Key.shelfLimit) private var shelfLimit = ShelfStore.defaultLimit
 
@@ -19,13 +20,15 @@ struct GeneralSettingsView: View {
     private let themes: ThemeStore
     private let shelf: ShelfStore
     private let updater: SoftwareUpdating?
+    private let showWelcome: () -> Void
 
     init(
         nowPlaying: NowPlayingStore, companion: CompanionStore, accessibility: AccessibilityPermission,
         loginItem: LoginItem, autoThemes: AutoThemeController, themes: ThemeStore, shelf: ShelfStore,
-        updater: SoftwareUpdating? = nil
+        updater: SoftwareUpdating? = nil, showWelcome: @escaping () -> Void = {}
     ) {
         self.updater = updater
+        self.showWelcome = showWelcome
         self.shelf = shelf
         self.loginItem = loginItem
         self.autoThemes = autoThemes
@@ -36,110 +39,127 @@ struct GeneralSettingsView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Form {
-                Section {
-                    Toggle("Abrir Notchy al iniciar sesión", isOn: Binding(
-                        get: { loginItem.state.isOn },
-                        set: { loginItem.setEnabled($0) }
-                    ))
-                    if loginItem.state == .needsApproval {
-                        LabeledContent("Falta tu aprobación") {
-                            Button("Abrir Ítems de inicio…", action: loginItem.openSystemSettings)
-                        }
-                    }
-                    if let message = loginItem.message {
-                        Text(message).font(.system(size: 11)).foregroundStyle(.red)
-                    }
-                    if let updater {
-                        Toggle("Buscar actualizaciones automáticamente", isOn: Binding(
-                            get: { updater.automaticallyChecksForUpdates },
-                            set: { updater.automaticallyChecksForUpdates = $0 }
-                        ))
-                    }
-                    Toggle("Animación al conectar o desconectar el cargador", isOn: $chargingAnimation)
-                    Toggle("Visualizador de música", isOn: $visualizer)
-                    Toggle("Mostrar el volumen en el notch", isOn: $volumeHUD)
-                    Toggle("Estantería de archivos", isOn: $shelfEnabled)
-                    if shelfEnabled {
-                        Stepper(value: Binding(get: { shelfLimit }, set: { shelfLimit = $0; shelf.setLimit($0) }), in: ShelfStore.limitRange) {
-                            LabeledContent("Máximo de archivos", value: "\(shelfLimit)")
-                        }
-                    }
-                    if volumeHUD, !accessibility.isTrusted {
-                        LabeledContent("Para ocultar el aviso de macOS") {
-                            Button("Dar permiso…", action: accessibility.request)
-                        }
+        Form {
+            Section {
+                Toggle("Abrir Notchy al iniciar sesión", isOn: Binding(
+                    get: { loginItem.state.isOn },
+                    set: { loginItem.setEnabled($0) }
+                ))
+                if loginItem.state == .needsApproval {
+                    LabeledContent("Falta tu aprobación") {
+                        Button("Abrir Ítems de inicio…", action: loginItem.openSystemSettings)
                     }
                 }
-
-                AutoThemeSection(controller: autoThemes, themes: themes)
-
-                Section {
-                    Picker("Mostrar alas", selection: $wingsMode) {
-                        Text("Siempre").tag(WingsMode.always.rawValue)
-                        Text("Solo con música").tag(WingsMode.withMusic.rawValue)
-                        Text("Nunca").tag(WingsMode.never.rawValue)
-                    }
-                    .pickerStyle(.segmented)
-                    CompanionSettingsRow(companion: companion)
-                    LabeledContent("Ocultar si chocan con menús") {
-                        if accessibility.isTrusted {
-                            Label("Activo", systemImage: "checkmark.circle.fill")
+                if let message = loginItem.message {
+                    Text(message).font(.callout).foregroundStyle(.red)
+                }
+                if let updater {
+                    Toggle("Buscar actualizaciones automáticamente", isOn: Binding(
+                        get: { updater.automaticallyChecksForUpdates },
+                        set: { updater.automaticallyChecksForUpdates = $0 }
+                    ))
+                }
+                Toggle("Animación al conectar o desconectar el cargador", isOn: $chargingAnimation)
+                Toggle("Visualizador de música", isOn: $visualizer)
+                if visualizer {
+                    LabeledContent("Audio del sistema") {
+                        if audioConfirmed {
+                            Label("Concedido", systemImage: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
                         } else {
-                            Button("Dar permiso…", action: accessibility.request)
+                            HStack {
+                                Text("Sin comprobar").foregroundStyle(.secondary)
+                                Button("Pedir permiso", action: AudioVisualizer.requestPermission)
+                                Button("Abrir Ajustes", action: AudioVisualizer.openCaptureSettings)
+                            }
                         }
                     }
-                } header: {
-                    Text("Alas y acompañante")
-                } footer: {
-                    Text("Las alas muestran la carátula y tu imagen junto al notch. En «Solo con música» se quedan un minuto tras pausar. Los GIF se mueven solo mientras suena música. Con permiso de Accesibilidad se ocultan cuando la app activa tiene menús que llegan al notch.")
-                        .foregroundStyle(.secondary)
                 }
-
-                Section {
-                    Picker("Pantallas sin notch", selection: $nonNotchMode) {
-                        Text("Píldora flotante").tag(NonNotchMode.pill.rawValue)
-                        Text("Nada").tag(NonNotchMode.hidden.rawValue)
+                Toggle("Mostrar el volumen en el notch", isOn: $volumeHUD)
+                Toggle("Estantería de archivos", isOn: $shelfEnabled)
+                if shelfEnabled {
+                    Stepper(value: Binding(get: { shelfLimit }, set: { shelfLimit = $0; shelf.setLimit($0) }), in: ShelfStore.limitRange) {
+                        LabeledContent("Máximo de archivos", value: "\(shelfLimit)")
                     }
-                    .pickerStyle(.segmented)
-                } footer: {
-                    Text("Monitores externos y Macs sin notch.")
-                        .foregroundStyle(.secondary)
+                    if let problem = shelf.lastError {
+                        Text(problem).font(.callout).foregroundStyle(.red)
+                    }
                 }
-
-                Section {
-                    Picker("Fuente de música", selection: $musicSourceMode) {
-                        Text("Automática").tag(MusicSourceMode.automatic.rawValue)
-                        Text("Solo AppleScript").tag(MusicSourceMode.appleScript.rawValue)
+                if volumeHUD, !accessibility.isTrusted {
+                    LabeledContent("Para ocultar el aviso de macOS") {
+                        Button("Dar permiso…", action: accessibility.request)
                     }
-                    .pickerStyle(.segmented)
-                    LabeledContent("Ahora mismo") {
-                        SourceStatusView(source: nowPlaying.activeSource)
-                    }
-                } footer: {
-                    Text("Automática usa MediaRemote (cualquier app, incluido el navegador) y pasa sola a AppleScript (Spotify y Música) si deja de funcionar.")
-                        .foregroundStyle(.secondary)
-                }
-
-                Section {
-                    Toggle("Contorno de calibración", isOn: $showOutline)
-                } footer: {
-                    Text("Dibuja el borde del panel para comprobar que encaja con el notch.")
-                        .foregroundStyle(.secondary)
                 }
             }
-            .formStyle(.grouped)
 
-            Text("Now Playing con MediaRemoteAdapter © 2025 Jonas van den Berg y colaboradores · BSD-3-Clause")
-                .font(.system(size: 10))
-                .foregroundStyle(.tertiary)
-                .frame(maxWidth: .infinity)
-                .padding(.bottom, 12)
+            AutoThemeSection(controller: autoThemes, themes: themes)
+
+            Section {
+                Picker("Mostrar alas", selection: $wingsMode) {
+                    Text("Siempre").tag(WingsMode.always.rawValue)
+                    Text("Solo con música").tag(WingsMode.withMusic.rawValue)
+                    Text("Nunca").tag(WingsMode.never.rawValue)
+                }
+                .pickerStyle(.segmented)
+                CompanionSettingsRow(companion: companion)
+                LabeledContent("Ocultar si chocan con menús") {
+                    if accessibility.isTrusted {
+                        Label("Activo", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    } else {
+                        Button("Dar permiso…", action: accessibility.request)
+                    }
+                }
+            } header: {
+                Text("Alas y acompañante")
+            } footer: {
+                Text("Las alas muestran la carátula y tu imagen junto al notch. En «Solo con música» se quedan un minuto tras pausar. Los GIF y vídeos se mueven solo mientras suena música. Con permiso de Accesibilidad se ocultan cuando la app activa tiene menús que llegan al notch.")
+                    .settingsFooter()
+            }
+
+            Section {
+                Picker("Pantallas sin notch", selection: $nonNotchMode) {
+                    Text("Píldora flotante").tag(NonNotchMode.pill.rawValue)
+                    Text("Nada").tag(NonNotchMode.hidden.rawValue)
+                }
+                .pickerStyle(.segmented)
+            } footer: {
+                Text("Monitores externos y Macs sin notch.")
+                    .settingsFooter()
+            }
+
+            Section {
+                Picker("Fuente de música", selection: $musicSourceMode) {
+                    Text("Cualquier app").tag(MusicSourceMode.automatic.rawValue)
+                    Text("Solo Spotify y Música").tag(MusicSourceMode.appleScript.rawValue)
+                }
+                .pickerStyle(.segmented)
+                LabeledContent("Ahora mismo") {
+                    SourceStatusView(source: nowPlaying.activeSource)
+                }
+            } footer: {
+                Text("«Cualquier app» lee lo que suena en cualquier reproductor, también en el navegador. Si deja de funcionar, Notchy pasa sola a leer Spotify y Música.")
+                    .settingsFooter()
+            }
+
+            Section {
+                Toggle("Contorno de calibración", isOn: $showOutline)
+            } footer: {
+                Text("Dibuja el borde del panel para comprobar que encaja con el notch.")
+                    .settingsFooter()
+            }
+
+            Section {
+                LabeledContent("Versión", value: AppInfo.version)
+                LabeledContent("Bienvenida") {
+                    Button("Ver de nuevo", action: showWelcome)
+                }
+            } footer: {
+                Text("Lectura de la música con MediaRemoteAdapter © 2025 Jonas van den Berg y colaboradores, licencia BSD-3-Clause.")
+                    .settingsFooter()
+            }
         }
-        .frame(maxWidth: 560)
-        .frame(maxWidth: .infinity)
+        .formStyle(.grouped)
     }
 }
 
@@ -147,30 +167,24 @@ private struct SourceStatusView: View {
     let source: ActiveMusicSource
 
     var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(color)
-                .frame(width: 7, height: 7)
-            Text(label)
-                .font(.system(size: 12, design: .monospaced))
-        }
+        Label(label, systemImage: symbol)
     }
 
     private var label: String {
         switch source {
-        case .checking: String(localized: "comprobando…")
-        case .mediaRemote: "MediaRemote"
-        case .appleScript(fallback: true): String(localized: "AppleScript (respaldo)")
-        case .appleScript(fallback: false): "AppleScript"
+        case .checking: String(localized: "Comprobando…")
+        case .mediaRemote: String(localized: "Cualquier app")
+        case .appleScript(fallback: true): String(localized: "Solo Spotify y Música, porque la lectura general falló")
+        case .appleScript(fallback: false): String(localized: "Solo Spotify y Música")
         }
     }
 
-    private var color: Color {
+    private var symbol: String {
         switch source {
-        case .checking: .gray
-        case .mediaRemote: .green
-        case .appleScript(fallback: true): .yellow
-        case .appleScript(fallback: false): NotchyStyle.accent
+        case .checking: "hourglass"
+        case .mediaRemote: "checkmark.circle"
+        case .appleScript(fallback: true): "exclamationmark.triangle"
+        case .appleScript(fallback: false): "music.note"
         }
     }
 }
@@ -178,31 +192,33 @@ private struct SourceStatusView: View {
 private struct CompanionSettingsRow: View {
     let companion: CompanionStore
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         HStack(spacing: 14) {
             Group {
                 if let source = companion.source {
-                    MediaView(source: source, isActive: true)
-                } else {
-                    Image(systemName: "sparkle")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(NotchyStyle.accent)
-                }
+                    MediaView(source: source, isActive: !reduceMotion)
+                    } else {
+                        Image(systemName: "photo")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
             }
             .frame(width: 44, height: 44)
             .background(.black, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(companion.source == nil ? "Destello por defecto" as LocalizedStringKey : "Tu acompañante")
-                    .font(.system(size: 13, weight: .semibold))
+                Text(companion.source == nil ? "Sin acompañante" as LocalizedStringKey : "Tu acompañante")
+                    .font(.headline)
                 if let error = companion.lastError {
                     Text(error)
-                        .font(.system(size: 11))
+                        .font(.callout)
                         .foregroundStyle(.red)
                 } else {
                     Text("Imagen, GIF o vídeo de tu Mac")
-                        .font(.system(size: 11))
+                        .font(.callout)
                         .foregroundStyle(.secondary)
                 }
             }

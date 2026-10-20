@@ -106,7 +106,15 @@ private struct ProgressRow: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityValue(Self.format(position))
+        .accessibilityLabel("Progreso")
+        .accessibilityValue(accessibleProgress(at: position))
+    }
+
+    private func accessibleProgress(at position: TimeInterval) -> Text {
+        let elapsed = Self.format(position)
+        guard let duration = info.duration else { return Text(verbatim: elapsed) }
+        let total = Self.format(duration)
+        return Text("\(elapsed) de \(total)")
     }
 
     private static func format(_ seconds: TimeInterval) -> String {
@@ -141,23 +149,34 @@ private struct TransportControls: View {
             }
             .accessibilityLabel("Siguiente")
         }
-        .buttonStyle(TransportButtonStyle(diameter: layout.controlDiameter, tint: appearance.text, pressed: appearance.accentGraphic))
+        .buttonStyle(TransportButtonStyle(diameter: layout.controlDiameter, spacing: layout.controlSpacing, tint: appearance.text, pressed: appearance.accentGraphic))
         .frame(width: layout.controlsWidth)
     }
 }
 
 struct TransportButtonStyle: ButtonStyle {
+    static let minimumTarget: CGFloat = 44
+
     let diameter: CGFloat
+    var spacing: CGFloat = 0
     let tint: Color
     let pressed: Color
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var targetWidth: CGFloat { max(diameter, min(Self.minimumTarget, diameter + spacing)) }
+    private var targetHeight: CGFloat { max(diameter, Self.minimumTarget) }
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(configuration.isPressed ? pressed : tint)
             .frame(width: diameter, height: diameter)
             .background(pressed.opacity(configuration.isPressed ? 0.2 : 0), in: Circle())
-            .scaleEffect(configuration.isPressed ? 0.86 : 1)
-            .animation(.spring(duration: 0.2), value: configuration.isPressed)
-            .contentShape(Circle())
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.86 : 1)
+            .animation(reduceMotion ? nil : .spring(duration: 0.2), value: configuration.isPressed)
+            .frame(width: targetWidth, height: targetHeight)
+            .contentShape(Rectangle())
+            .padding(.horizontal, (diameter - targetWidth) / 2)
+            .padding(.vertical, (diameter - targetHeight) / 2)
     }
 }

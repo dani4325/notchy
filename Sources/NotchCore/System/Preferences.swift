@@ -9,6 +9,7 @@ public enum Preferences {
         public static let chargingAnimation = "chargingAnimation"
         public static let volumeHUD = "volumeHUD"
         public static let visualizer = "visualizer"
+        public static let audioCaptureConfirmed = "audioCaptureConfirmed"
         public static let shelf = "shelf"
         public static let shelfLimit = "shelfLimit"
     }

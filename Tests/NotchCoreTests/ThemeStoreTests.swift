@@ -27,6 +27,15 @@ struct ThemeStoreTests {
         #expect(!FileManager.default.fileExists(atPath: trashed.path))
     }
 
+    @Test func unreadableThemesAreCountedInsteadOfVanishingSilently() throws {
+        let broken = directory.appendingPathComponent("roto")
+        try FileManager.default.createDirectory(at: broken, withIntermediateDirectories: true)
+        _ = makeStore()
+        try Data("{ esto no es un tema".utf8).write(to: broken.appendingPathComponent(ThemeStore.themeFileName))
+
+        #expect(makeStore().unreadableThemes == 1)
+    }
+
     func makePNG(color: NSColor = .red) throws -> URL {
         let rep = try #require(NSBitmapImageRep(
             bitmapDataPlanes: nil, pixelsWide: 8, pixelsHigh: 4, bitsPerSample: 8, samplesPerPixel: 4,

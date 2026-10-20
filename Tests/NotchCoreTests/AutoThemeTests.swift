@@ -76,3 +76,20 @@ struct ThemeOverrideTests {
         #expect(store.activeTheme.id == Theme.notchyDefault.id)
     }
 }
+
+@MainActor
+struct AutoThemeRulesProblemTests {
+    @Test func damagedSavedRulesAreResetWithAWarning() {
+        let defaults = UserDefaults(suiteName: "autotheme-\(UUID().uuidString)")!
+        defaults.set(Data("dañado".utf8), forKey: "autoThemeRules")
+        let store = ThemeStore(
+            directory: FileManager.default.temporaryDirectory.appendingPathComponent("autotheme-\(UUID().uuidString)"),
+            defaults: defaults
+        )
+
+        let controller = AutoThemeController(store: store, defaults: defaults)
+
+        #expect(controller.rules == .empty)
+        #expect(controller.problem != nil)
+    }
+}
