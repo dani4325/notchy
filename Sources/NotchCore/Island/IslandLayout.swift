@@ -50,6 +50,13 @@ struct IslandLayout: Equatable {
     var artworkCorner: CGFloat { artworkSide * Self.artworkCornerRatio }
 
     static let minimumTextSize: CGFloat = 10
+    static let wingInsetRatio: CGFloat = 0.27
+    static let wingBarRatio: CGFloat = 0.08
+    static let wingBarShare: CGFloat = 0.6
+
+    static func wingMediaSide(height: CGFloat) -> CGFloat { height * (1 - wingInsetRatio) }
+    static func wingCorner(height: CGFloat) -> CGFloat { height * artworkCornerRatio }
+    static func wingBarHeight(height: CGFloat) -> CGFloat { max(height * wingBarRatio, 2) }
 
     var titleSize: CGFloat { max(unit * Self.titleRatio, Self.minimumTextSize) }
     var subtitleSize: CGFloat { max(unit * Self.subtitleRatio, Self.minimumTextSize) }

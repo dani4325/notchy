@@ -23,26 +23,26 @@ struct IslandView: View {
                 .frame(width: size.width, height: size.height)
 
             Group {
-            switch model.state {
-            case .expanded:
-                expandedContent
-                    .frame(width: size.width, height: model.layout.bodyHeight)
-                    .overlay(alignment: .topTrailing) {
-                        if shelfEnabled, model.activity == nil {
-                            PageToggleButton(page: model.page, count: shelf.items.count, layout: model.layout, action: togglePage)
-                                .padding(.top, model.layout.padding * 0.18)
-                                .padding(.trailing, model.layout.padding * 0.55)
+                switch model.state {
+                case .expanded:
+                    expandedContent
+                        .frame(width: size.width, height: model.layout.bodyHeight)
+                        .overlay(alignment: .topTrailing) {
+                            if shelfEnabled, model.activity == nil {
+                                PageToggleButton(page: model.page, count: shelf.items.count, layout: model.layout, action: togglePage)
+                                    .padding(.top, model.layout.padding * 0.18)
+                                    .padding(.trailing, model.layout.padding * 0.55)
+                            }
                         }
-                    }
-                    .padding(.top, model.layout.stem.height)
-                    .frame(width: size.width, height: size.height, alignment: .top)
-                    .transition(contentTransition(policy))
-            case .compact:
-                CompactWingsView(nowPlaying: nowPlaying, companion: companion, wing: model.compactWing, height: size.height, volume: compactVolume)
-                    .frame(width: size.width, height: size.height)
-                    .transition(.opacity.animation(policy.contentAnimation))
-            case .collapsed:
-                EmptyView()
+                        .padding(.top, model.layout.stem.height)
+                        .frame(width: size.width, height: size.height, alignment: .top)
+                        .transition(contentTransition(policy))
+                case .compact:
+                    CompactWingsView(nowPlaying: nowPlaying, companion: companion, wing: model.compactWing, height: size.height, volume: compactVolume)
+                        .frame(width: size.width, height: size.height)
+                        .transition(.opacity.animation(policy.contentAnimation))
+                case .collapsed:
+                    EmptyView()
             }
             }
             .modifier(SignatureOpening(

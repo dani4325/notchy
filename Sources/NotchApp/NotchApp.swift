@@ -55,6 +55,7 @@ struct StatusMenu: View {
         }
         .keyboardShortcut(",")
         Button("Buscar actualizaciones…", action: updater.checkForUpdates)
+            .disabled(!updater.canCheckForUpdates)
         Divider()
         Button("Salir de \(AppInfo.name)") {
             NSApp.terminate(nil)

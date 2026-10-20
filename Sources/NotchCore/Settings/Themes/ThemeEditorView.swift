@@ -298,24 +298,18 @@ private struct LabeledSlider: View {
     let value: Binding<Double>
     let range: ClosedRange<Double>
     let unit: String
-    let step: Double?
 
-    init(_ title: LocalizedStringKey, value: Binding<Double>, range: ClosedRange<Double>, unit: String = "", step: Double? = nil) {
+    init(_ title: LocalizedStringKey, value: Binding<Double>, range: ClosedRange<Double>, unit: String = "") {
         self.title = title
         self.value = value
         self.range = range
         self.unit = unit
-        self.step = step
     }
 
     var body: some View {
         LabeledContent(title) {
             HStack {
-                if let step {
-                    Slider(value: value, in: range, step: step)
-                } else {
-                    Slider(value: value, in: range)
-                }
+                Slider(value: value, in: range)
                 Text(formatted)
                     .font(.callout.monospacedDigit())
                     .foregroundStyle(.secondary)

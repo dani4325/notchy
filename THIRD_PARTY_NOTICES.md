@@ -4,7 +4,7 @@ Notchy incluye o usa el siguiente software y tipografías de terceros. Este arch
 
 Notchy includes or uses the following third-party software and fonts. This file ships with the source code and inside every copy of the app, as their licenses require.
 
-## MediaRemoteAdapter — BSD 3-Clause
+## MediaRemoteAdapter (BSD 3-Clause)
 
 - Proyecto / Project: https://github.com/ungive/mediaremote-adapter (copia en `Vendor/mediaremote-adapter`, sin modificaciones / unmodified).
 - Exige / Requires: conservar este aviso en el código, reproducirlo en la documentación de la distribución binaria y no usar el nombre de sus autores para promocionar Notchy. / Keep this notice in source, reproduce it in the documentation of binary distributions, and don't use its authors' names to promote Notchy.
@@ -39,9 +39,9 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.```
 
-## Sparkle 2.10.0 — MIT (con licencias externas incluidas)
+## Sparkle 2.10.0 (MIT, con licencias externas incluidas)
 
-- Proyecto / Project: https://sparkle-project.org — actualizaciones automáticas / automatic updates.
+- Proyecto / Project: https://sparkle-project.org (actualizaciones automáticas / automatic updates).
 - Exige / Requires: incluir este aviso de copyright y permiso en todas las copias. / Include this copyright and permission notice in all copies.
 
 ```
@@ -181,7 +181,7 @@ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ```
 
-## Tipografías / Fonts — SIL Open Font License 1.1
+## Tipografías / Fonts (SIL Open Font License 1.1)
 
 Incluidas sin modificar en `Resources/Fonts`, con su licencia completa en `Resources/Fonts/licenses`. La OFL permite incluirlas y redistribuirlas con software, también comercial, siempre que se acompañen de su aviso de copyright y licencia, no se vendan por separado y las versiones modificadas no usen los nombres reservados.
 
@@ -191,10 +191,10 @@ Bundled unmodified in `Resources/Fonts`, with their full licenses in `Resources/
 |---|---|---|
 | Nixie One | Copyright (c) 2011, Jovanny Lemonad | "Nixie" |
 | Share Tech Mono | Copyright (c) 2012, Carrois Type Design, Ralph du Carrois | "Share" |
-| Big Shoulders Stencil Display | Copyright 2019 The Big Shoulders Project Authors | — |
-| Dela Gothic One | Copyright 2020 The Dela Gothic Project Authors | — |
-| Bebas Neue | Copyright © 2010 by Dharma Type | — |
-| Cormorant Garamond | Copyright 2015 the Cormorant Project Authors | — |
+| Big Shoulders Stencil Display | Copyright 2019 The Big Shoulders Project Authors | Ninguno / None |
+| Dela Gothic One | Copyright 2020 The Dela Gothic Project Authors | Ninguno / None |
+| Bebas Neue | Copyright © 2010 by Dharma Type | Ninguno / None |
+| Cormorant Garamond | Copyright 2015 the Cormorant Project Authors | Ninguno / None |
 
 ## Otros / Other
 

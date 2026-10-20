@@ -33,11 +33,11 @@ final class MediaContainerView: NSView {
     private var crop = MediaCrop.standard
     private var isActive = false
     private var mediaAspect: Double = 1
-    private var imageView: NSView?
+    private(set) var imageView: NSView?
     private var playerView: NSView?
     private var player: AVQueuePlayer?
     private var looper: AVPlayerLooper?
-    private var loadTask: Task<Void, Never>?
+    private(set) var loadTask: Task<Void, Never>?
 
     override var isFlipped: Bool { true }
 
@@ -51,12 +51,6 @@ final class MediaContainerView: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) is not supported")
-    }
-
-    var animatedLayerForTesting: CALayer? { imageView?.layer }
-
-    func waitUntilLoaded() async throws {
-        await loadTask?.value
     }
 
     func configure(source: MediaSource, crop: MediaCrop, isActive: Bool) {

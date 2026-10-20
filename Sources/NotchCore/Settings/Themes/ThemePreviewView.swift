@@ -43,17 +43,17 @@ struct ThemePreviewView: View {
         return ZStack(alignment: .top) {
             IslandSurface(model: model, appearance: appearance, showOutline: false)
             Group {
-            if model.isExpanded {
-                ExpandedMusicView(
-                    layout: layout,
-                    info: nowPlaying.info ?? Self.sample,
-                    artwork: nowPlaying.info == nil ? nil : nowPlaying.artwork,
-                    appName: nowPlaying.info == nil ? String(localized: "Vista previa") : nowPlaying.appName,
-                    controls: .inert
-                )
-                .allowsHitTesting(false)
-                .padding(.top, layout.stem.height)
-                .transition(.opacity)
+                if model.isExpanded {
+                    ExpandedMusicView(
+                        layout: layout,
+                        info: nowPlaying.info ?? Self.sample,
+                        artwork: nowPlaying.info == nil ? nil : nowPlaying.artwork,
+                        appName: nowPlaying.info == nil ? String(localized: "Vista previa") : nowPlaying.appName,
+                        controls: .inert
+                    )
+                    .allowsHitTesting(false)
+                    .padding(.top, layout.stem.height)
+                    .transition(.opacity)
             }
             }
             .modifier(SignatureOpening(

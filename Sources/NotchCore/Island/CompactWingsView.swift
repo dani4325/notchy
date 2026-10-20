@@ -10,10 +10,9 @@ struct CompactWingsView: View {
     let height: CGFloat
     var volume: VolumeReading?
 
-    private var mediaSize: CGFloat { height - 10 }
-
-    private static let compactBarHeight: CGFloat = 3
-    private static let compactBarShare: CGFloat = 0.6
+    private var mediaSize: CGFloat { IslandLayout.wingMediaSide(height: height) }
+    private var corner: CGFloat { IslandLayout.wingCorner(height: height) }
+    private var barHeight: CGFloat { IslandLayout.wingBarHeight(height: height) }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -34,7 +33,7 @@ struct CompactWingsView: View {
             VolumeSymbol(reading: volume, size: mediaSize * 0.5)
                 .foregroundStyle(appearance.text)
         } else if let info = nowPlaying.info {
-            ArtworkView(image: nowPlaying.artwork, size: mediaSize, cornerRadius: 7)
+            ArtworkView(image: nowPlaying.artwork, size: mediaSize, cornerRadius: corner)
                 .opacity(info.isPlaying ? 1 : 0.45)
                 .overlay {
                     if !info.isPlaying {
@@ -56,13 +55,13 @@ struct CompactWingsView: View {
         if let volume {
             LevelBar(
                 fraction: Double(volume.isMuted ? 0 : volume.level),
-                fill: appearance.accentBarColor, track: appearance.barTrackColor, height: Self.compactBarHeight
+                fill: appearance.accentBarColor, track: appearance.barTrackColor, height: barHeight
             )
-            .frame(width: wing * Self.compactBarShare, height: Self.compactBarHeight)
+            .frame(width: wing * IslandLayout.wingBarShare, height: barHeight)
         } else if let source = companion.source {
             MediaView(source: source, isActive: nowPlaying.isPlaying && !reduceMotion)
                 .frame(width: mediaSize, height: mediaSize)
-                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
         }
     }
 }

@@ -63,9 +63,9 @@ struct AnimatedLayerViewTests {
         view.frame = CGRect(x: 0, y: 0, width: 120, height: 120)
 
         view.configure(source: MediaSource(url: url, kind: .animatedImage), crop: .standard, isActive: true)
-        try await view.waitUntilLoaded()
+        await view.loadTask?.value
 
-        let layer = try #require(view.animatedLayerForTesting)
+        let layer = try #require(view.imageView?.layer)
         #expect(layer.animation(forKey: MediaContainerView.frameAnimationKey) != nil)
         #expect(layer.speed == 1)
 
@@ -83,9 +83,9 @@ struct AnimatedLayerViewTests {
         view.frame = CGRect(x: 0, y: 0, width: 120, height: 120)
 
         view.configure(source: MediaSource(url: url, kind: .image), crop: .standard, isActive: true)
-        try await view.waitUntilLoaded()
+        await view.loadTask?.value
 
-        #expect(view.animatedLayerForTesting?.animation(forKey: MediaContainerView.frameAnimationKey) == nil)
-        #expect(view.animatedLayerForTesting?.contents != nil)
+        #expect(view.imageView?.layer?.animation(forKey: MediaContainerView.frameAnimationKey) == nil)
+        #expect(view.imageView?.layer?.contents != nil)
     }
 }

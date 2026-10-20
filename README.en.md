@@ -28,7 +28,7 @@ Notchy turns your MacBook's notch into a living, Dynamic Island–style panel ma
 
 ### Low battery warning
 
-Notchy uses macOS's low battery warning, which isn't tied to a fixed percentage but to time: it fires when the battery has about **20 minutes** of use left (and again at about 10). So the percentage depends on what you're doing: on a MacBook it's usually **between 3% and 8%** (closer to 3% with light use, closer to 8% with heavy use). This way Notchy doesn't have to keep watching the battery.
+Notchy uses macOS's low battery warning, which isn't tied to a fixed percentage but to time: it fires when the battery has about 20 minutes of use left (and again at about 10). So the percentage depends on what you're doing: on a MacBook it's usually **between 3% and 8%** (closer to 3% with light use, closer to 8% with heavy use). This way Notchy doesn't have to keep watching the battery.
 
 ## Requirements
 
