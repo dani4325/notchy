@@ -93,13 +93,14 @@ final class IslandPanelController {
         panel.orderFrontRegardless()
     }
 
-    func show(_ activity: IslandActivity) {
+    func show(_ activity: IslandActivity, compactOnly: Bool = false) {
+        if case .volume = activity, compactOnly, model.kind != .notch { return }
         activityTimer?.cancel()
         if !isHovering {
             pendingHover?.cancel()
         }
         if case .volume = activity {
-            showVolume(activity)
+            showVolume(activity, compactOnly: compactOnly)
             return
         }
         volumePresentation = nil
@@ -119,9 +120,13 @@ final class IslandPanelController {
         }
     }
 
-    private func showVolume(_ activity: IslandActivity) {
+    private func showVolume(_ activity: IslandActivity, compactOnly: Bool) {
+        if volumePresentation?.compactOnly != compactOnly {
+            volumePresentation = nil
+        }
         var presentation = volumePresentation ?? VolumePresentation(
-            allowsCompact: model.kind == .notch && wings.allowsCompactActivity && !isHovering
+            allowsCompact: model.kind == .notch && wings.allowsCompactActivity && !isHovering,
+            compactOnly: compactOnly
         )
         let wait = presentation.press()
         volumePresentation = presentation

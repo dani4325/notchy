@@ -1,21 +1,29 @@
 import AppKit
+import os
 
 @MainActor
 public final class VolumeHUDCoordinator {
-    public var onShow: ((VolumeReading, VolumeNudge.Direction?, VolumeLimit?) -> Void)?
+    public var onShow: ((VolumeReading, VolumeNudge.Direction?, VolumeLimit?, Bool) -> Void)?
 
     private let volume = VolumeController()
     private let keys = MediaKeyTap()
     private var observers: [NSObjectProtocol] = []
     private var lastKeyPress: Date?
     private var lastReading: VolumeReading?
+    private var interceptionGaveUp = false
+    private var lastPressWentToMacOS = false
 
     private static let keyEchoWindow: TimeInterval = 0.5
+    private static let logger = Logger(subsystem: "com.danirubio.notchy", category: "volume")
 
     public init() {}
 
     public func start() {
         volume.onChange = { [weak self] reading in self?.volumeChanged(reading) }
+        volume.onOutputChange = { [weak self] in
+            self?.interceptionGaveUp = false
+            self?.syncKeyTap()
+        }
         volume.start()
         keys.onKey = { [weak self] key in self?.keyPressed(key) ?? false }
         observers = [
@@ -39,7 +47,7 @@ public final class VolumeHUDCoordinator {
     }
 
     private func syncKeyTap() {
-        if Preferences.volumeHUD {
+        if Preferences.volumeHUD, AXIsProcessTrusted(), !interceptionGaveUp {
             keys.start()
         } else {
             keys.stop()
@@ -51,15 +59,23 @@ public final class VolumeHUDCoordinator {
     }
 
     private func keyPressed(_ key: MediaKey) -> Bool {
-        guard let before = volume.current else { return false }
+        guard key.isDown else { return !lastPressWentToMacOS }
+        let fullScreen = FullScreenDetector.current()
+        lastPressWentToMacOS = true
+        guard fullScreen != .coversNotch, let before = volume.current else { return false }
         volume.apply(key)
-        guard key.isDown else { return true }
-        lastKeyPress = Date()
-        if let reading = volume.current {
-            let limit = VolumeLimit.reached(before: before.isMuted ? 0 : before.level, after: reading.isMuted ? 0 : reading.level, kind: key.kind)
-            onShow?(reading, VolumeNudge.Direction.of(from: before, to: reading, key: key.kind), limit)
-            lastReading = reading
+        guard let reading = volume.current else { return false }
+        if !key.isRepeat, InterceptionSafeguard.interceptionFailed(before: before, after: reading, key: key.kind) {
+            Self.logger.error("volume did not change after a key press; leaving keys to macOS")
+            interceptionGaveUp = true
+            syncKeyTap()
+            return false
         }
+        lastPressWentToMacOS = false
+        lastKeyPress = Date()
+        let limit = VolumeLimit.reached(before: before.isMuted ? 0 : before.level, after: reading.isMuted ? 0 : reading.level, kind: key.kind)
+        onShow?(reading, VolumeNudge.Direction.of(from: before, to: reading, key: key.kind), limit, fullScreen == .besideNotch)
+        lastReading = reading
         return true
     }
 
@@ -68,6 +84,8 @@ public final class VolumeHUDCoordinator {
         if let lastKeyPress, Date().timeIntervalSince(lastKeyPress) < Self.keyEchoWindow {
             return
         }
-        onShow?(reading, VolumeNudge.Direction.of(from: lastReading, to: reading, key: nil), nil)
+        let fullScreen = FullScreenDetector.current()
+        guard fullScreen == .none || (fullScreen == .besideNotch && keys.isActive) else { return }
+        onShow?(reading, VolumeNudge.Direction.of(from: lastReading, to: reading, key: nil), nil, fullScreen == .besideNotch)
     }
 }

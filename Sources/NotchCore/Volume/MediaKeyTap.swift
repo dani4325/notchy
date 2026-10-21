@@ -21,26 +21,23 @@ public final class MediaKeyTap {
         guard tap == nil, AXIsProcessTrusted() else { return }
         let mask = CGEventMask(1) << Self.systemDefinedType.rawValue
         let refcon = Unmanaged.passUnretained(self).toOpaque()
-        guard let created = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
-            place: .headInsertEventTap,
-            options: .defaultTap,
-            eventsOfInterest: mask,
-            callback: { _, type, event, refcon in
-                guard let refcon else { return Unmanaged.passUnretained(event) }
-                let owner = Unmanaged<MediaKeyTap>.fromOpaque(refcon).takeUnretainedValue()
-                if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-                    MainActor.assumeIsolated { owner.reenable() }
-                    return Unmanaged.passUnretained(event)
-                }
-                guard let key = MediaKeyTap.mediaKey(type: type, event: event) else {
-                    return Unmanaged.passUnretained(event)
-                }
-                let handled = MainActor.assumeIsolated { owner.onKey?(key) ?? false }
-                return handled ? nil : Unmanaged.passUnretained(event)
-            },
-            userInfo: refcon
-        ) else {
+        let callback: CGEventTapCallBack = { _, type, event, refcon in
+            guard let refcon else { return Unmanaged.passUnretained(event) }
+            let owner = Unmanaged<MediaKeyTap>.fromOpaque(refcon).takeUnretainedValue()
+            if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                MainActor.assumeIsolated { owner.reenable() }
+                return Unmanaged.passUnretained(event)
+            }
+            guard let key = MediaKeyTap.mediaKey(type: type, event: event) else {
+                return Unmanaged.passUnretained(event)
+            }
+            let handled = MainActor.assumeIsolated { owner.onKey?(key) ?? false }
+            return handled ? nil : Unmanaged.passUnretained(event)
+        }
+        let levels: [CGEventTapLocation] = [.cghidEventTap, .cgSessionEventTap]
+        guard let created = levels.lazy.compactMap({ level in
+            CGEvent.tapCreate(tap: level, place: .headInsertEventTap, options: .defaultTap, eventsOfInterest: mask, callback: callback, userInfo: refcon)
+        }).first else {
             Self.logger.error("event tap could not be created")
             return
         }

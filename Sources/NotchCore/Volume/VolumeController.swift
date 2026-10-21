@@ -8,6 +8,7 @@ public final class VolumeController {
     private static let logger = Logger(subsystem: "com.danirubio.notchy", category: "volume")
 
     public var onChange: ((VolumeReading) -> Void)?
+    public var onOutputChange: (() -> Void)?
 
     private var device = AudioObjectID(kAudioObjectUnknown)
     private var output: AudioOutput?
@@ -41,7 +42,10 @@ public final class VolumeController {
 
     public func start() {
         let listener: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
-            Task { @MainActor [weak self] in self?.attachToDefaultDevice() }
+            Task { @MainActor [weak self] in
+                self?.attachToDefaultDevice()
+                self?.onOutputChange?()
+            }
         }
         deviceListener = listener
         AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &Self.defaultOutputAddress, .main, listener)
