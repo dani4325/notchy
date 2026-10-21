@@ -131,6 +131,12 @@ private struct BackgroundSection: View {
                 LabeledSlider("Posición horizontal", value: editor.backgroundBinding(\.media.crop.focusX, fallback: 0.5), range: 0...1)
                 LabeledSlider("Posición vertical", value: editor.backgroundBinding(\.media.crop.focusY, fallback: 0.5), range: 0...1)
                 LabeledSlider("Oscurecer más", value: editor.backgroundBinding(\.legibility, fallback: ThemeBackground.defaultLegibility), range: ThemeBackground.legibilityRange)
+                if let measurement = editor.store.measurement(themeID: theme.id),
+                   FramingAdvice.needsDarkerArea(measurement: measurement, crop: background.media.crop, theme: theme) {
+                    Label("Este fondo es muy claro detrás del texto. Mueve el encuadre hacia una zona más oscura para que se vea más.", systemImage: "circle.lefthalf.filled")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 Button(action: editor.chooseBackground) {
                     Label("Elegir imagen, GIF o vídeo…", systemImage: "photo.on.rectangle.angled")

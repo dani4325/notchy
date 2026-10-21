@@ -1505,6 +1505,22 @@
         }
       }
     },
+    "Este fondo es muy claro detrás del texto. Mueve el encuadre hacia una zona más oscura para que se vea más.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This background is very bright behind the text. Move the framing to a darker area so more of it shows."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este fondo es muy claro detrás del texto. Mueve el encuadre hacia una zona más oscura para que se vea más."
+          }
+        }
+      }
+    },
     "Estilo": {
       "localizations": {
         "en": {

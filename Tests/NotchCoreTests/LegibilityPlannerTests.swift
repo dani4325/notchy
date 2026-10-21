@@ -195,3 +195,29 @@ struct ScrimZoneRequirementTests {
         #expect(spots.allSatisfy { $0.strength < 0.95 }, "\(spots)")
     }
 }
+
+struct FramingAdviceTests {
+    func measurement(_ pixel: (Int, Int) -> (UInt8, UInt8, UInt8)) throws -> BackgroundMeasurement {
+        let image = LegibilityPlannerTests().image(width: 40, height: 10, pixel: pixel)
+        return BackgroundMeasurement(sample: try #require(BackgroundSample.measuring(image)), framesChecked: 1, coversEveryFrame: true)
+    }
+
+    @Test func aWhiteBackgroundBehindTheTextAsksToMoveTheFraming() throws {
+        let white = try measurement { _, _ in (255, 255, 255) }
+
+        #expect(FramingAdvice.needsDarkerArea(measurement: white, crop: .standard, theme: .notchyDefault))
+    }
+
+    @Test func aDarkBackgroundNeedsNoAdvice() throws {
+        let dark = try measurement { _, _ in (40, 40, 40) }
+
+        #expect(!FramingAdvice.needsDarkerArea(measurement: dark, crop: .standard, theme: .notchyDefault))
+    }
+
+    @Test func movingTheFramingToADarkAreaRemovesTheAdvice() throws {
+        let halves = try measurement { x, _ in x < 20 ? (20, 20, 20) : (255, 255, 255) }
+
+        #expect(FramingAdvice.needsDarkerArea(measurement: halves, crop: MediaCrop(zoom: 2.5, focusX: 0.8, focusY: 0.5), theme: .notchyDefault))
+        #expect(!FramingAdvice.needsDarkerArea(measurement: halves, crop: MediaCrop(zoom: 2.5, focusX: 0.2, focusY: 0.5), theme: .notchyDefault))
+    }
+}
