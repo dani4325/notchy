@@ -149,16 +149,49 @@ struct LegibilityPlannerTests {
         #expect(wide > 0)
         #expect(zoomed == 0)
     }
+}
 
-    @Test func stopsKeepEveryZoneAtLeastAtItsStrength() {
-        let boundaries = [0.3, 0.8]
-        let strengths = [0.2, 0.9, 0.5]
+@MainActor
+struct ScrimZoneRequirementTests {
+    let size = CGSize(width: 500, height: 130)
+    let title = LegibilityMark(needs: .text, rect: CGRect(x: 20, y: 30, width: 100, height: 16))
+    let controls = LegibilityMark(needs: .graphics, rect: CGRect(x: 420, y: 50, width: 20, height: 18))
 
-        let stops = LegibilityPlanner.stops(boundaries: boundaries, strengths: strengths, ramp: 0.05)
+    func foregrounds(_ theme: Theme, _ needs: LegibilityNeeds) -> [ScrimZone.Foreground] {
+        ScrimPlan.foregrounds(for: needs, appearance: ThemeAppearance(theme: theme, background: nil))
+    }
 
-        for position in stride(from: 0.0, through: 1.0, by: 0.01) {
-            let zone = boundaries.firstIndex { position < $0 } ?? strengths.count - 1
-            #expect(LegibilityPlanner.value(of: stops, at: position) >= strengths[zone] - 1e-9, "en \(position)")
-        }
+    @Test func theAccentOnlyNeedsTextContrastWhereItIsDrawnAsText() {
+        #expect(!foregrounds(.notchyDefault, .text).contains { $0.color == Theme.notchyDefault.palette.accent.rgb })
+        #expect(foregrounds(.steinsGate, .text).contains { $0.use == .text && $0.color == Theme.steinsGate.palette.secondary.rgb })
+    }
+
+    @Test func theSecondaryColorIsNotRequiredBecauseThePanelNeverDrawsIt() {
+        let secondary = Theme.notchyDefault.palette.secondary.rgb
+
+        #expect(!foregrounds(.notchyDefault, [.text, .graphics]).contains { $0.color == secondary })
+    }
+
+    @Test func eachMarkGetsOnlyTheDarkeningItsOwnPixelsNeed() throws {
+        let halves = LegibilityPlannerTests().image(width: 20, height: 4) { x, _ in x < 10 ? (0, 0, 0) : (255, 255, 255) }
+        let measurement = BackgroundMeasurement(sample: try #require(BackgroundSample.measuring(halves)), framesChecked: 1, coversEveryFrame: true)
+        let appearance = ThemeAppearance(theme: .notchyDefault, background: MediaSource(url: URL(fileURLWithPath: "/fondo.png"), kind: .image), measurement: measurement)
+
+        let spots = VeilCache.spots(for: measurement, crop: .standard, size: size, appearance: appearance, marks: [title, controls], minimum: 0)
+
+        #expect(spots[0].strength == 0)
+        #expect(spots[1].strength > 0.4)
+    }
+
+    @Test func aDarkAutomaticAccentNoLongerHidesABrightBackground() throws {
+        var theme = Theme.notchyDefault
+        theme.palette = ThemePalette(accent: HexColor("#1D29BF")!, secondary: HexColor("#BF6983")!, panel: HexColor("#0E0C1F")!, text: HexColor("#F5F6FF")!, source: .automatic)
+        let bright = try #require(BackgroundSample.measuring(LegibilityPlannerTests().solid(200)))
+        let measurement = BackgroundMeasurement(sample: bright, framesChecked: 1, coversEveryFrame: true)
+        let appearance = ThemeAppearance(theme: theme, background: MediaSource(url: URL(fileURLWithPath: "/fondo.png"), kind: .image), measurement: measurement)
+
+        let spots = VeilCache.spots(for: measurement, crop: .standard, size: size, appearance: appearance, marks: [controls], minimum: 0)
+
+        #expect(spots.allSatisfy { $0.strength < 0.95 }, "\(spots)")
     }
 }

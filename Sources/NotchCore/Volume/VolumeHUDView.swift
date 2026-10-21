@@ -26,6 +26,7 @@ struct VolumeHUDView: View {
                     .font(appearance.bodyFont(layout.subtitleSize))
                     .foregroundStyle(appearance.secondaryTextColor)
                     .lineLimit(1)
+                    .legibilityMark(.text, letterHeight: layout.subtitleSize)
             }
             SegmentedLevelBar(
                 level: level,
@@ -34,6 +35,7 @@ struct VolumeHUDView: View {
                 nudge: nudge
             )
             .frame(height: layout.volumeSegmentHeight)
+            .legibilityMark(.accent)
             .accessibilityHidden(true)
         }
         .padding(.horizontal, layout.padding)
@@ -63,6 +65,7 @@ struct VolumeHUDView: View {
         }
         .foregroundStyle(appearance.text)
         .lineLimit(1)
+        .legibilityMark(.text, letterHeight: layout.volumeNumberSize)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(reading.isMuted ? Text("Sonido silenciado") : Text("Volumen \(percent) por ciento"))
         .accessibilityValue(reading.output.map { Text(verbatim: $0.name) } ?? Text(verbatim: ""))

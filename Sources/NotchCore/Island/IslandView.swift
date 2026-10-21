@@ -54,6 +54,10 @@ struct IslandView: View {
                 appearance: appearance
             ))
         }
+        .coordinateSpace(.named(LegibilityMark.space))
+        .onPreferenceChange(LegibilityMarksKey.self) { marks in
+            if model.legibilityMarks != marks { model.legibilityMarks = marks }
+        }
         .modifier(NotchBounce(nudge: volumeNudge, isEnabled: !policy.reduceMotion))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.themeAppearance, appearance)

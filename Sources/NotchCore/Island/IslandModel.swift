@@ -56,6 +56,7 @@ final class IslandModel {
     var page = IslandPage.main
     var isDropTargeted = false
     var shapeStyle = ThemeShape.standard
+    var legibilityMarks: [LegibilityMark] = []
     private static let minimumWing: CGFloat = 40
     private static let wingPadding: CGFloat = 8
 

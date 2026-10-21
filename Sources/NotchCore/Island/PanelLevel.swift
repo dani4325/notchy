@@ -11,6 +11,7 @@ struct PanelLevel: View {
         VStack(spacing: layout.textSpacing) {
             LevelBar(fraction: fraction, fill: fill ?? appearance.accentBarColor, track: appearance.barTrackColor, height: layout.progressHeight)
                 .frame(height: layout.progressHeight)
+                .legibilityMark(.accent)
             Text(verbatim: " ")
                 .font(appearance.numericFont(layout.timeSize))
                 .hidden()

@@ -117,6 +117,7 @@ private struct ShelfTile: View {
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .truncationMode(.middle)
+                .legibilityMark(.text)
                 .frame(width: width * 0.9, height: layout.timeSize * IslandLayout.lineHeightFactor * 2, alignment: .top)
         }
         .frame(width: width)

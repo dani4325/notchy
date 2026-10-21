@@ -5,6 +5,7 @@ struct PanelRow<Tile: View, Title: View, Accessory: View, Bar: View, Trailing: V
     var subtitle: Text?
     var subtitleLines = 1
     var showsBar = true
+    var tileNeedsVeil = true
     @ViewBuilder let tile: () -> Tile
     @ViewBuilder let title: () -> Title
     @ViewBuilder let accessory: () -> Accessory
@@ -17,20 +18,24 @@ struct PanelRow<Tile: View, Title: View, Accessory: View, Bar: View, Trailing: V
         HStack(spacing: layout.columnGap) {
             tile()
                 .frame(width: layout.artworkSide, height: layout.artworkSide)
+                .legibilityMarkIfNeeded(tileNeedsVeil ? .graphics : [])
             VStack(alignment: .leading, spacing: layout.textSpacing) {
                 if !showsBar { Spacer(minLength: 0) }
                 HStack(alignment: .firstTextBaseline, spacing: layout.textSpacing) {
                     title()
                         .font(appearance.titleFont(layout.titleSize))
                         .foregroundStyle(appearance.text)
+                        .legibilityMark(.text, letterHeight: layout.titleSize)
                     Spacer(minLength: 0)
                     accessory()
+                        .legibilityMark(.accent)
                 }
                 if let subtitle {
                     subtitle
                         .font(appearance.bodyFont(layout.subtitleSize))
                         .foregroundStyle(appearance.secondaryTextColor)
                         .lineLimit(subtitleLines)
+                        .legibilityMark(.text, letterHeight: subtitleLines == 1 ? layout.subtitleSize : nil)
                 }
                 Spacer(minLength: showsBar ? layout.progressGap : 0)
                 if showsBar { bar() }

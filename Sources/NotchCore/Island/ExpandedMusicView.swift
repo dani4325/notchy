@@ -20,7 +20,7 @@ struct ExpandedMusicView: View {
     @AppStorage(Preferences.Key.visualizer) private var showsVisualizer = true
 
     var body: some View {
-        PanelRow(layout: layout, subtitle: Text(verbatim: info.artist ?? info.album ?? " ")) {
+        PanelRow(layout: layout, subtitle: Text(verbatim: info.artist ?? info.album ?? " "), tileNeedsVeil: artwork == nil) {
             ArtworkView(image: artwork, size: layout.artworkSide, cornerRadius: layout.artworkCorner)
                 .shadow(color: appearance.accent.opacity(appearance.theme.effects.glow), radius: layout.unit * 0.35)
                 .overlay(alignment: .bottomTrailing) { sourceBadge }
@@ -84,21 +84,26 @@ private struct ProgressRow: View {
                 transition: transition
             )
             .frame(height: layout.progressHeight)
+            .legibilityMark(.accent)
 
             if appearance.theme.decoration == .nixieTerminal {
                 HStack {
                     NixieReadoutView(text: Self.format(position), height: layout.nixieHeight, glow: appearance.secondaryText)
+                        .legibilityMark(.text)
                     Spacer(minLength: 0)
                     if let duration = info.duration {
                         NixieReadoutView(text: "-" + Self.format(max(duration - position, 0)), height: layout.nixieHeight, glow: appearance.secondaryText)
+                            .legibilityMark(.text)
                     }
                 }
             } else {
                 HStack {
                     Text(Self.format(position))
+                        .legibilityMark(.text, letterHeight: layout.timeSize)
                     Spacer(minLength: 0)
                     if let duration = info.duration {
                         Text("-" + Self.format(max(duration - position, 0)))
+                            .legibilityMark(.text, letterHeight: layout.timeSize)
                     }
                 }
                 .font(appearance.numericFont(layout.timeSize))
@@ -169,6 +174,7 @@ struct TransportButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
+            .legibilityMark(.graphics)
             .foregroundStyle(configuration.isPressed ? pressed : tint)
             .frame(width: diameter, height: diameter)
             .background(pressed.opacity(configuration.isPressed ? 0.2 : 0), in: Circle())

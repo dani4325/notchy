@@ -13,7 +13,10 @@ struct IslandSurface: View {
         ZStack(alignment: .top) {
             Color.black
             if model.isExpanded {
-                IslandBody(appearance: appearance, layout: model.layout, coversWholeWidth: model.page == .shelf)
+                IslandBody(
+                    appearance: appearance, layout: model.layout,
+                    marks: model.legibilityMarks.map { LegibilityMark(needs: $0.needs, rect: $0.rect.offsetBy(dx: 0, dy: -stem)) }
+                )
                     .frame(width: size.width, height: max(size.height - stem, 0))
                     .padding(.top, stem)
                     .transition(.opacity)
@@ -37,7 +40,7 @@ struct IslandSurface: View {
 struct IslandBody: View {
     let appearance: ThemeAppearance
     let layout: IslandLayout
-    let coversWholeWidth: Bool
+    var marks: [LegibilityMark] = []
 
     var body: some View {
         GeometryReader { proxy in
@@ -46,7 +49,7 @@ struct IslandBody: View {
                     BackgroundMediaView(source: source, crop: settings.media.crop, size: proxy.size)
                     LegibilityScrim(
                         appearance: appearance, layout: layout, crop: settings.media.crop,
-                        minimum: settings.legibility, coversWholeWidth: coversWholeWidth, size: proxy.size
+                        minimum: settings.legibility, size: proxy.size, marks: marks
                     )
                 } else {
                     LinearGradient(colors: [.black, appearance.panel], startPoint: .top, endPoint: .bottom)

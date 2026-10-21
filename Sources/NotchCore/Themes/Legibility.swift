@@ -153,11 +153,6 @@ struct ScrimZone: Sendable {
 }
 
 enum LegibilityPlanner {
-    struct Stop: Equatable, Sendable {
-        let location: Double
-        let value: Double
-    }
-
     private static let precision = 0.005
 
     static func strength(for zone: ScrimZone, over sample: FramedSample, scrim: RGB, atLeast minimum: Double) -> Double {
@@ -177,34 +172,6 @@ enum LegibilityPlanner {
 
     static func worstRatio(for zone: ScrimZone, over sample: FramedSample, scrim: RGB, strength: Double) -> Double {
         zone.foregrounds.map { ratio(of: $0, in: zone, over: sample, scrim: scrim, strength: strength) }.min() ?? 21
-    }
-
-    static func stops(boundaries: [Double], strengths: [Double], ramp: Double) -> [Stop] {
-        guard let first = strengths.first, let last = strengths.last, strengths.count == boundaries.count + 1 else { return [] }
-        var stops = [Stop(location: 0, value: first)]
-        for (index, boundary) in boundaries.enumerated() {
-            let before = strengths[index], after = strengths[index + 1]
-            let previous = index == 0 ? 0 : boundaries[index - 1]
-            let next = index + 1 < boundaries.count ? boundaries[index + 1] : 1
-            if before < after {
-                stops.append(Stop(location: max(boundary - ramp, previous), value: before))
-                stops.append(Stop(location: boundary, value: after))
-            } else {
-                stops.append(Stop(location: boundary, value: before))
-                stops.append(Stop(location: min(boundary + ramp, next), value: after))
-            }
-        }
-        stops.append(Stop(location: 1, value: last))
-        return stops
-    }
-
-    static func value(of stops: [Stop], at location: Double) -> Double {
-        guard let upperIndex = stops.firstIndex(where: { $0.location >= location }) else { return stops.last?.value ?? 0 }
-        guard upperIndex > 0 else { return stops[upperIndex].value }
-        let lower = stops[upperIndex - 1], upper = stops[upperIndex]
-        let span = upper.location - lower.location
-        guard span > 0 else { return max(lower.value, upper.value) }
-        return lower.value + (upper.value - lower.value) * (location - lower.location) / span
     }
 
     private enum Blending: CaseIterable {

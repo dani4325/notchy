@@ -266,10 +266,25 @@ struct PanelPreviewRenderTests {
         }
     }
 
+    @Test func renderVeilWithALocalBackground() async throws {
+        let environment = ProcessInfo.processInfo.environment
+        guard let themePath = environment["NOTCHY_VEIL_THEME"], let framePath = environment["NOTCHY_VEIL_FRAME"],
+              let measurementPath = environment["NOTCHY_VEIL_MEASUREMENT"] else { return }
+        var theme = try JSONDecoder().decode(Theme.self, from: Data(contentsOf: URL(fileURLWithPath: themePath)))
+        theme.background?.media.kind = .image
+        let measurement = try JSONDecoder().decode(BackgroundMeasurement.self, from: Data(contentsOf: URL(fileURLWithPath: measurementPath)))
+        let source = MediaSource(url: URL(fileURLWithPath: framePath), kind: .image)
+        let cover = try #require(NSImage(contentsOf: try Self.makeFaceImage()))
+        try render(name: "velo-con-portada", notch: IslandLayout.referenceNotch, theme: theme, background: source, measurement: measurement, artwork: cover)
+        try render(name: "velo-sin-portada", notch: IslandLayout.referenceNotch, theme: theme, background: source, measurement: measurement)
+        try render(name: "velo-volumen", notch: IslandLayout.referenceNotch, theme: theme, background: source,
+                   volume: VolumeReading(level: 0.625, isMuted: false, output: AudioOutput(name: "Altavoces del MacBook Pro", kind: .builtInSpeakers)), info: nil, measurement: measurement)
+    }
+
     private func render(
         name: String, notch: CGSize, theme: Theme, background: MediaSource?, power: PowerEvent? = nil, volume: VolumeReading? = nil, shelf: (ShelfStore, Bool)? = nil, pill: Bool = false, greeting: Bool = false,
         info: NowPlayingInfo? = PanelPreviewRenderTests.info, openingProgress: Double? = nil, measurement: BackgroundMeasurement? = nil,
-        adjust: ((NSView) -> Void)? = nil
+        artwork: NSImage? = nil, adjust: ((NSView) -> Void)? = nil
     ) throws {
         let model = IslandModel(kind: pill ? .pill : .notch, collapsedSize: notch, stripHeight: pill ? notch.height + 2 : notch.height)
         model.shapeStyle = theme.shape
@@ -293,7 +308,7 @@ struct PanelPreviewRenderTests {
                     } else if let volume {
                         VolumeHUDView(layout: layout, reading: volume)
                     } else if let info {
-                        ExpandedMusicView(layout: layout, info: info, artwork: nil, appName: "Spotify", controls: .inert)
+                        ExpandedMusicView(layout: layout, info: info, artwork: artwork, appName: "Spotify", controls: .inert)
                     } else {
                         IdleContentView(layout: layout)
                     }
@@ -312,6 +327,10 @@ struct PanelPreviewRenderTests {
                 }
             }
             .frame(width: layout.size.width, height: layout.size.height, alignment: .top)
+            .coordinateSpace(.named(LegibilityMark.space))
+            .onPreferenceChange(LegibilityMarksKey.self) { marks in
+                if model.legibilityMarks != marks { model.legibilityMarks = marks }
+            }
             .environment(\.themeAppearance, appearance)
         }
         .frame(width: layout.size.width + 2 * margin, height: layout.size.height + margin)

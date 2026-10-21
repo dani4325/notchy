@@ -1,64 +1,51 @@
 import SwiftUI
 
-struct ScrimPlan: Equatable, Sendable {
-    let boundaries: [Double]
-    let strengths: [Double]
-
-    static let ramp = 0.1
+enum ScrimPlan {
     static let textOpacities = [1.0, ThemeAppearance.secondaryTextOpacity]
 
-    static func zones(layout: IslandLayout, appearance: ThemeAppearance, coversWholeWidth: Bool) -> (boundaries: [Double], zones: [ScrimZone]) {
+    static func foregrounds(for needs: LegibilityNeeds, appearance: ThemeAppearance) -> [ScrimZone.Foreground] {
         let palette = appearance.theme.palette
-        let text = textOpacities.map { ScrimZone.Foreground(color: palette.text.rgb, opacity: $0, use: .text) }
-        let accent = [
-            ScrimZone.Foreground(color: appearance.effective(palette.accent, for: .text), opacity: 1, use: .text),
-            ScrimZone.Foreground(color: appearance.effective(palette.accent, for: .graphic), opacity: 1, use: .graphic),
-            ScrimZone.Foreground(color: appearance.effective(palette.secondary, for: .graphic), opacity: 1, use: .graphic),
-        ]
-        let icons = [ScrimZone.Foreground(color: palette.text.rgb, opacity: 1, use: .graphic)]
-        if coversWholeWidth {
-            return ([], [ScrimZone(horizontal: 0...1, vertical: 0...1, foregrounds: text + accent + icons)])
+        var result: [ScrimZone.Foreground] = []
+        if needs.contains(.text) {
+            result += textOpacities.map { ScrimZone.Foreground(color: palette.text.rgb, opacity: $0, use: .text) }
+            if appearance.theme.decoration == .nixieTerminal {
+                result.append(ScrimZone.Foreground(color: appearance.effective(palette.secondary, for: .text), opacity: 1, use: .text))
+            }
         }
-        let width = max(layout.size.width, 1)
-        let textStart = min(max((layout.padding + layout.artworkSide + layout.columnGap) / width, 0), 1)
-        let textEnd = min(max(textStart + layout.textWidth / width, textStart), 1)
-        return ([textStart, textEnd], [
-            ScrimZone(horizontal: 0...textStart, vertical: 0...1, foregrounds: accent + icons),
-            ScrimZone(horizontal: textStart...textEnd, vertical: 0...1, foregrounds: text + accent),
-            ScrimZone(horizontal: textEnd...1, vertical: 0...1, foregrounds: icons),
-        ])
-    }
-
-    static func make(_ sample: FramedSample, layout: IslandLayout, appearance: ThemeAppearance, minimum: Double, coversWholeWidth: Bool) -> ScrimPlan {
-        let (boundaries, zones) = zones(layout: layout, appearance: appearance, coversWholeWidth: coversWholeWidth)
-        let strengths = zones.map {
-            LegibilityPlanner.strength(for: $0, over: sample, scrim: appearance.scrimRGB, atLeast: minimum)
+        if needs.contains(.graphics) {
+            result.append(ScrimZone.Foreground(color: palette.text.rgb, opacity: 1, use: .graphic))
         }
-        return ScrimPlan(boundaries: boundaries, strengths: strengths)
+        if needs.contains(.accent) {
+            result.append(ScrimZone.Foreground(color: appearance.effective(palette.accent, for: .graphic), opacity: 1, use: .graphic))
+        }
+        return result
     }
 }
 
 struct LegibilityScrim: View {
+    static let featherRatio: CGFloat = 0.3
+
     let appearance: ThemeAppearance
     let layout: IslandLayout
     let crop: MediaCrop
     let minimum: Double
-    let coversWholeWidth: Bool
     let size: CGSize
+    let marks: [LegibilityMark]
 
     var body: some View {
         let color = appearance.scrimColor
         if let measurement = appearance.measurement, size.width > 0, size.height > 0 {
-            let plan = ScrimPlanCache.plan(
-                for: measurement, crop: crop, size: size, layout: layout, appearance: appearance,
-                minimum: minimum, coversWholeWidth: coversWholeWidth
-            )
-            let stops = LegibilityPlanner.stops(boundaries: plan.boundaries, strengths: plan.strengths, ramp: ScrimPlan.ramp)
-            LinearGradient(
-                stops: stops.map { Gradient.Stop(color: color.opacity($0.value), location: $0.location) },
-                startPoint: .leading,
-                endPoint: .trailing
-            )
+            ZStack {
+                color.opacity(minimum)
+                if let veil = VeilCache.image(
+                    for: measurement, crop: crop, size: size, appearance: appearance, marks: marks,
+                    minimum: minimum, feather: layout.unit * Self.featherRatio
+                ) {
+                    Image(decorative: veil, scale: VeilMask.pixelsPerPoint)
+                        .resizable()
+                        .interpolation(.high)
+                }
+            }
         } else {
             color
         }
@@ -66,7 +53,7 @@ struct LegibilityScrim: View {
 }
 
 @MainActor
-enum ScrimPlanCache {
+enum VeilCache {
     private struct Key: Hashable {
         let themeID: String
         let mediaFile: String
@@ -74,36 +61,54 @@ enum ScrimPlanCache {
         let width: Int
         let height: Int
         let palette: [HexColor]
-        let textStart: Int
-        let textEnd: Int
+        let marks: [MarkKey]
         let minimum: Double
-        let coversWholeWidth: Bool
+        let feather: Double
     }
 
-    private static let retained = 16
-    private static var plans: [Key: ScrimPlan] = [:]
+    private struct MarkKey: Hashable {
+        let needs: Int
+        let x: Int, y: Int, width: Int, height: Int
+
+        init(_ mark: LegibilityMark) {
+            needs = mark.needs.rawValue
+            x = Int(mark.rect.minX.rounded()); y = Int(mark.rect.minY.rounded())
+            width = Int(mark.rect.width.rounded()); height = Int(mark.rect.height.rounded())
+        }
+    }
+
+    private static let retained = 8
+    private static var images: [Key: CGImage] = [:]
     private static var order: [Key] = []
 
-    static func plan(for measurement: BackgroundMeasurement, crop: MediaCrop, size: CGSize, layout: IslandLayout, appearance: ThemeAppearance, minimum: Double, coversWholeWidth: Bool) -> ScrimPlan {
+    static func spots(for measurement: BackgroundMeasurement, crop: MediaCrop, size: CGSize, appearance: ThemeAppearance, marks: [LegibilityMark], minimum: Double) -> [VeilSpot] {
+        let framed = measurement.sample.framed(crop: crop, targetAspect: size.width / size.height)
+        return marks.compactMap { mark in
+            let rect = mark.rect.intersection(CGRect(origin: .zero, size: size))
+            guard !rect.isNull, rect.width > 0, rect.height > 0 else { return nil }
+            let zone = ScrimZone(
+                horizontal: Double(rect.minX / size.width)...Double(rect.maxX / size.width),
+                vertical: Double(rect.minY / size.height)...Double(rect.maxY / size.height),
+                foregrounds: ScrimPlan.foregrounds(for: mark.needs, appearance: appearance)
+            )
+            return VeilSpot(rect: rect, strength: LegibilityPlanner.strength(for: zone, over: framed, scrim: appearance.scrimRGB, atLeast: minimum))
+        }
+    }
+
+    static func image(for measurement: BackgroundMeasurement, crop: MediaCrop, size: CGSize, appearance: ThemeAppearance, marks: [LegibilityMark], minimum: Double, feather: CGFloat) -> CGImage? {
         let palette = appearance.theme.palette
         let key = Key(
-            themeID: appearance.theme.id,
-            mediaFile: appearance.theme.background?.media.file ?? "",
-            crop: crop,
-            width: Int(size.width.rounded()),
-            height: Int(size.height.rounded()),
-            palette: [palette.text, palette.accent, palette.secondary, palette.panel],
-            textStart: Int((layout.padding + layout.artworkSide + layout.columnGap).rounded()),
-            textEnd: Int(layout.textWidth.rounded()),
-            minimum: minimum,
-            coversWholeWidth: coversWholeWidth
+            themeID: appearance.theme.id, mediaFile: appearance.background?.url.lastPathComponent ?? "", crop: crop,
+            width: Int(size.width.rounded()), height: Int(size.height.rounded()),
+            palette: [palette.text, palette.accent, palette.panel], marks: marks.map(MarkKey.init),
+            minimum: minimum, feather: Double(feather)
         )
-        if let cached = plans[key] { return cached }
-        let framed = measurement.sample.framed(crop: crop, targetAspect: size.width / size.height)
-        let plan = ScrimPlan.make(framed, layout: layout, appearance: appearance, minimum: minimum, coversWholeWidth: coversWholeWidth)
-        plans[key] = plan
+        if let cached = images[key] { return cached }
+        let spots = spots(for: measurement, crop: crop, size: size, appearance: appearance, marks: marks, minimum: minimum)
+        guard let image = VeilMask(size: size, spots: spots, feather: feather).image(color: appearance.scrimRGB) else { return nil }
+        images[key] = image
         order.append(key)
-        if order.count > retained { plans[order.removeFirst()] = nil }
-        return plan
+        if order.count > retained { images[order.removeFirst()] = nil }
+        return image
     }
 }
