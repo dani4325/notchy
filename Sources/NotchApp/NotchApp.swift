@@ -95,6 +95,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         nowPlaying.start()
         accessibility.start()
+        PlaybackProbe.shared.start()
         wings.start()
         notchController.start()
         power.onEvent = { [weak self] event in self?.notchController.show(event) }

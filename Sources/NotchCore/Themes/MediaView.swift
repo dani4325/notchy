@@ -38,10 +38,12 @@ final class MediaContainerView: NSView {
     private(set) var player: AVQueuePlayer?
     private var looper: AVPlayerLooper?
     private(set) var loadTask: Task<Void, Never>?
+    private let probe: PlaybackProbe
 
     override var isFlipped: Bool { true }
 
-    init() {
+    init(probe: PlaybackProbe = .shared) {
+        self.probe = probe
         super.init(frame: .zero)
         wantsLayer = true
         layer?.masksToBounds = true
@@ -58,6 +60,7 @@ final class MediaContainerView: NSView {
             tearDown()
             self.source = source
             load(source)
+            registerWithProbe(source.kind)
         }
         if crop != self.crop {
             self.crop = crop
@@ -79,6 +82,23 @@ final class MediaContainerView: NSView {
         imageView = nil
         source = nil
         isActive = false
+        probe.unregister(self)
+    }
+
+    private func registerWithProbe(_ kind: MediaKind) {
+        switch kind {
+        case .image:
+            break
+        case .animatedImage:
+            probe.register(self, kind: "gif") { [weak self] in
+                guard let layer = self?.imageView?.layer, layer.animation(forKey: Self.frameAnimationKey) != nil else { return nil }
+                return layer.speed == 0 ? layer.timeOffset : layer.convertTime(CACurrentMediaTime(), from: nil)
+            }
+        case .video:
+            probe.register(self, kind: "video") { [weak self] in
+                self.map { $0.player?.currentTime().seconds ?? 0 }
+            }
+        }
     }
 
     override func layout() {

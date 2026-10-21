@@ -18,6 +18,7 @@ public final class AudioVisualizer {
     @ObservationIgnored private var tap: SystemAudioTap?
     @ObservationIgnored private var viewers = 0
     @ObservationIgnored private var silentSince: Date?
+    @ObservationIgnored private var framesReceived = 0
 
     private static let silenceFallback: TimeInterval = 3
     private static let logger = Logger(subsystem: "com.danirubio.notchy", category: "visualizer")
@@ -65,6 +66,9 @@ public final class AudioVisualizer {
             try newTap.start()
             tap = newTap
             silentSince = nil
+            PlaybackProbe.shared.register(self, kind: "visualizer") { [weak self] in
+                self.map { Double($0.framesReceived) }
+            }
         } catch {
             Self.logger.error("audio tap unavailable: \(String(describing: error), privacy: .public)")
             mode = .simulated
@@ -74,6 +78,7 @@ public final class AudioVisualizer {
     private func stopTap() {
         tap?.stop()
         tap = nil
+        PlaybackProbe.shared.unregister(self)
     }
 
     private func received(_ newLevels: [Float], isSilent: Bool) {
@@ -89,6 +94,7 @@ public final class AudioVisualizer {
             silentSince = nil
             confirmCapture()
         }
+        framesReceived += 1
         levels = SpectrumAnalyzer.smooth(previous: levels, next: newLevels)
         publish()
     }

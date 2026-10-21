@@ -23,23 +23,24 @@ Antes de cada versión se mide cada escenario durante 60 s. Si alguno supera su 
 
 MacBook con chip M4, macOS 27.0.1, enchufado. Cada fila son 60 s con `top`, muestras cada 5 s. «Con música» significa que Safari reproducía audio y el panel mostraba el visualizador.
 
-| Escenario | Fondo | CPU media | Despertares | Memoria |
-|---|---|---|---|---|
-| Panel cerrado | imagen | 0,10 % | 2 en 60 s | 21 MB |
-| Panel cerrado | GIF (57 fotogramas, 540 × 400) | 0,05 % | 0 en 60 s | 31 MB |
-| Panel cerrado | vídeo | 0,01 % | 2 en 60 s | 20 MB |
-| Panel abierto, sin música | sin fondo | 0,23 % | 5 en 60 s | 27 MB |
-| Panel abierto, sin música | imagen | 0,00 % | 5 en 60 s | 35 MB |
-| Panel abierto, sin música | GIF | 0,00 % | 10 en 60 s | 128 MB |
-| Panel abierto, sin música | el mismo GIF convertido a vídeo | 0,00 % | 1 en 60 s | 25 MB |
-| Panel abierto, sin música | vídeo | 0,00 % | 0 en 60 s | 25 MB |
-| Panel abierto, con música | sin fondo | 15,66 % | 0 en 60 s | 26 MB |
-| Panel abierto, con música | imagen | 15,57 % | 4 en 60 s | 32 MB |
-| Panel abierto, con música | GIF | 15,12 % | 0 en 60 s | 124 MB |
-| Panel abierto, con música | vídeo | 12,23 % | 2 en 60 s | 27 MB |
+| Escenario | Fondo | CPU media | Despertares | Memoria | Fiabilidad |
+|---|---|---|---|---|---|
+| Panel cerrado | imagen | 0,10 % | 2 en 60 s | 21 MB | válida |
+| Panel cerrado | GIF (57 fotogramas, 540 × 400) | 0,05 % | 0 en 60 s | 31 MB | válida (cerrado no se anima) |
+| Panel cerrado | vídeo | 0,01 % | 2 en 60 s | 20 MB | válida (cerrado no se reproduce) |
+| Panel abierto, sin música | sin fondo | 0,23 % | 5 en 60 s | 27 MB | válida |
+| Panel abierto, sin música | imagen | 0,00 % | 5 en 60 s | 35 MB | válida |
+| Panel abierto, sin música | GIF | 0,00 % | 10 en 60 s | 128 MB | sin comprobar que se animaba |
+| Panel abierto, sin música | el mismo GIF convertido a vídeo | 0,00 % | 1 en 60 s | 25 MB | **no fiable**: el vídeo no arrancaba |
+| Panel abierto, sin música | vídeo | 0,00 % | 0 en 60 s | 25 MB | **no fiable**: el vídeo no arrancaba |
+| Panel abierto, con música | sin fondo | 15,66 % | 0 en 60 s | 26 MB | sin comprobar el visualizador |
+| Panel abierto, con música | imagen | 15,57 % | 4 en 60 s | 32 MB | sin comprobar el visualizador |
+| Panel abierto, con música | GIF | 15,12 % | 0 en 60 s | 124 MB | sin comprobar el GIF ni el visualizador |
+| Panel abierto, con música | vídeo | 12,23 % | 2 en 60 s | 27 MB | **no fiable**: el vídeo no arrancaba |
 
 Lo que muestran:
 
+- Fallo descubierto el 20 de octubre: hasta el commit `8fbcb1e`, un fondo de vídeo que se aplicaba con el panel ya abierto no llegaba a reproducirse. Las filas marcadas «no fiable» se midieron con el vídeo parado. Las marcadas «sin comprobar» son probablemente correctas, porque el GIF y el visualizador no pasaban por ese código, pero nadie comprobó que se movieran. Desde ese día, `measure-energy.sh --check video|gif|visualizer` lo comprueba antes y después de medir y descarta la medición si no avanza.
 - El fondo no gasta CPU en el proceso de Notchy. El GIF se anima con Core Animation y el vídeo lo decodifica el sistema, así que ese trabajo lo hacen `WindowServer` y `VTDecoderXPCService`. Midiendo esos procesos con una ventana de prueba, la diferencia entre GIF, vídeo y ninguna animación quedó por debajo del ruido de otro vídeo que se reproducía en Safari (±0,7 %). No está medida por separado.
 - El GIF ocupa 128 MB porque se descomprimen todos sus fotogramas. Convertido a vídeo, 25 MB.
 - Con música el panel gasta un 15 %. Según el perfil (`sample`, 10 s), el código de Notchy apenas cuenta (68 de 4.040 muestras del hilo principal). El gasto está en volver a pintar por software toda la columna de texto en cada fotograma del visualizador, porque una sombra de texto la convertía en una sola capa, y en la animación continua de la barra de progreso.
@@ -50,7 +51,7 @@ Mismo equipo y método. Cambios: sin sombra de texto en la columna, visualizador
 
 | Escenario | CPU media | CPU máx. | Despertares | Límite |
 |---|---|---|---|---|
-| Panel abierto con música y visualizador (tu tema, fondo GIF) | 1,65 % | 1,9 % | 0 en 60 s | menos de 3 % ✓ |
+| Panel abierto con música y visualizador (tu tema, fondo GIF) | 1,65 % | 1,9 % | 0 en 60 s | menos de 3 % ✓ (sin comprobar que el GIF y el visualizador se movían) |
 | Panel abierto sin música | 0,00 % | 0,0 % | 9 en 60 s | menos de 0,5 % ✓ |
 | Panel cerrado, tras mostrar y ocultar el aviso de volumen | 0,00 % | 0,0 % | 3 en 60 s | 0 % ✓ |
 
