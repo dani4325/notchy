@@ -609,6 +609,22 @@
         }
       }
     },
+    "Bajar volumen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume Down"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bajar volumen"
+          }
+        }
+      }
+    },
     "Bienvenida": {
       "localizations": {
         "en": {
@@ -3437,6 +3453,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Suave"
+          }
+        }
+      }
+    },
+    "Subir volumen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume Up"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subir volumen"
           }
         }
       }

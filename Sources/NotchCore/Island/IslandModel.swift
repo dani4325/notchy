@@ -8,7 +8,7 @@ enum IslandKind: Equatable {
 
 enum IslandActivity: Equatable {
     case power(PowerEvent)
-    case volume(VolumeReading, VolumeBump?)
+    case volume(VolumeReading, VolumeNudge?)
     case greeting
 
     var duration: Duration {

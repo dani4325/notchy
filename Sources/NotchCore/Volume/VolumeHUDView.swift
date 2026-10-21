@@ -3,7 +3,8 @@ import SwiftUI
 struct VolumeHUDView: View {
     let layout: IslandLayout
     let reading: VolumeReading
-    var bump: VolumeBump?
+    var nudge: VolumeNudge?
+    var step: (MediaKeyKind) -> Void = { _ in }
 
     @Environment(\.themeAppearance) private var appearance
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -12,39 +13,67 @@ struct VolumeHUDView: View {
     private var percent: Int { Int((level * 100).rounded()) }
 
     var body: some View {
-        PanelRow(layout: layout, subtitle: outputLine) {
-            PanelTile(layout: layout) {
-                VolumeSymbol(reading: reading, size: layout.artworkSide * 0.34)
-                    .foregroundStyle(appearance.text)
+        VStack(spacing: layout.textSpacing * 2.5) {
+            HStack(spacing: 0) {
+                stepButton("minus", label: "Bajar volumen", kind: .volumeDown)
+                Spacer(minLength: 0)
+                readout
+                Spacer(minLength: 0)
+                stepButton("plus", label: "Subir volumen", kind: .volumeUp)
             }
-        } title: {
-            if reading.isMuted {
-                Text("Silencio")
-            } else if appearance.theme.decoration == .nixieTerminal {
-                NixieReadoutView(text: "\(percent)", height: layout.titleSize * 1.2, glow: appearance.secondaryText)
-            } else {
-                Text("\(percent) %")
-                    .monospacedDigit()
-                    .contentTransition(reduceMotion ? .identity : .numericText(value: Double(percent)))
+            if let output = reading.output {
+                (Text(Image(systemName: output.kind.symbol)) + Text(verbatim: " " + output.name))
+                    .font(appearance.bodyFont(layout.subtitleSize))
+                    .foregroundStyle(appearance.secondaryTextColor)
+                    .lineLimit(1)
             }
-        } accessory: {
-            EmptyView()
-        } bar: {
-            PanelLevel(layout: layout, fraction: Double(level), bump: bump)
-        } trailing: {
-            Color.clear
+            SegmentedLevelBar(
+                level: level,
+                colors: appearance.levelSegmentColors,
+                track: appearance.barTrackColor,
+                nudge: nudge
+            )
+            .frame(height: layout.volumeSegmentHeight)
+            .accessibilityHidden(true)
         }
+        .padding(.horizontal, layout.padding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(reduceMotion ? nil : Self.change, value: percent)
         .animation(reduceMotion ? nil : Self.change, value: reading.isMuted)
+    }
+
+    private static let change = Animation.snappy(duration: 0.25)
+
+    private var readout: some View {
+        HStack(spacing: layout.unit * 0.22) {
+            VolumeSymbol(reading: reading, size: layout.volumeNumberSize * 0.8)
+            Group {
+                if reading.isMuted {
+                    Text("Silencio")
+                } else if appearance.theme.decoration == .nixieTerminal {
+                    NixieReadoutView(text: "\(percent)", height: layout.volumeNumberSize * 1.2, glow: appearance.secondaryText)
+                } else {
+                    Text("\(percent) %")
+                        .monospacedDigit()
+                        .contentTransition(reduceMotion ? .identity : .numericText(value: Double(percent)))
+                }
+            }
+            .font(appearance.titleFont(layout.volumeNumberSize))
+            .foregroundStyle(appearance.text)
+        }
+        .foregroundStyle(appearance.text)
+        .lineLimit(1)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(reading.isMuted ? Text("Sonido silenciado") : Text("Volumen \(percent) por ciento"))
         .accessibilityValue(reading.output.map { Text(verbatim: $0.name) } ?? Text(verbatim: ""))
     }
 
-    private static let change = Animation.snappy(duration: 0.25)
-
-    private var outputLine: Text? {
-        reading.output.map { Text(Image(systemName: $0.kind.symbol)) + Text(verbatim: " " + $0.name) }
+    private func stepButton(_ symbol: String, label: LocalizedStringKey, kind: MediaKeyKind) -> some View {
+        Button { step(kind) } label: {
+            Image(systemName: symbol).font(.system(size: layout.volumeStepIconSize, weight: .semibold))
+        }
+        .buttonStyle(TransportButtonStyle(diameter: layout.controlDiameter, tint: appearance.text, pressed: appearance.accentGraphic))
+        .accessibilityLabel(label)
     }
 }
 

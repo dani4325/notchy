@@ -8,6 +8,7 @@ struct IslandView: View {
     let visualizer: AudioVisualizer
     let shelf: ShelfStore
     let togglePage: () -> Void
+    let stepVolume: (MediaKeyKind) -> Void
 
     @AppStorage(Preferences.Key.shelf) private var shelfEnabled = true
 
@@ -53,8 +54,14 @@ struct IslandView: View {
                 appearance: appearance
             ))
         }
+        .modifier(NotchBounce(nudge: volumeNudge, isEnabled: !policy.reduceMotion))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.themeAppearance, appearance)
+    }
+
+    private var volumeNudge: VolumeNudge? {
+        if case .volume(_, let nudge) = model.activity { return nudge }
+        return nil
     }
 
     private var compactVolume: VolumeReading? {
@@ -66,8 +73,8 @@ struct IslandView: View {
     private var expandedContent: some View {
         if case .power(let event) = model.activity {
             ChargingView(layout: model.layout, event: event)
-        } else if case .volume(let reading, let bump) = model.activity {
-            VolumeHUDView(layout: model.layout, reading: reading, bump: bump)
+        } else if case .volume(let reading, let nudge) = model.activity {
+            VolumeHUDView(layout: model.layout, reading: reading, nudge: nudge, step: stepVolume)
         } else if model.activity == .greeting {
             GreetingView(layout: model.layout)
         } else if shelfEnabled, model.page == .shelf {

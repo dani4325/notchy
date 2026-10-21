@@ -1,6 +1,6 @@
 import Foundation
 
-enum MediaKeyKind: Equatable, Sendable {
+public enum MediaKeyKind: Equatable, Sendable {
     case volumeUp
     case volumeDown
     case mute

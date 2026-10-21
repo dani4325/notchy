@@ -102,20 +102,20 @@ struct PanelPreviewRenderTests {
             name: "volumen-secuencia-4-pulsar-otra-vez-en-el-100", notch: notch, theme: .notchyDefault, background: nil,
             volume: VolumeReading(level: 1, isMuted: false, output: speakers), info: nil
         ) { host in
-            for bar in Self.levelBars(in: host) {
+            for bar in Self.segmentRows(in: host) {
                 CATransaction.begin()
                 CATransaction.setDisableActions(true)
-                bar.barLayer.anchorPoint = CGPoint(x: 0, y: 0.5)
-                bar.barLayer.position = CGPoint(x: 0, y: bar.bounds.midY)
-                bar.barLayer.transform = CATransform3DMakeScale(LevelBarView.stretchScale, 1, 1)
+                bar.rowLayer.anchorPoint = CGPoint(x: 0, y: 0.5)
+                bar.rowLayer.position = CGPoint(x: 0, y: bar.bounds.midY)
+                bar.rowLayer.transform = CATransform3DMakeScale(SegmentedLevelView.stretchScale, 1, 1)
                 CATransaction.commit()
             }
         }
         try renderWings(name: "volumen-secuencia-7-compacto", notch: notch, theme: .notchyDefault, volume: VolumeReading(level: 0.5625, isMuted: false, output: speakers))
     }
 
-    private static func levelBars(in view: NSView) -> [LevelBarView] {
-        (view as? LevelBarView).map { [$0] } ?? view.subviews.flatMap(levelBars)
+    private static func segmentRows(in view: NSView) -> [SegmentedLevelView] {
+        (view as? SegmentedLevelView).map { [$0] } ?? view.subviews.flatMap(segmentRows)
     }
 
     private func renderWings(name: String, notch: CGSize, theme: Theme, volume: VolumeReading? = nil) throws {

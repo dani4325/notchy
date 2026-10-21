@@ -50,7 +50,27 @@ public enum VolumeLimit: Equatable, Sendable {
     }
 }
 
-struct VolumeBump: Equatable, Sendable {
-    let limit: VolumeLimit
+public struct VolumeNudge: Equatable, Sendable {
+    public enum Direction: Equatable, Sendable {
+        case up
+        case down
+        case mute
+        case unmute
+
+        static func of(from previous: VolumeReading?, to current: VolumeReading, key: MediaKeyKind?) -> Direction? {
+            guard let previous else { return nil }
+            if previous.isMuted != current.isMuted { return current.isMuted ? .mute : .unmute }
+            if current.level > previous.level { return .up }
+            if current.level < previous.level { return .down }
+            return switch key {
+            case .volumeUp?: .up
+            case .volumeDown?: .down
+            default: nil
+            }
+        }
+    }
+
+    let direction: Direction
+    let limit: VolumeLimit?
     let count: Int
 }

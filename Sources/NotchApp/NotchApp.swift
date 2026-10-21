@@ -100,7 +100,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         power.onEvent = { [weak self] event in self?.notchController.show(event) }
         power.start()
         autoThemes.start()
-        volumeHUD.onShow = { [weak self] reading, limit in self?.notchController.show(reading, limit: limit) }
+        volumeHUD.onShow = { [weak self] reading, direction, limit in self?.notchController.show(reading, direction: direction, limit: limit) }
+        notchController.onVolumeStep = { [weak self] kind in self?.volumeHUD.step(kind) }
         volumeHUD.start()
         onboarding.onTryPanel = { [weak self] in self?.notchController.greet() }
     }

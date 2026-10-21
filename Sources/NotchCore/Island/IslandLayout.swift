@@ -25,6 +25,9 @@ struct IslandLayout: Equatable {
     static let minimumTextWidthRatio: CGFloat = 3
     static let topBlendRatio: CGFloat = 0.7
     static let maxJunctionShare: CGFloat = 0.5
+    static let volumeNumberRatio: CGFloat = 0.78
+    static let volumeSegmentRatio: CGFloat = 0.36
+    static let volumeStepIconRatio: CGFloat = 0.42
 
     let stem: CGSize
     let unit: CGFloat
@@ -62,6 +65,9 @@ struct IslandLayout: Equatable {
     var subtitleSize: CGFloat { max(unit * Self.subtitleRatio, Self.minimumTextSize) }
     var labelSize: CGFloat { unit * Self.labelRatio }
     var timeSize: CGFloat { max(unit * Self.timeRatio, Self.minimumTextSize) }
+    var volumeNumberSize: CGFloat { max(unit * Self.volumeNumberRatio, Self.minimumTextSize) }
+    var volumeSegmentHeight: CGFloat { unit * Self.volumeSegmentRatio }
+    var volumeStepIconSize: CGFloat { max(unit * Self.volumeStepIconRatio, Self.minimumTextSize) }
     var textSpacing: CGFloat { unit * Self.textSpacingRatio }
     var progressHeight: CGFloat { unit * Self.progressRatio }
     var progressGap: CGFloat { unit * Self.progressGapRatio }

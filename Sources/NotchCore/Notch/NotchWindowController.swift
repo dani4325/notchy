@@ -14,7 +14,8 @@ public final class NotchWindowController {
     private let shelf: ShelfStore
     private let menuInspector = MenuBarInspector()
     private var wakeObserver: NSObjectProtocol?
-    private var bumpCount = 0
+    private var nudgeCount = 0
+    public var onVolumeStep: ((MediaKeyKind) -> Void)?
 
     public init(
         nowPlaying: NowPlayingStore, companion: CompanionStore, wings: WingsVisibility, themes: ThemeStore, shelf: ShelfStore
@@ -78,13 +79,13 @@ public final class NotchWindowController {
         islands.values.forEach { $0.show(.greeting) }
     }
 
-    public func show(_ reading: VolumeReading, limit: VolumeLimit? = nil) {
+    public func show(_ reading: VolumeReading, direction: VolumeNudge.Direction?, limit: VolumeLimit?) {
         guard Preferences.volumeHUD else { return }
-        let bump = limit.map { limit -> VolumeBump in
-            bumpCount += 1
-            return VolumeBump(limit: limit, count: bumpCount)
+        let nudge = direction.map { direction -> VolumeNudge in
+            nudgeCount += 1
+            return VolumeNudge(direction: direction, limit: limit, count: nudgeCount)
         }
-        islands.values.forEach { $0.show(.volume(reading, bump)) }
+        islands.values.forEach { $0.show(.volume(reading, nudge)) }
     }
 
     private func preferencesChanged() {
@@ -117,7 +118,8 @@ public final class NotchWindowController {
                     collapsedFrame: placement.collapsedFrame, kind: placement.kind,
                     screenFrame: placement.screenFrame, stripHeight: placement.stripHeight,
                     nowPlaying: nowPlaying, companion: companion, wings: wings, themes: themes,
-                    visualizer: visualizer, shelf: shelf
+                    visualizer: visualizer, shelf: shelf,
+                    stepVolume: { [weak self] kind in self?.onVolumeStep?(kind) }
                 )
             }
         }

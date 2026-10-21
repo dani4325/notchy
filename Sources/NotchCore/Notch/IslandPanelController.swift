@@ -24,6 +24,7 @@ final class IslandPanelController {
     private var isClosed = false
     private var activityTimer: Task<Void, Never>?
     private var volumePresentation: VolumePresentation?
+    private var bounceRestore: Task<Void, Never>?
 
     init(
         collapsedFrame: CGRect,
@@ -35,7 +36,8 @@ final class IslandPanelController {
         wings: WingsVisibility,
         themes: ThemeStore,
         visualizer: AudioVisualizer,
-        shelf: ShelfStore
+        shelf: ShelfStore,
+        stepVolume: @escaping (MediaKeyKind) -> Void
     ) {
         self.collapsedFrame = collapsedFrame
         self.screenFrame = screenFrame
@@ -50,7 +52,7 @@ final class IslandPanelController {
 
         hostingView = HoverHostingView(rootView: IslandView(
             model: model, nowPlaying: nowPlaying, companion: companion, themes: themes,
-            visualizer: visualizer, shelf: shelf, togglePage: {}
+            visualizer: visualizer, shelf: shelf, togglePage: {}, stepVolume: { _ in }
         ))
         hostingView.onHoverChange = { [weak self] isInside in
             self?.hoverChanged(isInside)
@@ -64,7 +66,7 @@ final class IslandPanelController {
         hostingView.canAcceptDrop = { Preferences.shelf }
         hostingView.rootView = IslandView(
             model: model, nowPlaying: nowPlaying, companion: companion, themes: themes,
-            visualizer: visualizer, shelf: shelf, togglePage: { [weak self] in self?.togglePage() }
+            visualizer: visualizer, shelf: shelf, togglePage: { [weak self] in self?.togglePage() }, stepVolume: stepVolume
         )
         panel.contentView = hostingView
         panel.orderFrontRegardless()
@@ -125,6 +127,9 @@ final class IslandPanelController {
         volumePresentation = presentation
         let wasShowingVolume = model.activity?.isSameKind(as: activity) == true
         model.activity = activity
+        if case .volume(_, let nudge?) = activity, NotchBounce.moves(nudge.direction) {
+            makeRoomForBounce()
+        }
         switch presentation.phase {
         case .expanded where !model.isExpanded:
             transition(to: .expanded, animated: true)
@@ -146,8 +151,21 @@ final class IslandPanelController {
         }
     }
 
+    private func makeRoomForBounce() {
+        guard !MotionPolicy.current(openAnimation: model.openAnimation).reduceMotion else { return }
+        let room = panel.frame.height * NotchBounce.roomRatio
+        setPanelFrame(panel.frame.union(panel.frame.offsetBy(dx: 0, dy: -room)))
+        bounceRestore?.cancel()
+        bounceRestore = Task { [weak self] in
+            try? await Task.sleep(for: NotchBounce.settle)
+            guard !Task.isCancelled, let self else { return }
+            self.setPanelFrame(self.frame(for: self.model.state))
+        }
+    }
+
     private func volumeTick() {
-        guard var presentation = volumePresentation, !isHovering, let wait = presentation.tick() else {
+        if volumePresentation != nil, isHovering { return }
+        guard var presentation = volumePresentation, let wait = presentation.tick() else {
             volumePresentation = nil
             endActivity()
             return
@@ -172,6 +190,7 @@ final class IslandPanelController {
 
     func close() {
         activityTimer?.cancel()
+        bounceRestore?.cancel()
         volumePresentation = nil
         isClosed = true
         cancelPending()
@@ -242,6 +261,10 @@ final class IslandPanelController {
     private func hoverChanged(_ isInside: Bool) {
         isHovering = isInside
         pendingHover?.cancel()
+        if !isInside, volumePresentation != nil {
+            scheduleVolumeTick(after: VolumePresentation.expandedHold)
+            return
+        }
         if !isInside, model.activity != nil, activityTimer == nil {
             model.activity = nil
         }

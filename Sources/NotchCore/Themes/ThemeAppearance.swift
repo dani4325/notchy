@@ -54,6 +54,10 @@ public struct ThemeAppearance: Sendable {
 
     var accentBarColor: NSColor { nsColor(theme.palette.accent, for: .graphic) }
 
+    var levelSegmentColors: [HexColor] {
+        SegmentedLevel.colors(accent: HexColor(rgb: effective(theme.palette.accent, for: .graphic)), panel: theme.palette.panel, awayFrom: scrimRGB)
+    }
+
     var barTrackColor: NSColor {
         let text = theme.palette.text
         return NSColor(srgbRed: text.red, green: text.green, blue: text.blue, alpha: Self.barTrackOpacity)

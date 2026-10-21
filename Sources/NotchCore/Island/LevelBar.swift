@@ -7,7 +7,6 @@ struct LevelBar: NSViewRepresentable {
     let track: NSColor
     let height: CGFloat
     var transition: TimeInterval = 0.15
-    var bump: VolumeBump?
 
     func makeNSView(context: Context) -> LevelBarView {
         LevelBarView()
@@ -16,10 +15,6 @@ struct LevelBar: NSViewRepresentable {
     func updateNSView(_ view: LevelBarView, context: Context) {
         let reduceMotion = context.environment.accessibilityReduceMotion
         view.update(fraction: fraction, fill: fill, track: track, duration: reduceMotion ? 0 : transition)
-        if let bump, bump.count != view.lastBump {
-            view.lastBump = bump.count
-            if !reduceMotion { view.stretch(toward: bump.limit) }
-        }
     }
 
     func sizeThatFits(_ proposal: ProposedViewSize, nsView: LevelBarView, context: Context) -> CGSize? {
@@ -28,10 +23,6 @@ struct LevelBar: NSViewRepresentable {
 }
 
 final class LevelBarView: NSView {
-    static let stretchScale = 1.05
-    static let stretchOut: TimeInterval = 0.07
-
-    var lastBump = 0
     let barLayer = CALayer()
     private let trackLayer = CALayer()
     private let fillLayer = CALayer()
@@ -43,33 +34,6 @@ final class LevelBarView: NSView {
         layer?.addSublayer(barLayer)
         barLayer.addSublayer(trackLayer)
         barLayer.addSublayer(fillLayer)
-    }
-
-    func stretch(toward limit: VolumeLimit) {
-        let anchor = CGPoint(x: limit == .top ? 0 : 1, y: 0.5)
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        barLayer.anchorPoint = anchor
-        barLayer.position = CGPoint(x: bounds.width * anchor.x, y: bounds.midY)
-        CATransaction.commit()
-
-        let out = CABasicAnimation(keyPath: "transform.scale.x")
-        out.fromValue = 1
-        out.toValue = Self.stretchScale
-        out.duration = Self.stretchOut
-        out.timingFunction = CAMediaTimingFunction(name: .easeOut)
-        let back = CASpringAnimation(keyPath: "transform.scale.x")
-        back.fromValue = Self.stretchScale
-        back.toValue = 1
-        back.mass = 0.5
-        back.stiffness = 400
-        back.damping = 14
-        back.beginTime = Self.stretchOut
-        back.duration = back.settlingDuration
-        let group = CAAnimationGroup()
-        group.animations = [out, back]
-        group.duration = Self.stretchOut + back.settlingDuration
-        barLayer.add(group, forKey: "stretch")
     }
 
     required init?(coder: NSCoder) { nil }

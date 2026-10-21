@@ -2,12 +2,13 @@ import AppKit
 
 @MainActor
 public final class VolumeHUDCoordinator {
-    public var onShow: ((VolumeReading, VolumeLimit?) -> Void)?
+    public var onShow: ((VolumeReading, VolumeNudge.Direction?, VolumeLimit?) -> Void)?
 
     private let volume = VolumeController()
     private let keys = MediaKeyTap()
     private var observers: [NSObjectProtocol] = []
     private var lastKeyPress: Date?
+    private var lastReading: VolumeReading?
 
     private static let keyEchoWindow: TimeInterval = 0.5
 
@@ -45,21 +46,28 @@ public final class VolumeHUDCoordinator {
         }
     }
 
+    public func step(_ kind: MediaKeyKind) {
+        _ = keyPressed(MediaKey(kind: kind, isDown: true, isRepeat: false))
+    }
+
     private func keyPressed(_ key: MediaKey) -> Bool {
         guard let before = volume.current else { return false }
         volume.apply(key)
         guard key.isDown else { return true }
         lastKeyPress = Date()
         if let reading = volume.current {
-            onShow?(reading, VolumeLimit.reached(before: before.isMuted ? 0 : before.level, after: reading.isMuted ? 0 : reading.level, kind: key.kind))
+            let limit = VolumeLimit.reached(before: before.isMuted ? 0 : before.level, after: reading.isMuted ? 0 : reading.level, kind: key.kind)
+            onShow?(reading, VolumeNudge.Direction.of(from: before, to: reading, key: key.kind), limit)
+            lastReading = reading
         }
         return true
     }
 
     private func volumeChanged(_ reading: VolumeReading) {
+        defer { lastReading = reading }
         if let lastKeyPress, Date().timeIntervalSince(lastKeyPress) < Self.keyEchoWindow {
             return
         }
-        onShow?(reading, nil)
+        onShow?(reading, VolumeNudge.Direction.of(from: lastReading, to: reading, key: nil), nil)
     }
 }
