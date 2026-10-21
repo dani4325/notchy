@@ -45,41 +45,30 @@ struct FullScreenClassifierTests {
     @Test func aMaximisedWindowUnderAVisibleMenuBarIsNotFullScreen() {
         let maximised = window(CGRect(x: 0, y: notch, width: 1710, height: 1112 - notch))
 
-        #expect(FullScreenClassifier.classify(windows: [menuBar, maximised], frontmostPID: pid, screen: screen, notchHeight: notch) == .none)
+        #expect(FullScreenClassifier.isFullScreen(windows: [menuBar, maximised], frontmostPID: pid, screen: screen, notchHeight: notch) == false)
     }
 
-    @Test func aFullScreenAppBelowTheNotchLeavesTheBlackStrip() {
+    @Test func aFullScreenAppBelowTheNotchIsFullScreen() {
         let fullScreen = window(CGRect(x: 0, y: notch, width: 1710, height: 1112 - notch))
 
-        #expect(FullScreenClassifier.classify(windows: [fullScreen], frontmostPID: pid, screen: screen, notchHeight: notch) == .besideNotch)
+        #expect(FullScreenClassifier.isFullScreen(windows: [fullScreen], frontmostPID: pid, screen: screen, notchHeight: notch) == true)
     }
 
-    @Test func aFullScreenAppThatUsesTheNotchAreaCoversIt() {
+    @Test func aFullScreenAppThatUsesTheNotchAreaIsFullScreen() {
         let fullScreen = window(screen)
 
-        #expect(FullScreenClassifier.classify(windows: [fullScreen], frontmostPID: pid, screen: screen, notchHeight: notch) == .coversNotch)
+        #expect(FullScreenClassifier.isFullScreen(windows: [fullScreen], frontmostPID: pid, screen: screen, notchHeight: notch) == true)
     }
 
     @Test func otherAppsWindowsDoNotCount() {
         let someoneElse = window(screen, owner: 7)
 
-        #expect(FullScreenClassifier.classify(windows: [someoneElse], frontmostPID: pid, screen: screen, notchHeight: notch) == .none)
+        #expect(FullScreenClassifier.isFullScreen(windows: [someoneElse], frontmostPID: pid, screen: screen, notchHeight: notch) == false)
     }
 
     @Test func aSmallWindowIsNeverFullScreen() {
         let small = window(CGRect(x: 100, y: 100, width: 800, height: 600))
 
-        #expect(FullScreenClassifier.classify(windows: [small], frontmostPID: pid, screen: screen, notchHeight: notch) == .none)
-    }
-}
-
-struct CompactOnlyPresentationTests {
-    @Test func inFullScreenTheHUDGoesStraightToTheWingsAndThenHides() {
-        var presentation = VolumePresentation(allowsCompact: true, compactOnly: true)
-
-        _ = presentation.press()
-        #expect(presentation.phase == .compact)
-        #expect(presentation.tick() == nil)
-        #expect(presentation.phase == .hidden)
+        #expect(FullScreenClassifier.isFullScreen(windows: [small], frontmostPID: pid, screen: screen, notchHeight: notch) == false)
     }
 }

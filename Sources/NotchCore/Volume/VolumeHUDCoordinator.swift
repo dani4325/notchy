@@ -3,7 +3,7 @@ import os
 
 @MainActor
 public final class VolumeHUDCoordinator {
-    public var onShow: ((VolumeReading, VolumeNudge.Direction?, VolumeLimit?, Bool) -> Void)?
+    public var onShow: ((VolumeReading, VolumeNudge.Direction?, VolumeLimit?) -> Void)?
 
     private let volume = VolumeController()
     private let keys = MediaKeyTap()
@@ -60,9 +60,8 @@ public final class VolumeHUDCoordinator {
 
     private func keyPressed(_ key: MediaKey) -> Bool {
         guard key.isDown else { return !lastPressWentToMacOS }
-        let fullScreen = FullScreenDetector.current()
         lastPressWentToMacOS = true
-        guard fullScreen != .coversNotch, let before = volume.current else { return false }
+        guard !FullScreenDetector.isActive(), let before = volume.current else { return false }
         volume.apply(key)
         guard let reading = volume.current else { return false }
         if !key.isRepeat, InterceptionSafeguard.interceptionFailed(before: before, after: reading, key: key.kind) {
@@ -74,7 +73,7 @@ public final class VolumeHUDCoordinator {
         lastPressWentToMacOS = false
         lastKeyPress = Date()
         let limit = VolumeLimit.reached(before: before.isMuted ? 0 : before.level, after: reading.isMuted ? 0 : reading.level, kind: key.kind)
-        onShow?(reading, VolumeNudge.Direction.of(from: before, to: reading, key: key.kind), limit, fullScreen == .besideNotch)
+        onShow?(reading, VolumeNudge.Direction.of(from: before, to: reading, key: key.kind), limit)
         lastReading = reading
         return true
     }
@@ -84,8 +83,7 @@ public final class VolumeHUDCoordinator {
         if let lastKeyPress, Date().timeIntervalSince(lastKeyPress) < Self.keyEchoWindow {
             return
         }
-        let fullScreen = FullScreenDetector.current()
-        guard fullScreen == .none || (fullScreen == .besideNotch && keys.isActive) else { return }
-        onShow?(reading, VolumeNudge.Direction.of(from: lastReading, to: reading, key: nil), nil, fullScreen == .besideNotch)
+        guard !FullScreenDetector.isActive() else { return }
+        onShow?(reading, VolumeNudge.Direction.of(from: lastReading, to: reading, key: nil), nil)
     }
 }

@@ -11,19 +11,14 @@ struct VolumePresentation: Equatable {
     static let compactHold: Duration = .milliseconds(1500)
 
     let allowsCompact: Bool
-    let compactOnly: Bool
     private(set) var phase = Phase.hidden
 
-    init(allowsCompact: Bool, compactOnly: Bool = false) {
+    init(allowsCompact: Bool) {
         self.allowsCompact = allowsCompact
-        self.compactOnly = compactOnly
     }
 
     mutating func press() -> Duration {
-        if phase == .compact || compactOnly {
-            phase = .compact
-            return Self.compactHold
-        }
+        if phase == .compact { return Self.compactHold }
         phase = .expanded
         return Self.expandedHold
     }

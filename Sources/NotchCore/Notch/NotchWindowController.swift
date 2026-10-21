@@ -79,13 +79,13 @@ public final class NotchWindowController {
         islands.values.forEach { $0.show(.greeting) }
     }
 
-    public func show(_ reading: VolumeReading, direction: VolumeNudge.Direction?, limit: VolumeLimit?, compactOnly: Bool) {
+    public func show(_ reading: VolumeReading, direction: VolumeNudge.Direction?, limit: VolumeLimit?) {
         guard Preferences.volumeHUD else { return }
         let nudge = direction.map { direction -> VolumeNudge in
             nudgeCount += 1
             return VolumeNudge(direction: direction, limit: limit, count: nudgeCount)
         }
-        islands.values.forEach { $0.show(.volume(reading, nudge), compactOnly: compactOnly) }
+        islands.values.forEach { $0.show(.volume(reading, nudge)) }
     }
 
     private func preferencesChanged() {
