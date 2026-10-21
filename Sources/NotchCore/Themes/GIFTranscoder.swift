@@ -45,8 +45,12 @@ enum GIFTranscoder {
         return reader.status == .completed ? frames : nil
     }
 
+    private static let encodingQueue = DispatchQueue(label: "com.danirubio.notchy.gif-transcoder", qos: .userInitiated)
+
     static func transcode(_ gif: URL) async throws -> URL {
-        try await Task.detached(priority: .userInitiated) { try encode(gif) }.value
+        try await withCheckedThrowingContinuation { continuation in
+            encodingQueue.async { continuation.resume(with: Result { try encode(gif) }) }
+        }
     }
 
     private static func encode(_ gif: URL) throws -> URL {

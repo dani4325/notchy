@@ -48,6 +48,22 @@ struct GIFTranscoderTests {
         return bytes
     }
 
+    @Test func manyConversionsAtTheSameTimeAllFinish() throws {
+        let gif = try makeGIF(transparent: false)
+        let count = ProcessInfo.processInfo.activeProcessorCount * 2
+        let done = DispatchSemaphore(value: 0)
+        Task.detached {
+            await withTaskGroup(of: Void.self) { group in
+                for _ in 0..<count {
+                    group.addTask { _ = try? await GIFTranscoder.transcode(gif) }
+                }
+            }
+            done.signal()
+        }
+
+        #expect(done.wait(timeout: .now() + 60) == .success)
+    }
+
     @Test func opaqueGIFsBecomeH264VideosWithTheSameDuration() async throws {
         let gif = try makeGIF(transparent: false)
 
