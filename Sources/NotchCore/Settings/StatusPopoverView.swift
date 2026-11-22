@@ -64,14 +64,12 @@ public struct StatusPopoverView: View {
             Divider()
 
             VStack(spacing: 8) {
-                Toggle("Alas junto al notch", isOn: Binding(
+                PopoverToggleRow(title: "Alas junto al notch", isOn: Binding(
                     get: { wingsMode != WingsMode.never.rawValue },
                     set: { wingsMode = $0 ? WingsMode.withMusic.rawValue : WingsMode.never.rawValue }
                 ))
-                Toggle("Estantería de archivos", isOn: $shelfEnabled)
+                PopoverToggleRow(title: "Estantería de archivos", isOn: $shelfEnabled)
             }
-            .toggleStyle(.switch)
-            .controlSize(.small)
 
             Divider()
 
@@ -146,6 +144,23 @@ private struct ActiveThemeThumbnail: View {
                 .strokeBorder(.primary.opacity(0.12), lineWidth: 0.75)
         )
         .accessibilityHidden(true)
+    }
+}
+
+private struct PopoverToggleRow: View {
+    let title: LocalizedStringKey
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(title)
+            Spacer(minLength: 8)
+            Toggle(title, isOn: $isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.small)
+        }
+        .padding(.horizontal, 2)
     }
 }
 
