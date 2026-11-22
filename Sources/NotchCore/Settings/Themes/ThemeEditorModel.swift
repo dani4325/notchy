@@ -238,14 +238,21 @@ public final class ThemeEditorModel {
             fail(String(localized: "No se ha podido medir el fondo para garantizar el contraste. Prueba con otro archivo."))
             return
         }
+        _ = install(url, themeID: themeID, measurement: measurement)
+    }
+
+    private func install(_ url: URL, themeID: String, measurement: BackgroundMeasurement) -> Bool {
+        var installed = false
         perform(String(localized: "Ese archivo no se puede usar como fondo.")) {
             let updated = try store.setBackground(from: url, themeID: themeID, measurement: measurement)
+            installed = true
             guard draft?.id == themeID else { return }
             draft = updated
             syncPreview()
             loadBackgroundAspect()
             extractPalette(force: false)
         }
+        return installed
     }
 
     public func clearBackground() {
@@ -377,7 +384,6 @@ public final class ThemeEditorModel {
 
     static func describe(_ error: Error, fallback: String) -> String {
         switch error as? ThemeStore.StoreError {
-        case .lastTheme: String(localized: "No se puede borrar el único tema que queda.")
         case .unsupportedMedia: String(localized: "Ese archivo no es una imagen, un GIF ni un vídeo compatible.")
         case .mediaTooLarge: String(localized: "El archivo supera los 200 MB.")
         case .builtInTheme: String(localized: "Los temas incluidos no se pueden cambiar. Duplica el tema para editarlo.")

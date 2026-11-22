@@ -8,8 +8,8 @@ enum ScrimPlan {
         var result: [ScrimZone.Foreground] = []
         if needs.contains(.text) {
             result += textOpacities.map { ScrimZone.Foreground(color: palette.text.rgb, opacity: $0, use: .text) }
-            if appearance.theme.decoration == .nixieTerminal {
-                result.append(ScrimZone.Foreground(color: appearance.effective(palette.secondary, for: .text), opacity: 1, use: .text))
+            if appearance.hasRetroDigits {
+                result.append(ScrimZone.Foreground(color: appearance.effective(palette.accent, for: .text), opacity: 1, use: .text))
             }
         }
         if needs.contains(.graphics) {
@@ -24,6 +24,7 @@ enum ScrimPlan {
 
 struct LegibilityScrim: View {
     static let featherRatio: CGFloat = 0.3
+    static let maximumVeil = 0.22
 
     let appearance: ThemeAppearance
     let layout: IslandLayout
@@ -91,7 +92,8 @@ enum VeilCache {
                 vertical: Double(rect.minY / size.height)...Double(rect.maxY / size.height),
                 foregrounds: ScrimPlan.foregrounds(for: mark.needs, appearance: appearance)
             )
-            return VeilSpot(rect: rect, strength: LegibilityPlanner.strength(for: zone, over: framed, scrim: appearance.scrimRGB, atLeast: minimum))
+            let needed = LegibilityPlanner.strength(for: zone, over: framed, scrim: appearance.scrimRGB, atLeast: minimum)
+            return VeilSpot(rect: rect, strength: max(minimum, min(needed, LegibilityScrim.maximumVeil)))
         }
     }
 

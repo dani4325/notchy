@@ -3,14 +3,14 @@ import Testing
 @testable import NotchCore
 
 struct AutoThemeResolverTests {
-    let day = ScheduleRule(startMinute: 8 * 60, themeID: "frieren")
+    let day = ScheduleRule(startMinute: 8 * 60, themeID: "tema-de-dia")
     let night = ScheduleRule(startMinute: 21 * 60, themeID: "tokyo")
     let xcode = AppRule(bundleID: "com.apple.dt.Xcode", appName: "Xcode", themeID: "steins")
 
     var rules: AutoThemeRules { AutoThemeRules(isEnabled: true, schedule: [night, day], apps: [xcode]) }
 
     @Test func scheduleAppliesTheLatestStartedSlot() {
-        #expect(AutoThemeResolver.themeID(rules: rules, minuteOfDay: 9 * 60, frontmostBundleID: nil) == "frieren")
+        #expect(AutoThemeResolver.themeID(rules: rules, minuteOfDay: 9 * 60, frontmostBundleID: nil) == "tema-de-dia")
         #expect(AutoThemeResolver.themeID(rules: rules, minuteOfDay: 22 * 60, frontmostBundleID: nil) == "tokyo")
     }
 
@@ -20,7 +20,7 @@ struct AutoThemeResolverTests {
 
     @Test func appRuleWinsOverSchedule() {
         #expect(AutoThemeResolver.themeID(rules: rules, minuteOfDay: 9 * 60, frontmostBundleID: "com.apple.dt.Xcode") == "steins")
-        #expect(AutoThemeResolver.themeID(rules: rules, minuteOfDay: 9 * 60, frontmostBundleID: "com.apple.Safari") == "frieren")
+        #expect(AutoThemeResolver.themeID(rules: rules, minuteOfDay: 9 * 60, frontmostBundleID: "com.apple.Safari") == "tema-de-dia")
     }
 
     @Test func disabledOrEmptyRulesNeverOverride() {
@@ -65,8 +65,8 @@ struct ThemeOverrideTests {
             defaults: UserDefaults(suiteName: "notchy-override-\(UUID().uuidString)")!
         )
 
-        store.setOverride(themeID: Theme.frieren.id)
-        #expect(store.activeTheme.id == Theme.frieren.id)
+        store.setOverride(themeID: Theme.cartel.id)
+        #expect(store.activeTheme.id == Theme.cartel.id)
         #expect(store.activeThemeID == Theme.notchyDefault.id)
 
         store.setOverride(themeID: "no-existe")

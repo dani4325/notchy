@@ -41,24 +41,25 @@ struct ThemeStoreTests {
             bitmapDataPlanes: nil, pixelsWide: 8, pixelsHigh: 4, bitsPerSample: 8, samplesPerPixel: 4,
             hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
         ))
-        for x in 0..<8 { for y in 0..<4 { rep.setColor(color, atX: x, y: y) } }
+        for x in 0..<8 { for y in 0..<4 { rep.setColor(color.bitmapPixel, atX: x, y: y) } }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).png")
         try #require(rep.representation(using: .png, properties: [:])).write(to: url)
         return url
     }
 
-    @Test func seedsTheDefaultThemeOnFirstLaunch() {
+    @Test func aFreshInstallStartsOnTheBuiltInDefaultWithoutWritingThemes() {
         let store = makeStore()
 
         #expect(store.themes.first?.id == Theme.notchyDefault.id)
-        #expect(store.themes.filter { !store.isBuiltIn($0.id) }.map(\.id) == [Theme.notchyDefault.id])
+        #expect(store.themes.allSatisfy { store.isBuiltIn($0.id) })
         #expect(store.activeTheme.id == Theme.notchyDefault.id)
-        #expect(FileManager.default.fileExists(atPath: store.folder(for: Theme.notchyDefault.id).appendingPathComponent("theme.json").path))
+        #expect(!FileManager.default.fileExists(atPath: store.folder(for: Theme.notchyDefault.id).path))
     }
 
     @Test func savePersistsSanitizedThemeAcrossReloads() throws {
         let store = makeStore()
-        var theme = store.activeTheme
+        var theme = try store.createTheme(named: "Borrador")
+        store.activate(themeID: theme.id)
         theme.name = "  Mi tema  "
         theme.shape.widthRatio = 99
 
@@ -71,42 +72,47 @@ struct ThemeStoreTests {
 
     @Test func duplicateCreatesAnIndependentThemeWithItsMedia() throws {
         let store = makeStore()
-        _ = try store.setBackground(from: try makePNG(), themeID: Theme.notchyDefault.id)
+        let original = try store.createTheme(named: "Fondo")
+        _ = try store.setBackground(from: try makePNG(), themeID: original.id)
 
-        let copy = try store.duplicate(themeID: Theme.notchyDefault.id)
+        let copy = try store.duplicate(themeID: original.id)
 
-        #expect(copy.id != Theme.notchyDefault.id)
-        #expect(copy.name == "Notchy (copia)")
+        #expect(copy.id != original.id)
+        #expect(copy.name == "Fondo (copia)")
         let media = try #require(copy.background?.media)
         #expect(FileManager.default.fileExists(atPath: store.mediaURL(themeID: copy.id, media: media).path))
         #expect(store.themes.filter { !store.isBuiltIn($0.id) }.count == 2)
     }
 
-    @Test func deletingTheActiveThemeActivatesAnother() throws {
+    @Test func deletingTheActiveThemeFallsBackToTheDefault() throws {
         let store = makeStore()
-        let copy = try store.duplicate(themeID: Theme.notchyDefault.id)
-        store.activate(themeID: copy.id)
+        let theme = try store.createTheme(named: "Único")
+        store.activate(themeID: theme.id)
 
-        _ = try store.delete(themeID: copy.id)
+        _ = try store.delete(themeID: theme.id)
 
         #expect(store.activeTheme.id == Theme.notchyDefault.id)
-        #expect(!FileManager.default.fileExists(atPath: store.folder(for: copy.id).path))
+        #expect(!FileManager.default.fileExists(atPath: store.folder(for: theme.id).path))
     }
 
-    @Test func theLastThemeCannotBeDeleted() {
+    @Test func builtInThemesCannotBeDeletedOrGetABackground() throws {
         let store = makeStore()
 
-        #expect(throws: ThemeStore.StoreError.lastTheme) {
+        #expect(throws: ThemeStore.StoreError.builtInTheme) {
             _ = try store.delete(themeID: Theme.notchyDefault.id)
+        }
+        #expect(throws: ThemeStore.StoreError.builtInTheme) {
+            try store.setBackground(from: try makePNG(), themeID: Theme.notchyDefault.id)
         }
     }
 
     @Test func setBackgroundCopiesMediaAndRemovesThePreviousFile() throws {
         let store = makeStore()
-        let first = try store.setBackground(from: try makePNG(), themeID: Theme.notchyDefault.id)
+        let theme = try store.createTheme(named: "Fondo")
+        let first = try store.setBackground(from: try makePNG(), themeID: theme.id)
         let firstURL = store.mediaURL(themeID: first.id, media: try #require(first.background?.media))
 
-        let second = try store.setBackground(from: try makePNG(color: .blue), themeID: Theme.notchyDefault.id)
+        let second = try store.setBackground(from: try makePNG(color: .blue), themeID: theme.id)
 
         let media = try #require(second.background?.media)
         #expect(media.kind == .image)
@@ -117,17 +123,19 @@ struct ThemeStoreTests {
 
     @Test func setBackgroundRejectsUnsupportedFiles() throws {
         let store = makeStore()
+        let theme = try store.createTheme(named: "Fondo")
         let text = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).txt")
         try Data("hola".utf8).write(to: text)
 
         #expect(throws: ThemeStore.StoreError.unsupportedMedia) {
-            try store.setBackground(from: text, themeID: Theme.notchyDefault.id)
+            try store.setBackground(from: text, themeID: theme.id)
         }
     }
 
     @Test func archiveRoundTripCreatesANewThemeWithMedia() throws {
         let store = makeStore()
-        var theme = try store.setBackground(from: try makePNG(), themeID: Theme.notchyDefault.id)
+        let created = try store.createTheme(named: "Para exportar")
+        var theme = try store.setBackground(from: try makePNG(), themeID: created.id)
         theme.name = "Exportado"
         try store.save(theme)
         let archive = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).notchytheme")
@@ -254,7 +262,7 @@ struct ThemeMeasurementStorageTests {
             bitmapDataPlanes: nil, pixelsWide: 16, pixelsHigh: 8, bitsPerSample: 8, samplesPerPixel: 4,
             hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
         ))
-        for x in 0..<16 { for y in 0..<8 { rep.setColor(white ? .white : .black, atX: x, y: y) } }
+        for x in 0..<16 { for y in 0..<8 { rep.setColor((white ? NSColor.white : .black).bitmapPixel, atX: x, y: y) } }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).png")
         try #require(rep.representation(using: .png, properties: [:])).write(to: url)
         return url

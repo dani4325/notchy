@@ -7,7 +7,6 @@ import os
 public final class ThemeStore {
     public enum StoreError: Error, Equatable {
         case unknownTheme
-        case lastTheme
         case unsupportedMedia
         case mediaTooLarge
         case writeFailed
@@ -39,13 +38,16 @@ public final class ThemeStore {
     @ObservationIgnored private let directory: URL
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored let trash: @MainActor (URL) throws -> URL
+    @ObservationIgnored public let artworkBackdrop: ArtworkBackdrop
 
     public init(directory: URL = ThemeStore.defaultDirectory, defaults: UserDefaults = .standard, trash: @escaping @MainActor (URL) throws -> URL = ThemeStore.moveToTrash) {
         self.directory = directory
         self.defaults = defaults
         self.trash = trash
+        artworkBackdrop = ArtworkBackdrop()
         activeThemeID = defaults.string(forKey: Self.activeKey) ?? Theme.notchyDefault.id
         reload()
+        migrateLegacyThemes()
     }
 
     public var activeTheme: Theme {
@@ -121,7 +123,6 @@ public final class ThemeStore {
     public func delete(themeID: String) throws -> URL {
         guard theme(id: themeID) != nil else { throw StoreError.unknownTheme }
         guard !isBuiltIn(themeID) else { throw StoreError.builtInTheme }
-        guard themes.filter({ !isBuiltIn($0.id) }).count > 1 else { throw StoreError.lastTheme }
         let trashed: URL
         do {
             trashed = try trash(folder(for: themeID))
@@ -260,17 +261,7 @@ public final class ThemeStore {
     }
 
     private func reload() {
-        let loaded = loadAll()
-        if loaded.isEmpty {
-            do {
-                try write(Theme.notchyDefault)
-            } catch {
-                Self.logger.error("seeding default theme failed")
-            }
-            themes = sorted([Theme.notchyDefault] + Theme.builtIns)
-        } else {
-            themes = sorted(loaded.filter { !isBuiltIn($0.id) } + Theme.builtIns)
-        }
+        themes = sorted(loadAll().filter { !isBuiltIn($0.id) } + Theme.builtIns)
         if theme(id: activeThemeID) == nil, let first = themes.first {
             activeThemeID = first.id
         }
@@ -330,6 +321,60 @@ public final class ThemeStore {
     private func rank(_ theme: Theme) -> Int {
         if theme.id == Theme.notchyDefault.id { return 0 }
         return isBuiltIn(theme.id) ? 1 : 2
+    }
+
+    private func migrateLegacyThemes() {
+        var replacements: [String: String] = [:]
+        if let seed = theme(id: LegacyTemplates.legacyDefaultID), isUneditedSeed(seed) {
+            do {
+                _ = try trash(folder(for: seed.id))
+                themes = themes.filter { $0.id != seed.id }
+                replacements[seed.id] = Theme.notchyDefault.id
+            } catch {
+                Self.logger.error("removing the unedited default theme failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+
+        let storedActive = defaults.string(forKey: Self.activeKey)
+        let rules = defaults.data(forKey: AutoThemeController.rulesKey).flatMap { try? JSONDecoder().decode(AutoThemeRules.self, from: $0) }
+        let referenced = [storedActive].compactMap { $0 } + (rules.map { $0.schedule.map(\.themeID) + $0.apps.map(\.themeID) } ?? [])
+        for legacyID in Set(referenced) where LegacyTemplates.isLegacy(legacyID) && replacements[legacyID] == nil {
+            var migrated = LegacyTemplates.theme(forLegacyID: legacyID)
+            migrated.id = Self.newID()
+            migrated.name = uniqueName(LegacyTemplates.migratedName)
+            do {
+                try save(migrated)
+                replacements[legacyID] = migrated.id
+            } catch {
+                Self.logger.error("migrating a 1.0 template failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        guard !replacements.isEmpty else { return }
+
+        if let storedActive, let replacement = replacements[storedActive] {
+            activate(themeID: replacement)
+        }
+        if var updated = rules {
+            for index in updated.schedule.indices { updated.schedule[index].themeID = replacements[updated.schedule[index].themeID] ?? updated.schedule[index].themeID }
+            for index in updated.apps.indices { updated.apps[index].themeID = replacements[updated.apps[index].themeID] ?? updated.apps[index].themeID }
+            do {
+                defaults.set(try JSONEncoder().encode(updated), forKey: AutoThemeController.rulesKey)
+            } catch {
+                Self.logger.error("rewriting rules after migration failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+    }
+
+    private func isUneditedSeed(_ theme: Theme) -> Bool {
+        var probe = theme
+        probe.id = Theme.notchyDefault.id
+        return probe == Theme.notchyDefault && !FileManager.default.fileExists(atPath: folder(for: theme.id).appendingPathComponent(Self.mediaFolderName).path)
+    }
+
+    private func uniqueName(_ base: String) -> String {
+        let taken = Set(themes.map(\.name))
+        guard taken.contains(base) else { return base }
+        return (2...).lazy.map { base + " " + String($0) }.first { !taken.contains($0) } ?? base
     }
 
     nonisolated static func newID() -> String {

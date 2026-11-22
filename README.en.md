@@ -100,7 +100,7 @@ Full details in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 - **Now Playing:** [MediaRemoteAdapter](https://github.com/ungive/mediaremote-adapter) © 2025 Jonas van den Berg and contributors, BSD-3-Clause.
 - **Updates:** [Sparkle](https://sparkle-project.org), MIT license.
-- **Fonts** (SIL Open Font License 1.1): Nixie One, Share Tech Mono, Big Shoulders Stencil Display, Dela Gothic One, Bebas Neue and Cormorant Garamond.
+- **Fonts** (SIL Open Font License 1.1): Share Tech Mono, Big Shoulders Display, Dela Gothic One, Bebas Neue and Cormorant Garamond.
 - **Inspiration:** [boring.notch](https://github.com/TheBoredTeam/boring.notch). Notchy doesn't reuse any of its code.
 - **Development:** Notchy is developed with the help of Claude Code.
 

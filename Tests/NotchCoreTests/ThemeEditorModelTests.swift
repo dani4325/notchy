@@ -79,21 +79,21 @@ struct ThemeEditorModelTests {
     @Test func storeErrorsBecomeMessagesThatSayWhatHappened() {
         let fallback = "No se ha podido crear el tema."
 
-        #expect(ThemeEditorModel.describe(ThemeStore.StoreError.lastTheme, fallback: fallback).contains("único tema"))
         #expect(ThemeEditorModel.describe(ThemeStore.StoreError.mediaTooLarge, fallback: fallback).contains("200 MB"))
         #expect(ThemeEditorModel.describe(ThemeStore.StoreError.writeFailed, fallback: fallback).hasPrefix(fallback))
         #expect(ThemeEditorModel.describe(CocoaError(.fileNoSuchFile), fallback: fallback) == fallback)
     }
 
-    @Test func deletingTheOnlyThemeExplainsWhyAndIsShownAsAnError() throws {
+    @Test func deletingTheLastOwnThemeShowsTheDefault() throws {
         let editor = ThemeEditorModel(store: store)
-        let onlyTheme = try #require(store.themes.first { !store.isBuiltIn($0.id) })
+        let theme = try store.createTheme(named: "Único")
+        store.activate(themeID: theme.id)
+        editor.select(themeID: theme.id)
 
-        editor.delete(themeID: onlyTheme.id)
+        editor.delete(themeID: theme.id)
 
-        #expect(editor.message?.contains("único tema") == true)
-        #expect(editor.messageIsError)
-        #expect(store.theme(id: onlyTheme.id) != nil)
+        #expect(editor.messageIsError == false)
+        #expect(editor.draft?.id == Theme.notchyDefault.id)
     }
 
     @Test func startsEditingTheActiveTheme() {
@@ -102,7 +102,9 @@ struct ThemeEditorModelTests {
         #expect(editor.draft?.id == store.activeTheme.id)
     }
 
-    @Test func editsChangeTheDraftAndPersistOnFlush() {
+    @Test func editsChangeTheDraftAndPersistOnFlush() throws {
+        let theme = try store.createTheme(named: "Propio")
+        store.activate(themeID: theme.id)
         let editor = ThemeEditorModel(store: store)
 
         editor.update { $0.name = "Nocturno" }
@@ -147,12 +149,14 @@ struct ThemeEditorModelTests {
 
     @Test func selectingAnotherThemeFlushesPendingEdits() throws {
         let editor = ThemeEditorModel(store: store)
-        let copy = try store.duplicate(themeID: store.activeTheme.id)
+        let theme = try store.createTheme(named: "Propio")
+        let copy = try store.duplicate(themeID: theme.id)
+        editor.select(themeID: theme.id)
         editor.update { $0.name = "Guardado al cambiar" }
 
         editor.select(themeID: copy.id)
 
-        #expect(store.theme(id: Theme.notchyDefault.id)?.name == "Guardado al cambiar")
+        #expect(store.theme(id: theme.id)?.name == "Guardado al cambiar")
         #expect(editor.draft?.id == copy.id)
     }
 }

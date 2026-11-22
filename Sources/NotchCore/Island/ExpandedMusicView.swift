@@ -86,29 +86,18 @@ private struct ProgressRow: View {
             .frame(height: layout.progressHeight)
             .legibilityMark(.accent)
 
-            if appearance.theme.decoration == .nixieTerminal {
-                HStack {
-                    NixieReadoutView(text: Self.format(position), height: layout.nixieHeight, glow: appearance.secondaryText)
-                        .legibilityMark(.text)
-                    Spacer(minLength: 0)
-                    if let duration = info.duration {
-                        NixieReadoutView(text: "-" + Self.format(max(duration - position, 0)), height: layout.nixieHeight, glow: appearance.secondaryText)
-                            .legibilityMark(.text)
-                    }
-                }
-            } else {
-                HStack {
-                    Text(Self.format(position))
+            HStack {
+                Text(Self.format(position))
+                    .legibilityMark(.text, letterHeight: layout.timeSize)
+                Spacer(minLength: 0)
+                if let duration = info.duration {
+                    Text("-" + Self.format(max(duration - position, 0)))
                         .legibilityMark(.text, letterHeight: layout.timeSize)
-                    Spacer(minLength: 0)
-                    if let duration = info.duration {
-                        Text("-" + Self.format(max(duration - position, 0)))
-                            .legibilityMark(.text, letterHeight: layout.timeSize)
-                    }
                 }
-                .font(appearance.numericFont(layout.timeSize))
-                .foregroundStyle(appearance.secondaryTextColor)
             }
+            .font(appearance.numericFont(layout.timeSize))
+            .foregroundStyle(appearance.hasRetroDigits ? appearance.accentText : appearance.secondaryTextColor)
+            .legibleHalo()
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Progreso")
@@ -168,6 +157,7 @@ struct TransportButtonStyle: ButtonStyle {
     let pressed: Color
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.themeAppearance) private var appearance
 
     private var targetWidth: CGFloat { max(diameter, min(Self.minimumTarget, diameter + spacing)) }
     private var targetHeight: CGFloat { max(diameter, Self.minimumTarget) }
@@ -176,8 +166,10 @@ struct TransportButtonStyle: ButtonStyle {
         configuration.label
             .legibilityMark(.graphics)
             .foregroundStyle(configuration.isPressed ? pressed : tint)
+            .legibleHalo()
             .frame(width: diameter, height: diameter)
             .background(pressed.opacity(configuration.isPressed ? 0.2 : 0), in: Circle())
+            .background(appearance.scrimColor.opacity(appearance.background == nil ? 0 : IconChip.opacity), in: Circle())
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.86 : 1)
             .animation(reduceMotion ? nil : .spring(duration: 0.2), value: configuration.isPressed)
             .frame(width: targetWidth, height: targetHeight)

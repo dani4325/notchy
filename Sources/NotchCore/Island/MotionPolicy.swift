@@ -28,16 +28,14 @@ struct MotionPolicy {
         case .smooth: .smooth(duration: 0.42)
         case .fade: nil
         case .glitch: .snappy(duration: 0.32, extraBounce: 0.05)
-        case .gate: .smooth(duration: 0.36)
-        case .menacing: .spring(duration: 0.42, bounce: 0.35)
-        case .slash: .snappy(duration: 0.28)
-        case .orbit: .smooth(duration: 0.5)
+        case .doors: .smooth(duration: 0.36)
+        case .cut: .snappy(duration: 0.28)
         }
     }
 
     var playsSignatureOpening: Bool {
         guard !reduceMotion else { return false }
-        return [.glitch, .gate, .menacing, .slash, .orbit].contains(openAnimation)
+        return [.glitch, .doors, .cut].contains(openAnimation)
     }
 
     var contentAnimation: Animation {

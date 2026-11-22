@@ -114,6 +114,7 @@ private struct ShelfTile: View {
             Text(name)
                 .font(appearance.bodyFont(layout.timeSize))
                 .foregroundStyle(appearance.text)
+                .legibleHalo()
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .truncationMode(.middle)

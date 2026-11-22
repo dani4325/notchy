@@ -10,7 +10,7 @@ NOT_UI = {
     " ", ",", "×", "ゴ", "ゴゴゴ", "Notchy", "Spotify", "Music", "Glitch", "Serif", "Panel", "Manual", "General", "Zoom",
     "Album", "Artist", "Duration", "Name", "Playback Position", "Player State", "Playing", "Stopped", "Total Time",
     "next track", "previous track", "--debounce=80", "init(coder:) is not supported", "\\u{1F}",
-    "Bebas Neue", "Big Shoulders Stencil Display", "Cormorant Garamond", "Dela Gothic One", "Nixie One", "Share Tech Mono",
+    "Bebas Neue", "Big Shoulders Display", "Big Shoulders Stencil Display", "Cormorant Garamond", "Dela Gothic One", "Nixie One", "Share Tech Mono",
     "Color no válido: %@", "%@ %", "%@, %@ %", "Notchy Visualizer",
 }
 

@@ -157,7 +157,7 @@ struct PanelPreviewRenderTests {
             try render(name: "plantilla-\(slug)", notch: notch, theme: theme, background: nil, info: playing)
             try render(name: "plantilla-\(slug)-apertura", notch: notch, theme: theme, background: nil, info: playing, openingProgress: 0.35)
         }
-        try render(name: "plantilla-steins-gate-reposo", notch: notch, theme: .steinsGate, background: nil, info: nil)
+        try render(name: "tema-fosforo-reposo", notch: notch, theme: .fosforo, background: nil, info: nil)
     }
 
     @Test func renderChargingAnimation() throws {
@@ -165,10 +165,10 @@ struct PanelPreviewRenderTests {
         try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
         let cases: [(String, Theme, PowerEvent)] = [
             ("carga-notchy-conectado", .notchyDefault, .connected(percent: 78)),
-            ("carga-steins-gate-conectado", .steinsGate, .connected(percent: 42)),
-            ("carga-one-piece-desconectado-baja", .onePiece, .disconnected(percent: 14)),
-            ("carga-frieren-bateria-baja", .frieren, .low(percent: 20)),
-            ("carga-naruto-completa", .naruto, .full),
+            ("carga-fosforo-conectado", .fosforo, .connected(percent: 42)),
+            ("carga-cartel-desconectado-baja", .cartel, .disconnected(percent: 14)),
+            ("carga-cartel-bateria-baja", .cartel, .low(percent: 20)),
+            ("carga-fosforo-completa", .fosforo, .full),
         ]
         for (name, theme, event) in cases {
             try render(name: name, notch: IslandLayout.referenceNotch, theme: theme, background: nil, power: event, info: nil)
@@ -182,7 +182,7 @@ struct PanelPreviewRenderTests {
             title: "Opening de la temporada", artist: "Artista de ejemplo", album: nil, duration: 245,
             elapsed: 83, timestamp: .now, playbackRate: 1, isPlaying: true, appBundleID: "", artworkData: nil
         )
-        for theme in [Theme.notchyDefault, .jujutsuKaisen, .violetEvergarden] {
+        for theme in [Theme.notchyDefault, .fosforo, .cartel] {
             let slug = theme.id.replacingOccurrences(of: "builtin-", with: "")
             try render(name: "visualizador-\(slug)", notch: IslandLayout.referenceNotch, theme: theme, background: nil, info: playing)
         }
@@ -204,8 +204,8 @@ struct PanelPreviewRenderTests {
 
         for (name, theme, store, targeted) in [
             ("estanteria-vacia-notchy", Theme.notchyDefault, empty, false),
-            ("estanteria-soltando-frieren", Theme.frieren, empty, true),
-            ("estanteria-archivos-one-piece", Theme.onePiece, full, false),
+            ("estanteria-soltando-cartel", Theme.cartel, empty, true),
+            ("estanteria-archivos-cartel", Theme.cartel, full, false),
         ] {
             try render(name: name, notch: IslandLayout.referenceNotch, theme: theme, background: nil, shelf: (store, targeted), info: nil)
         }
@@ -220,9 +220,9 @@ struct PanelPreviewRenderTests {
             elapsed: 83, timestamp: .now, playbackRate: 1, isPlaying: true, appBundleID: "", artworkData: nil
         )
         let emptyShelf = ShelfStore(directory: FileManager.default.temporaryDirectory.appendingPathComponent("pill-\(UUID().uuidString)"))
-        try render(name: "pildora-musica-chainsaw-man", notch: pill, theme: .chainsawMan, background: nil, pill: true, info: playing)
-        try render(name: "pildora-estanteria-black-clover", notch: pill, theme: .blackClover, background: nil, shelf: (emptyShelf, true), pill: true, info: nil)
-        try render(name: "pildora-volumen-eighty-six", notch: pill, theme: .eightySix, background: nil,
+        try render(name: "pildora-musica-cartel", notch: pill, theme: .cartel, background: nil, pill: true, info: playing)
+        try render(name: "pildora-estanteria-fosforo", notch: pill, theme: .fosforo, background: nil, shelf: (emptyShelf, true), pill: true, info: nil)
+        try render(name: "pildora-volumen-fosforo", notch: pill, theme: .fosforo, background: nil,
                    volume: VolumeReading(level: 0.375, isMuted: false), pill: true, info: nil)
     }
 
@@ -250,7 +250,7 @@ struct PanelPreviewRenderTests {
             window.orderOut(nil)
             model.next()
         }
-        try render(name: "saludo-attack-on-titan", notch: IslandLayout.referenceNotch, theme: .attackOnTitan, background: nil, greeting: true, info: nil)
+        try render(name: "saludo-cartel", notch: IslandLayout.referenceNotch, theme: .cartel, background: nil, greeting: true, info: nil)
     }
 
     @Test func renderVolumeHUD() throws {
@@ -258,8 +258,8 @@ struct PanelPreviewRenderTests {
         try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
         let cases: [(String, Theme, VolumeReading)] = [
             ("volumen-notchy", .notchyDefault, VolumeReading(level: 0.5625, isMuted: false)),
-            ("volumen-steins-gate", .steinsGate, VolumeReading(level: 0.8125, isMuted: false)),
-            ("volumen-chainsaw-man-silencio", .chainsawMan, VolumeReading(level: 0.4, isMuted: true)),
+            ("volumen-fosforo", .fosforo, VolumeReading(level: 0.8125, isMuted: false)),
+            ("volumen-cartel-silencio", .cartel, VolumeReading(level: 0.4, isMuted: true)),
         ]
         for (name, theme, reading) in cases {
             try render(name: name, notch: IslandLayout.referenceNotch, theme: theme, background: nil, volume: reading, info: nil)
@@ -277,6 +277,13 @@ struct PanelPreviewRenderTests {
         let cover = try #require(NSImage(contentsOf: try Self.makeFaceImage()))
         try render(name: "velo-con-portada", notch: IslandLayout.referenceNotch, theme: theme, background: source, measurement: measurement, artwork: cover)
         try render(name: "velo-sin-portada", notch: IslandLayout.referenceNotch, theme: theme, background: source, measurement: measurement)
+        let shelfFolder = FileManager.default.temporaryDirectory.appendingPathComponent("velo-estanteria-\(UUID().uuidString)")
+        let shelf = ShelfStore(directory: shelfFolder.appendingPathComponent("shelf"), limit: 5)
+        try FileManager.default.createDirectory(at: shelfFolder, withIntermediateDirectories: true)
+        let files = ["Entrada.pdf", "Notas.txt"].map { shelfFolder.appendingPathComponent($0) }
+        for file in files { try Data("contenido".utf8).write(to: file) }
+        shelf.add(files)
+        try render(name: "velo-estanteria", notch: IslandLayout.referenceNotch, theme: theme, background: source, shelf: (shelf, false), measurement: measurement)
         try render(name: "velo-volumen", notch: IslandLayout.referenceNotch, theme: theme, background: source,
                    volume: VolumeReading(level: 0.625, isMuted: false, output: AudioOutput(name: "Altavoces del MacBook Pro", kind: .builtInSpeakers)), info: nil, measurement: measurement)
     }

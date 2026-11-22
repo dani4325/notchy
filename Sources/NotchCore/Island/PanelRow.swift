@@ -25,6 +25,7 @@ struct PanelRow<Tile: View, Title: View, Accessory: View, Bar: View, Trailing: V
                     title()
                         .font(appearance.titleFont(layout.titleSize))
                         .foregroundStyle(appearance.text)
+                        .legibleHalo()
                         .legibilityMark(.text, letterHeight: layout.titleSize)
                     Spacer(minLength: 0)
                     accessory()
@@ -34,6 +35,7 @@ struct PanelRow<Tile: View, Title: View, Accessory: View, Bar: View, Trailing: V
                     subtitle
                         .font(appearance.bodyFont(layout.subtitleSize))
                         .foregroundStyle(appearance.secondaryTextColor)
+                        .legibleHalo()
                         .lineLimit(subtitleLines)
                         .legibilityMark(.text, letterHeight: subtitleLines == 1 ? layout.subtitleSize : nil)
                 }

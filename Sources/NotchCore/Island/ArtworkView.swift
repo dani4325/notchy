@@ -16,8 +16,6 @@ struct ArtworkView: View {
                         .resizable()
                         .interpolation(.high)
                         .aspectRatio(contentMode: .fill)
-                } else if let emblem = appearance.theme.emblem {
-                    EmblemView(emblem: emblem, size: size * 0.78, appearance: appearance)
                 } else {
                     Image(systemName: "music.note")
                         .font(.system(size: size * 0.32, weight: .semibold))

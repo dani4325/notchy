@@ -385,6 +385,22 @@
         }
       }
     },
+    "Anillos": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rings"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anillos"
+          }
+        }
+      }
+    },
     "Anillos psíquicos": {
       "localizations": {
         "en": {
@@ -801,6 +817,38 @@
         }
       }
     },
+    "Cartel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poster"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cartel"
+          }
+        }
+      }
+    },
+    "Carátula": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Album Art"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carátula"
+          }
+        }
+      }
+    },
     "Colores": {
       "localizations": {
         "en": {
@@ -909,6 +957,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Contorno de calibración"
+          }
+        }
+      }
+    },
+    "Corte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cut"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corte"
+          }
+        }
+      }
+    },
+    "Cuadrícula": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grid"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuadrícula"
           }
         }
       }
@@ -1073,6 +1153,22 @@
         }
       }
     },
+    "Duplicar y editar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplicate and Edit"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplicar y editar"
+          }
+        }
+      }
+    },
     "Duplicar y personalizar": {
       "localizations": {
         "en": {
@@ -1101,6 +1197,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Duplícala para añadir tu propia imagen, GIF o vídeo del anime y ajustarla a tu gusto."
+          }
+        }
+      }
+    },
+    "Duplícalo para cambiar sus colores, su forma o su fondo.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplicate it to change its colors, shape or background."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplícalo para cambiar sus colores, su forma o su fondo."
           }
         }
       }
@@ -1713,6 +1825,22 @@
         }
       }
     },
+    "Fósforo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Phosphor"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fósforo"
+          }
+        }
+      }
+    },
     "General": {
       "localizations": {
         "en": {
@@ -1969,6 +2097,22 @@
         }
       }
     },
+    "Marco": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frame"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marco"
+          }
+        }
+      }
+    },
     "Media": {
       "localizations": {
         "en": {
@@ -1997,6 +2141,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Metal y remaches"
+          }
+        }
+      }
+    },
+    "Mi tema (1.0)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My theme (1.0)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi tema (1.0)"
           }
         }
       }
@@ -2465,22 +2625,6 @@
         }
       }
     },
-    "No se puede borrar el único tema que queda.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The only remaining theme can't be deleted."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se puede borrar el único tema que queda."
-          }
-        }
-      }
-    },
     "Nombre": {
       "localizations": {
         "en": {
@@ -2541,54 +2685,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notchy arranca solo cuando entras en tu Mac."
-          }
-        }
-      }
-    },
-    "Notchy mide la imagen detrás de cada texto y la oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notchy measures the image behind each text and darkens it just enough for text to reach 4.5:1 and bars and icons 3:1. “Darken more” adds darkness on top of that minimum."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notchy mide la imagen detrás de cada texto y la oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo."
-          }
-        }
-      }
-    },
-    "Notchy mide todos los fotogramas del GIF detrás de cada texto y los oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notchy measures every frame of the GIF behind each text and darkens it just enough for text to reach 4.5:1 and bars and icons 3:1. “Darken more” adds darkness on top of that minimum."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notchy mide todos los fotogramas del GIF detrás de cada texto y los oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo."
-          }
-        }
-      }
-    },
-    "Notchy mide un fotograma del vídeo cada medio segundo y lo oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. Entre esos fotogramas el contraste no está garantizado.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notchy measures one video frame every half second and darkens it just enough for text to reach 4.5:1 and bars and icons 3:1. Between those frames contrast isn't guaranteed."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notchy mide un fotograma del vídeo cada medio segundo y lo oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. Entre esos fotogramas el contraste no está garantizado."
           }
         }
       }
@@ -2705,6 +2801,22 @@
         }
       }
     },
+    "Pantalla retro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retro screen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pantalla retro"
+          }
+        }
+      }
+    },
     "Pantallas sin notch": {
       "localizations": {
         "en": {
@@ -2749,6 +2861,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Para ocultar el aviso de macOS"
+          }
+        }
+      }
+    },
+    "Para que el fondo se vea entero, Notchy solo lo oscurece un poco detrás del texto y añade un halo oscuro a las letras y los iconos. Si con este fondo cuesta leer, sube «Oscurecer más».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "So the whole background shows, Notchy only darkens it slightly behind the text and adds a dark halo to letters and icons. If this background is hard to read over, raise “Darken more”."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para que el fondo se vea entero, Notchy solo lo oscurece un poco detrás del texto y añade un halo oscuro a las letras y los iconos. Si con este fondo cuesta leer, sube «Oscurecer más»."
           }
         }
       }
@@ -2813,6 +2941,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pausa"
+          }
+        }
+      }
+    },
+    "Pauta": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruled lines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pauta"
           }
         }
       }
@@ -3025,6 +3169,22 @@
         }
       }
     },
+    "Puertas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doors"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puertas"
+          }
+        }
+      }
+    },
     "Píldora flotante": {
       "localizations": {
         "en": {
@@ -3085,6 +3245,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quitar regla"
+          }
+        }
+      }
+    },
+    "Rayas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stripes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rayas"
           }
         }
       }
@@ -3553,6 +3729,22 @@
         }
       }
     },
+    "Tema incluido": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in theme"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tema incluido"
+          }
+        }
+      }
+    },
     "Tema nuevo": {
       "localizations": {
         "en": {
@@ -3933,6 +4125,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vídeo en bucle"
+          }
+        }
+      }
+    },
+    "Zigzag": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zigzag"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zigzag"
           }
         }
       }

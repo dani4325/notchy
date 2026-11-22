@@ -189,9 +189,8 @@ Bundled unmodified in `Resources/Fonts`, with their full licenses in `Resources/
 
 | Fuente / Font | Copyright | Nombre reservado / Reserved Font Name |
 |---|---|---|
-| Nixie One | Copyright (c) 2011, Jovanny Lemonad | "Nixie" |
 | Share Tech Mono | Copyright (c) 2012, Carrois Type Design, Ralph du Carrois | "Share" |
-| Big Shoulders Stencil Display | Copyright 2019 The Big Shoulders Project Authors | Ninguno / None |
+| Big Shoulders Display | Copyright 2019 The Big Shoulders Project Authors | Ninguno / None |
 | Dela Gothic One | Copyright 2020 The Dela Gothic Project Authors | Ninguno / None |
 | Bebas Neue | Copyright © 2010 by Dharma Type | Ninguno / None |
 | Cormorant Garamond | Copyright 2015 the Cormorant Project Authors | Ninguno / None |

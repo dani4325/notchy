@@ -17,6 +17,7 @@ public enum ActiveMusicSource: Equatable, Sendable {
 public final class NowPlayingStore {
     public private(set) var info: NowPlayingInfo?
     public private(set) var artwork: NSImage?
+    public private(set) var artworkRevision = 0
     public private(set) var appName: String?
     public private(set) var activeSource: ActiveMusicSource = .checking
 
@@ -101,6 +102,7 @@ public final class NowPlayingStore {
         guard newInfo != info else { return }
         if newInfo?.artworkData != info?.artworkData {
             artwork = newInfo?.artworkData.flatMap(NSImage.init(data:))
+            artworkRevision += 1
         }
         if newInfo?.appBundleID != info?.appBundleID {
             appName = newInfo.flatMap { Self.displayName(forBundleID: $0.appBundleID) }

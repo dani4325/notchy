@@ -15,54 +15,58 @@ struct BuiltInThemeTests {
         defaults: UserDefaults(suiteName: "notchy-builtin-\(UUID().uuidString)")!
     )
 
-    @Test func everyAnimeTemplateIsAlwaysAvailable() {
+    @Test func theFourStarterThemesAreAlwaysAvailable() {
         let ids = Set(store.themes.map(\.id))
 
-        #expect(Theme.builtIns.count == 16)
+        #expect(Theme.builtIns.map(\.name) == ["Notchy", "Cartel", "Fósforo", "Carátula"])
         #expect(Theme.builtIns.allSatisfy { ids.contains($0.id) && store.isBuiltIn($0.id) })
-        #expect(!store.isBuiltIn(Theme.notchyDefault.id))
         #expect(Set(Theme.builtIns.map(\.id)).count == Theme.builtIns.count)
-        for name in ["Steins;Gate", "Attack on Titan", "JoJo's Bizarre Adventure", "Bleach", "Orb: On the Movements of the Earth",
-                     "Tokyo Ghoul", "86 Eighty-Six", "Black Clover", "Jujutsu Kaisen", "Chainsaw Man", "Fullmetal Alchemist",
-                     "Frieren: Beyond Journey's End", "One Piece", "Naruto", "Violet Evergarden", "Mob Psycho 100"] {
-            #expect(Theme.builtIns.contains { $0.name == name }, "falta \(name)")
-        }
     }
 
-    @Test func everyTemplateHasItsOwnSignature() {
-        #expect(Set(Theme.builtIns.compactMap(\.decoration)).count == Theme.builtIns.count)
-        #expect(Set(ThemeDecoration.allCases).count == Theme.builtIns.count)
+    @Test func eachStarterThemeShowsADifferentPartOfTheEditor() {
+        #expect(Theme.cartel.palette.panel.rgb.brightness > 0.9)
+        #expect(Theme.cartel.openAnimation == .cut)
+        #expect(Theme.cartel.decoration == .zigzag)
+        #expect(Theme.fosforo.decoration == .scanlines)
+        #expect(Theme.fosforo.openAnimation == .glitch)
+        #expect(Theme.caratula.usesArtwork)
+        #expect(Theme.builtIns.filter(\.usesArtwork) == [.caratula])
+    }
+
+    @Test(arguments: Theme.builtIns)
+    func everyStarterThemeReachesTheContrastMinimums(_ theme: Theme) {
+        let appearance = ThemeAppearance(theme: theme, background: nil)
+
+        #expect(appearance.colorsReachMinimumOnPanel, "\(theme.name)")
     }
 
     @Test func builtInThemesAreReadOnly() {
-        var edited = Theme.steinsGate
+        var edited = Theme.cartel
         edited.name = "Otro"
 
         #expect(throws: ThemeStore.StoreError.builtInTheme) { try store.save(edited) }
-        #expect(throws: ThemeStore.StoreError.builtInTheme) { try store.delete(themeID: Theme.attackOnTitan.id) }
-        #expect(store.theme(id: Theme.steinsGate.id)?.name == "Steins;Gate")
+        #expect(throws: ThemeStore.StoreError.builtInTheme) { try store.delete(themeID: Theme.fosforo.id) }
+        #expect(store.theme(id: Theme.cartel.id)?.name == "Cartel")
     }
 
-    @Test func duplicatingABuiltInThemeKeepsItsSignatureAndIsEditable() throws {
-        let copy = try store.duplicate(themeID: Theme.attackOnTitan.id)
+    @Test func duplicatingAStarterThemeKeepsItsEffectsAndIsEditable() throws {
+        let copy = try store.duplicate(themeID: Theme.cartel.id)
 
         #expect(!store.isBuiltIn(copy.id))
-        #expect(copy.decoration == .wallPlating)
-        #expect(copy.openAnimation == .gate)
+        #expect(copy.decoration == .zigzag)
+        #expect(copy.openAnimation == .cut)
         var renamed = copy
-        renamed.name = "Mi muralla"
+        renamed.name = "Mi cartel"
         try store.save(renamed)
-        #expect(store.theme(id: copy.id)?.name == "Mi muralla")
+        #expect(store.theme(id: copy.id)?.name == "Mi cartel")
     }
 
-    @Test func builtInThemesUseOnlyFontsShippedWithTheApp() throws {
+    @Test func starterThemesUseOnlyFontsShippedWithTheApp() {
         FontRegistry.register(directory: RepoPaths.fonts)
 
-        for theme in Theme.builtIns {
-            let family = try #require(theme.typography.family)
+        for family in Theme.builtIns.compactMap(\.typography.family) {
             #expect(NSFontManager.shared.availableMembers(ofFontFamily: family) != nil, "falta \(family)")
         }
-        #expect(NSFontManager.shared.availableMembers(ofFontFamily: NixieStyle.fontFamily) != nil)
     }
 
     @Test func builtInThemesHaveNoMediaFiles() {
@@ -71,7 +75,7 @@ struct BuiltInThemeTests {
 }
 
 struct SignatureModelTests {
-    @Test func decorationAndNewAnimationsRoundTrip() throws {
+    @Test func starterThemesRoundTrip() throws {
         for theme in Theme.builtIns {
             let decoded = try JSONDecoder().decode(Theme.self, from: JSONEncoder().encode(theme))
             #expect(decoded == theme)
@@ -82,26 +86,52 @@ struct SignatureModelTests {
         let theme = try JSONDecoder().decode(Theme.self, from: Data(#"{"id":"x","name":"Plano"}"#.utf8))
 
         #expect(theme.decoration == nil)
+        #expect(!theme.usesArtwork)
+    }
+
+    @Test(arguments: [
+        ("nixieTerminal", ThemeDecoration.scanlines), ("wallPlating", .frame), ("menacing", .stripes), ("tacticalGrid", .grid),
+        ("sawTeeth", .zigzag), ("psychicRings", .rings), ("stationery", .ruled), ("waves", .waves),
+    ])
+    func decorationsSavedWithTheirOldNamesAreTranslated(_ old: String, _ current: ThemeDecoration) throws {
+        let json = #"{"id":"x","name":"Mío","decoration":"\#(old)"}"#
+
+        #expect(try JSONDecoder().decode(Theme.self, from: Data(json.utf8)).decoration == current)
+    }
+
+    @Test func retiredDecorationsAndEmblemsAreDroppedWithoutLosingTheTheme() throws {
+        let json = #"{"id":"x","name":"Mío","decoration":"clovers","emblem":"grimoire","openAnimation":"orbit"}"#
+
+        let theme = try JSONDecoder().decode(Theme.self, from: Data(json.utf8))
+
+        #expect(theme.name == "Mío")
+        #expect(theme.decoration == nil)
+        #expect(theme.openAnimation == .spring)
+    }
+
+    @Test func openingsSavedWithTheirOldNamesAreTranslated() throws {
+        let doors = #"{"id":"x","openAnimation":"gate"}"#
+        let cut = #"{"id":"x","openAnimation":"slash"}"#
+
+        #expect(try JSONDecoder().decode(Theme.self, from: Data(doors.utf8)).openAnimation == .doors)
+        #expect(try JSONDecoder().decode(Theme.self, from: Data(cut.utf8)).openAnimation == .cut)
+    }
+
+    @Test func retiredFontsAreReplaced() throws {
+        let stencil = ThemeTypography(design: .system, family: "Big Shoulders Stencil Display", titleWeight: .bold, labelTracking: 2)
+        let tubes = ThemeTypography(design: .system, family: "Nixie One", titleWeight: .bold, labelTracking: 2)
+
+        #expect(stencil.sanitized().family == "Big Shoulders Display")
+        #expect(tubes.sanitized().family == nil)
     }
 
     @Test func signatureOpeningsAnimateTheShapeButRespectReduceMotion() {
-        for animation in [OpenAnimation.glitch, .gate, .menacing, .slash, .orbit] {
+        for animation in [OpenAnimation.glitch, .doors, .cut] {
             #expect(MotionPolicy(reduceMotion: false, openAnimation: animation).shapeAnimation(expanding: true) != nil)
             #expect(MotionPolicy(reduceMotion: false, openAnimation: animation).playsSignatureOpening)
             #expect(!MotionPolicy(reduceMotion: true, openAnimation: animation).playsSignatureOpening)
         }
         #expect(!MotionPolicy(reduceMotion: false, openAnimation: .spring).playsSignatureOpening)
-    }
-}
-
-struct NixieReadoutTests {
-    @Test func splitsTimeIntoTubesAndSeparators() {
-        #expect(NixieReadout.symbols("12:05") == [.digit("1"), .digit("2"), .separator, .digit("0"), .digit("5")])
-        #expect(NixieReadout.symbols("-3:41") == [.sign, .digit("3"), .separator, .digit("4"), .digit("1")])
-    }
-
-    @Test func ignoresUnexpectedCharacters() {
-        #expect(NixieReadout.symbols("1a") == [.digit("1")])
     }
 }
 
@@ -115,7 +145,7 @@ struct OpeningEffectTests {
     }
 
     @Test func progressOpeningsStartVisibleAndEndInvisible() {
-        for kind in [OpenAnimation.gate, .menacing, .slash, .orbit] {
+        for kind in [OpenAnimation.doors, .cut] {
             let effect = SignatureEffect(kind)
             #expect(effect.duration > 0 && effect.duration <= 1.2)
             #expect(SignatureEffect.isFinished(progress: 1))
@@ -123,32 +153,76 @@ struct OpeningEffectTests {
         }
     }
 
-    @Test func gateDoorsSwingOpenAndDisappear() {
-        #expect(GateDoors.angle(progress: 0) == 0)
-        #expect(GateDoors.angle(progress: 1) == GateDoors.openAngle)
-        #expect(GateDoors.opacity(progress: 0) == 1)
-        #expect(GateDoors.opacity(progress: 1) == 0)
-        #expect(GateDoors.angle(progress: 0.5) > 0 && GateDoors.angle(progress: 0.5) < GateDoors.openAngle)
+    @Test func doorsSwingOpenAndDisappear() {
+        #expect(SwingDoors.angle(progress: 0) == 0)
+        #expect(SwingDoors.angle(progress: 1) == SwingDoors.openAngle)
+        #expect(SwingDoors.opacity(progress: 0) == 1)
+        #expect(SwingDoors.opacity(progress: 1) == 0)
     }
 }
 
-struct EmblemTests {
-    @Test func everyTemplateHasItsOwnEmblem() {
-        let emblems = Theme.builtIns.compactMap(\.emblem)
+@MainActor
+struct LegacyMigrationTests {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent("notchy-legacy-\(UUID().uuidString)")
+    let defaults = UserDefaults(suiteName: "notchy-legacy-\(UUID().uuidString)")!
 
-        #expect(emblems.count == Theme.builtIns.count)
-        #expect(Set(emblems).count == emblems.count)
-        #expect(Set(ThemeEmblem.allCases).count == Theme.builtIns.count)
+    func makeStore() -> ThemeStore {
+        ThemeStore(directory: directory, defaults: defaults, trash: FakeTrash(root: directory).move)
     }
 
-    @Test func emblemSurvivesEncodingAndPlainThemesHaveNone() throws {
-        let decoded = try JSONDecoder().decode(Theme.self, from: JSONEncoder().encode(Theme.onePiece))
+    @Test func aRetiredTemplateInUseBecomesAnEditableThemeAndRulesFollowIt() throws {
+        let retired = "builtin-retirada"
+        defaults.set(retired, forKey: "activeThemeID")
+        let rules = AutoThemeRules(isEnabled: true, schedule: [ScheduleRule(startMinute: 480, themeID: retired)], apps: [])
+        defaults.set(try JSONEncoder().encode(rules), forKey: AutoThemeController.rulesKey)
 
-        #expect(decoded.emblem == .strawHat)
-        #expect(Theme.notchyDefault.emblem == nil)
+        let store = makeStore()
+
+        let migrated = store.activeTheme
+        #expect(!store.isBuiltIn(migrated.id))
+        #expect(migrated.name == "Mi tema (1.0)")
+        let saved = try JSONDecoder().decode(AutoThemeRules.self, from: try #require(defaults.data(forKey: AutoThemeController.rulesKey)))
+        #expect(saved.schedule.first?.themeID == migrated.id)
+        #expect(makeStore().themes.filter { $0.name == "Mi tema (1.0)" }.count == 1)
     }
 
-    @Test func nixieReadoutSupportsDecimalPoint() {
-        #expect(NixieReadout.symbols("1.04") == [.digit("1"), .dot, .digit("0"), .digit("4")])
+    @Test func everyRetiredTemplateKeepsAShippedFontAndAValidShape() {
+        FontRegistry.register(directory: RepoPaths.fonts)
+
+        #expect(LegacyTemplates.count == 16)
+        for theme in LegacyTemplates.all {
+            #expect(theme.shape == theme.shape.sanitized())
+            if let family = theme.typography.family {
+                #expect(NSFontManager.shared.availableMembers(ofFontFamily: family) != nil, "falta \(family)")
+            }
+        }
+    }
+
+    @Test func anUneditedDefaultThemeFrom10IsReplacedByTheBuiltInOne() throws {
+        var seed = Theme.notchyDefault
+        seed.id = "notchy"
+        let folder = directory.appendingPathComponent("notchy")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try JSONEncoder().encode(seed).write(to: folder.appendingPathComponent(ThemeStore.themeFileName))
+        defaults.set("notchy", forKey: "activeThemeID")
+
+        let store = makeStore()
+
+        #expect(store.theme(id: "notchy") == nil)
+        #expect(store.activeThemeID == Theme.notchyDefault.id)
+    }
+
+    @Test func anEditedDefaultThemeFrom10IsKept() throws {
+        var mine = Theme.notchyDefault
+        mine.id = "notchy"
+        mine.name = "El mío"
+        let folder = directory.appendingPathComponent("notchy")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try JSONEncoder().encode(mine).write(to: folder.appendingPathComponent(ThemeStore.themeFileName))
+        defaults.set("notchy", forKey: "activeThemeID")
+
+        let store = makeStore()
+
+        #expect(store.activeTheme.name == "El mío")
     }
 }

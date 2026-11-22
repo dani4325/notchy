@@ -22,6 +22,7 @@ public struct ThemeAppearance: Sendable {
     var text: Color { Color(theme.palette.text) }
 
     var hasLightText: Bool { theme.palette.text.rgb.brightness > 0.5 }
+    var hasRetroDigits: Bool { theme.decoration == .scanlines }
 
     static let secondaryTextOpacity = 0.78
     var secondaryTextColor: Color { text.opacity(Self.secondaryTextOpacity) }
@@ -105,8 +106,22 @@ public struct ThemeAppearance: Sendable {
         return .system(size: size, weight: weight, design: theme.typography.design.fontDesign)
     }
 
+    static func resolve(_ theme: Theme, artwork: ArtworkBackdrop.Prepared?) -> ThemeAppearance {
+        guard theme.usesArtwork, let artwork else { return ThemeAppearance(theme: theme, background: nil) }
+        var shown = theme
+        shown.palette = artwork.palette
+        shown.background = ThemeBackground(
+            media: ThemeMedia(kind: .image, file: artwork.url.lastPathComponent, crop: artwork.crop),
+            legibility: ThemeBackground.defaultLegibility
+        )
+        return ThemeAppearance(theme: shown, background: MediaSource(url: artwork.url, kind: .image), measurement: artwork.measurement)
+    }
+
     @MainActor
     public static func resolve(_ theme: Theme, in store: ThemeStore) -> ThemeAppearance {
+        if theme.usesArtwork {
+            return resolve(theme, artwork: store.artworkBackdrop.prepared)
+        }
         let background = theme.background.map {
             MediaSource(url: store.mediaURL(themeID: theme.id, media: $0.media), kind: $0.media.kind)
         }

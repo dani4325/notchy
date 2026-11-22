@@ -12,11 +12,9 @@ struct ChargingView: View {
         PanelRow(layout: layout, subtitle: Text(detail)) {
             PanelSymbol(layout: layout, systemName: symbol)
         } title: {
-            if appearance.theme.decoration == .nixieTerminal {
-                NixieReadoutView(text: "\(event.percent)", height: layout.titleSize * 1.2, glow: appearance.secondaryText)
-            } else {
-                Text("\(event.percent) %").monospacedDigit()
-            }
+            Text("\(event.percent) %")
+                .monospacedDigit()
+                .foregroundStyle(appearance.hasRetroDigits ? appearance.accentText : appearance.text)
         } accessory: {
             EmptyView()
         } bar: {

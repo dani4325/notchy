@@ -14,7 +14,7 @@ public final class AutoThemeController {
     @ObservationIgnored private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     @ObservationIgnored private var nextChangeTimer: Task<Void, Never>?
 
-    private static let rulesKey = "autoThemeRules"
+    static let rulesKey = "autoThemeRules"
     private static let logger = Logger(subsystem: "com.danirubio.notchy", category: "autotheme")
     private static let defaultDayStart = 8 * 60
     private static let defaultNightStart = 21 * 60

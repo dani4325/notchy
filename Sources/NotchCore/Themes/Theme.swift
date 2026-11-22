@@ -29,10 +29,18 @@ public struct ThemeTypography: Codable, Equatable, Sendable {
 
     public static let standard = ThemeTypography(design: .rounded, family: nil, titleWeight: .semibold, labelTracking: 2.2)
 
+    private static let retiredFamilies: [String: String?] = [
+        "Big Shoulders Stencil Display": "Big Shoulders Display",
+        "Nixie One": nil,
+    ]
+
     func sanitized() -> ThemeTypography {
         var copy = self
         copy.labelTracking = labelTracking.clamped(to: 0...8)
         copy.family = family.flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : String($0.prefix(80)) }
+        if let family = copy.family, let replacement = Self.retiredFamilies[family] {
+            copy.family = replacement
+        }
         return copy
     }
 }
@@ -106,32 +114,28 @@ public struct ThemeShape: Codable, Equatable, Sendable {
 }
 
 public enum OpenAnimation: String, Codable, CaseIterable, Sendable {
-    case spring, bouncy, smooth, fade, glitch, gate, menacing, slash, orbit
-}
+    case spring, bouncy, smooth, fade, glitch, doors, cut
 
-public enum ThemeEmblem: String, Codable, CaseIterable, Sendable {
-    case nixieTube, crossedBlades, menacingGlyph, katana, astrolabe
-    case coffeeCup, tacticalMap, grimoire, sealedFinger, chainsaw, pocketWatch
-    case staffAndFlowers, strawHat, kunai, typewriter, percentMeter
+    private static let renamed: [String: OpenAnimation] = ["gate": .doors, "slash": .cut]
+
+    public init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = OpenAnimation(rawValue: raw) ?? Self.renamed[raw] ?? .spring
+    }
 }
 
 public enum ThemeDecoration: String, Codable, CaseIterable, Sendable {
-    case nixieTerminal
-    case wallPlating
-    case menacing
-    case reiatsu
-    case orbits
-    case cracks
-    case tacticalGrid
-    case clovers
-    case cursedWisps
-    case sawTeeth
-    case transmutation
-    case petals
-    case waves
-    case spiral
-    case stationery
-    case psychicRings
+    case scanlines, frame, stripes, grid, zigzag, waves, rings, ruled
+
+    private static let renamed: [String: ThemeDecoration] = [
+        "nixieTerminal": .scanlines, "wallPlating": .frame, "menacing": .stripes, "tacticalGrid": .grid,
+        "sawTeeth": .zigzag, "psychicRings": .rings, "stationery": .ruled,
+    ]
+
+    init?(legacyOrCurrent raw: String) {
+        guard let value = ThemeDecoration(rawValue: raw) ?? Self.renamed[raw] else { return nil }
+        self = value
+    }
 }
 
 public struct ThemeEffects: Codable, Equatable, Sendable {
@@ -204,13 +208,13 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
     public var effects: ThemeEffects
     public var background: ThemeBackground?
     public var decoration: ThemeDecoration?
-    public var emblem: ThemeEmblem?
+    public var usesArtwork: Bool
 
     public init(
         id: String, name: String, palette: ThemePalette, typography: ThemeTypography, shape: ThemeShape,
         openAnimation: OpenAnimation, effects: ThemeEffects, background: ThemeBackground?,
         decoration: ThemeDecoration? = nil,
-        emblem: ThemeEmblem? = nil
+        usesArtwork: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -221,11 +225,11 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
         self.effects = effects
         self.background = background
         self.decoration = decoration
-        self.emblem = emblem
+        self.usesArtwork = usesArtwork
     }
 
     private enum CodingKeys: String, CodingKey {
-        case schemaVersion, id, name, palette, typography, shape, openAnimation, effects, background, decoration, emblem
+        case schemaVersion, id, name, palette, typography, shape, openAnimation, effects, background, decoration, usesArtwork
     }
 
     public init(from decoder: Decoder) throws {
@@ -239,8 +243,8 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
         openAnimation = (try? container.decodeIfPresent(OpenAnimation.self, forKey: .openAnimation)) ?? fallback.openAnimation
         effects = try container.decodeIfPresent(ThemeEffects.self, forKey: .effects) ?? fallback.effects
         background = try container.decodeIfPresent(ThemeBackground.self, forKey: .background)
-        decoration = try? container.decodeIfPresent(ThemeDecoration.self, forKey: .decoration)
-        emblem = try? container.decodeIfPresent(ThemeEmblem.self, forKey: .emblem)
+        decoration = (try? container.decodeIfPresent(String.self, forKey: .decoration)).flatMap { $0.flatMap(ThemeDecoration.init(legacyOrCurrent:)) }
+        usesArtwork = try container.decodeIfPresent(Bool.self, forKey: .usesArtwork) ?? false
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -255,7 +259,7 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
         try container.encode(effects, forKey: .effects)
         try container.encodeIfPresent(background, forKey: .background)
         try container.encodeIfPresent(decoration, forKey: .decoration)
-        try container.encodeIfPresent(emblem, forKey: .emblem)
+        if usesArtwork { try container.encode(usesArtwork, forKey: .usesArtwork) }
     }
 
     public func sanitized() -> Theme {
@@ -276,7 +280,7 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
 
 extension Theme {
     public static let notchyDefault = Theme(
-        id: "notchy",
+        id: "builtin-notchy",
         name: "Notchy",
         palette: ThemePalette(
             accent: HexColor("#FF6B1A")!,

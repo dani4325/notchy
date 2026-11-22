@@ -25,6 +25,7 @@ struct VolumeHUDView: View {
                 (Text(Image(systemName: output.kind.symbol)) + Text(verbatim: " " + output.name))
                     .font(appearance.bodyFont(layout.subtitleSize))
                     .foregroundStyle(appearance.secondaryTextColor)
+                    .legibleHalo()
                     .lineLimit(1)
                     .legibilityMark(.text, letterHeight: layout.subtitleSize)
             }
@@ -52,8 +53,6 @@ struct VolumeHUDView: View {
             Group {
                 if reading.isMuted {
                     Text("Silencio")
-                } else if appearance.theme.decoration == .nixieTerminal {
-                    NixieReadoutView(text: "\(percent)", height: layout.volumeNumberSize * 1.2, glow: appearance.secondaryText)
                 } else {
                     Text("\(percent) %")
                         .monospacedDigit()
@@ -61,9 +60,10 @@ struct VolumeHUDView: View {
                 }
             }
             .font(appearance.titleFont(layout.volumeNumberSize))
-            .foregroundStyle(appearance.text)
+            .foregroundStyle(appearance.hasRetroDigits ? appearance.accentText : appearance.text)
         }
         .foregroundStyle(appearance.text)
+        .legibleHalo()
         .lineLimit(1)
         .legibilityMark(.text, letterHeight: layout.volumeNumberSize)
         .accessibilityElement(children: .ignore)

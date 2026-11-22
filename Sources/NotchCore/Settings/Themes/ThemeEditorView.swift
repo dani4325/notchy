@@ -42,14 +42,14 @@ struct ThemeEditorView: View {
             Image(systemName: "lock.fill")
                 .foregroundStyle(NotchyStyle.accent)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Plantilla incluida")
+                Text("Tema incluido")
                     .font(.headline)
-                Text("Duplícala para añadir tu propia imagen, GIF o vídeo del anime y ajustarla a tu gusto.")
+                Text("Duplícalo para cambiar sus colores, su forma o su fondo.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Duplicar y personalizar") { editor.duplicate(themeID: theme.id) }
+            Button("Duplicar y editar") { editor.duplicate(themeID: theme.id) }
                 .buttonStyle(.borderedProminent)
         }
         .padding(.horizontal, 20)
@@ -66,10 +66,8 @@ extension OpenAnimation {
         case .smooth: String(localized: "Suave")
         case .fade: String(localized: "Fundido")
         case .glitch: String(localized: "Glitch")
-        case .gate: String(localized: "Portón")
-        case .menacing: String(localized: "ゴゴゴ")
-        case .slash: String(localized: "Tajo")
-        case .orbit: String(localized: "Órbitas")
+        case .doors: String(localized: "Puertas")
+        case .cut: String(localized: "Corte")
         }
     }
 }
@@ -77,22 +75,14 @@ extension OpenAnimation {
 extension ThemeDecoration {
     var label: String {
         switch self {
-        case .nixieTerminal: String(localized: "Nixie y terminal")
-        case .wallPlating: String(localized: "Metal y remaches")
-        case .menacing: String(localized: "Rayas amenazantes")
-        case .reiatsu: String(localized: "Aura y tajo")
-        case .orbits: String(localized: "Órbitas y estrellas")
-        case .cracks: String(localized: "Grietas")
-        case .tacticalGrid: String(localized: "Rejilla táctica")
-        case .clovers: String(localized: "Tréboles")
-        case .cursedWisps: String(localized: "Volutas de energía")
-        case .sawTeeth: String(localized: "Dientes de sierra")
-        case .transmutation: String(localized: "Círculo geométrico")
-        case .petals: String(localized: "Florecillas")
+        case .scanlines: String(localized: "Pantalla retro")
+        case .frame: String(localized: "Marco")
+        case .stripes: String(localized: "Rayas")
+        case .grid: String(localized: "Cuadrícula")
+        case .zigzag: String(localized: "Zigzag")
         case .waves: String(localized: "Olas")
-        case .spiral: String(localized: "Espiral")
-        case .stationery: String(localized: "Papel de carta")
-        case .psychicRings: String(localized: "Anillos psíquicos")
+        case .rings: String(localized: "Anillos")
+        case .ruled: String(localized: "Pauta")
         }
     }
 }
@@ -159,14 +149,7 @@ private struct BackgroundSection: View {
         guard appearance.colorsReachMinimumOnPanel else {
             return "Con los colores actuales el contraste no está garantizado: algún color no llega al mínimo ni sobre el panel liso."
         }
-        switch kind {
-        case .image:
-            return "Notchy mide la imagen detrás de cada texto y la oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo."
-        case .animatedImage:
-            return "Notchy mide todos los fotogramas del GIF detrás de cada texto y los oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. «Oscurecer más» añade oscuridad por encima de ese mínimo."
-        case .video:
-            return "Notchy mide un fotograma del vídeo cada medio segundo y lo oscurece lo justo para que el texto llegue a 4,5:1 y las barras e iconos a 3:1. Entre esos fotogramas el contraste no está garantizado."
-        }
+        return "Para que el fondo se vea entero, Notchy solo lo oscurece un poco detrás del texto y añade un halo oscuro a las letras y los iconos. Si con este fondo cuesta leer, sube «Oscurecer más»."
     }
 
     private static func previewAspect(_ shape: ThemeShape) -> CGFloat {

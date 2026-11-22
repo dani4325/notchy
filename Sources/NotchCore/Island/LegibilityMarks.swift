@@ -42,3 +42,32 @@ extension View {
         }
     }
 }
+
+struct LegibleHalo: ViewModifier {
+    static let tightRadius: CGFloat = 1.2
+    static let tightOpacity = 0.85
+    static let softRadius: CGFloat = 4
+    static let softOpacity = 0.45
+
+    @Environment(\.themeAppearance) private var appearance
+
+    func body(content: Content) -> some View {
+        if appearance.background != nil {
+            content
+                .shadow(color: appearance.scrimColor.opacity(Self.tightOpacity), radius: Self.tightRadius)
+                .shadow(color: appearance.scrimColor.opacity(Self.softOpacity), radius: Self.softRadius)
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    func legibleHalo() -> some View {
+        modifier(LegibleHalo())
+    }
+}
+
+enum IconChip {
+    static let opacity = 0.75
+}

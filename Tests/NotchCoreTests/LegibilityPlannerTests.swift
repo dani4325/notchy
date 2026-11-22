@@ -163,7 +163,7 @@ struct ScrimZoneRequirementTests {
 
     @Test func theAccentOnlyNeedsTextContrastWhereItIsDrawnAsText() {
         #expect(!foregrounds(.notchyDefault, .text).contains { $0.color == Theme.notchyDefault.palette.accent.rgb })
-        #expect(foregrounds(.steinsGate, .text).contains { $0.use == .text && $0.color == Theme.steinsGate.palette.secondary.rgb })
+        #expect(foregrounds(.fosforo, .text).contains { $0.use == .text && $0.color == Theme.fosforo.palette.accent.rgb })
     }
 
     @Test func theSecondaryColorIsNotRequiredBecauseThePanelNeverDrawsIt() {
@@ -172,7 +172,7 @@ struct ScrimZoneRequirementTests {
         #expect(!foregrounds(.notchyDefault, [.text, .graphics]).contains { $0.color == secondary })
     }
 
-    @Test func eachMarkGetsOnlyTheDarkeningItsOwnPixelsNeed() throws {
+    @Test func eachMarkGetsOnlyTheDarkeningItsOwnPixelsNeedUpToTheCap() throws {
         let halves = LegibilityPlannerTests().image(width: 20, height: 4) { x, _ in x < 10 ? (0, 0, 0) : (255, 255, 255) }
         let measurement = BackgroundMeasurement(sample: try #require(BackgroundSample.measuring(halves)), framesChecked: 1, coversEveryFrame: true)
         let appearance = ThemeAppearance(theme: .notchyDefault, background: MediaSource(url: URL(fileURLWithPath: "/fondo.png"), kind: .image), measurement: measurement)
@@ -180,7 +180,7 @@ struct ScrimZoneRequirementTests {
         let spots = VeilCache.spots(for: measurement, crop: .standard, size: size, appearance: appearance, marks: [title, controls], minimum: 0)
 
         #expect(spots[0].strength == 0)
-        #expect(spots[1].strength > 0.4)
+        #expect(spots[1].strength == LegibilityScrim.maximumVeil)
     }
 
     @Test func aDarkAutomaticAccentNoLongerHidesABrightBackground() throws {
