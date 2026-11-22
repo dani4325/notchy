@@ -56,7 +56,7 @@ public struct OnboardingView: View {
             .padding(20)
         }
         .frame(width: 640, height: 500)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .containerBackground(.thickMaterial, for: .window)
         .tint(NotchyStyle.accent)
     }
 }
@@ -247,8 +247,8 @@ private struct ThemeChip: View {
         let appearance = ThemeAppearance(theme: theme, background: nil)
         HStack(spacing: 10) {
             HStack(spacing: 3) {
-                ForEach([appearance.accent, appearance.secondary, appearance.text], id: \.self) { color in
-                    Circle().fill(color).frame(width: 8, height: 8)
+                ForEach(PaletteSwatchRole.allCases, id: \.self) { role in
+                    Circle().fill(appearance.color(for: role)).frame(width: 8, height: 8)
                 }
             }
             .padding(6)

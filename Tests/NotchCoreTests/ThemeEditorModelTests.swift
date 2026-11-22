@@ -159,6 +159,39 @@ struct ThemeEditorModelTests {
         #expect(store.theme(id: theme.id)?.name == "Guardado al cambiar")
         #expect(editor.draft?.id == copy.id)
     }
+
+    @Test func searchQueryFiltersThemesIgnoringCaseAndDiacritics() throws {
+        let editor = ThemeEditorModel(store: store)
+        _ = try store.createTheme(named: "Fósforo nocturno")
+        _ = try store.createTheme(named: "Cobalto")
+
+        #expect(editor.filteredThemes.count == store.themes.count)
+
+        editor.searchQuery = "  fosforo "
+        #expect(editor.filteredThemes.contains { $0.name == "Fósforo nocturno" })
+        #expect(editor.filteredThemes.contains { $0.name == "Cobalto" } == false)
+
+        editor.searchQuery = ""
+        #expect(editor.filteredThemes.count == store.themes.count)
+    }
+
+    @Test func mediaImageCacheDownsamplesLargeImages() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("notchy-downsample-\(UUID().uuidString).png")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let rep = try #require(NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: 1600, pixelsHigh: 800,
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        let data = try #require(rep.representation(using: .png, properties: [:]))
+        try data.write(to: url)
+
+        let image = try #require(MediaImageCache.image(at: url, maxPixelSize: 400))
+        let maxSide = max(image.size.width, image.size.height)
+        #expect(maxSide <= 400)
+        #expect(maxSide >= 200)
+    }
 }
 
 @MainActor

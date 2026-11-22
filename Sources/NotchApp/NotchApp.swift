@@ -7,11 +7,16 @@ struct NotchApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            StatusMenu(updater: appDelegate.updater)
+            StatusPopoverView(
+                themes: appDelegate.themes,
+                router: appDelegate.settingsRouter,
+                updater: appDelegate.updater
+            )
         } label: {
             Image(nsImage: MenuBarIcon.image)
                 .accessibilityLabel(AppInfo.name)
         }
+        .menuBarExtraStyle(.window)
 
         Settings {
             SettingsView(
@@ -27,6 +32,7 @@ struct NotchApp: App {
                 updater: appDelegate.updater
             )
         }
+        .windowResizability(.contentMinSize)
 
         Window(AppInfo.name, id: OnboardingModel.windowID) {
             OnboardingView(
@@ -39,28 +45,8 @@ struct NotchApp: App {
         }
         .windowResizability(.contentSize)
         .windowStyle(.hiddenTitleBar)
+        .defaultPosition(.center)
         .defaultLaunchBehavior(OnboardingModel.needsOnboarding() ? .presented : .suppressed)
-    }
-}
-
-struct StatusMenu: View {
-    let updater: SparkleUpdater
-
-    @Environment(\.openSettings) private var openSettings
-
-    var body: some View {
-        Button("Ajustes…") {
-            openSettings()
-            NSApp.activate()
-        }
-        .keyboardShortcut(",")
-        Button("Buscar actualizaciones…", action: updater.checkForUpdates)
-            .disabled(!updater.canCheckForUpdates)
-        Divider()
-        Button("Salir de \(AppInfo.name)") {
-            NSApp.terminate(nil)
-        }
-        .keyboardShortcut("q")
     }
 }
 

@@ -159,13 +159,24 @@ extension FontWeightName {
     }
 }
 
-private struct ThemeAppearanceKey: EnvironmentKey {
+enum PaletteSwatchRole: CaseIterable, Hashable {
+    case accent
+    case secondary
+    case text
+}
+
+extension ThemeAppearance {
     static let defaultValue = ThemeAppearance(theme: .notchyDefault, background: nil)
+
+    func color(for role: PaletteSwatchRole) -> Color {
+        switch role {
+        case .accent: accent
+        case .secondary: secondary
+        case .text: text
+        }
+    }
 }
 
 extension EnvironmentValues {
-    var themeAppearance: ThemeAppearance {
-        get { self[ThemeAppearanceKey.self] }
-        set { self[ThemeAppearanceKey.self] = newValue }
-    }
+    @Entry var themeAppearance: ThemeAppearance = ThemeAppearance.defaultValue
 }

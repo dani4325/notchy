@@ -40,26 +40,38 @@ public struct SettingsView: View {
 
     public var body: some View {
         TabView(selection: Bindable(router).section) {
-            ThemesSettingsView(editor: editor, nowPlaying: nowPlaying)
-                .frame(width: Self.themesSize.width, height: Self.themesSize.height)
-                .tabItem { Label(SettingsSection.themes.title, systemImage: "paintpalette") }
-                .tag(SettingsSection.themes)
-            GeneralSettingsView(
-                nowPlaying: nowPlaying, companion: companion, accessibility: accessibility,
-                loginItem: loginItem, autoThemes: autoThemes, themes: editor.store, shelf: shelf,
-                updater: updater, showWelcome: showWelcome
-            )
-            .frame(width: Self.generalSize.width, height: Self.generalSize.height)
-            .onAppear(perform: loginItem.refresh)
-            .tabItem { Label(SettingsSection.general.title, systemImage: "gearshape") }
-            .tag(SettingsSection.general)
+            Tab(SettingsSection.themes.title, systemImage: "paintpalette", value: SettingsSection.themes) {
+                ThemesSettingsView(editor: editor, nowPlaying: nowPlaying)
+                    .frame(
+                        minWidth: Self.themesMinSize.width,
+                        idealWidth: Self.themesIdealSize.width,
+                        minHeight: Self.themesMinSize.height,
+                        idealHeight: Self.themesIdealSize.height
+                    )
+            }
+            Tab(SettingsSection.general.title, systemImage: "gearshape", value: SettingsSection.general) {
+                GeneralSettingsView(
+                    nowPlaying: nowPlaying, companion: companion, accessibility: accessibility,
+                    loginItem: loginItem, autoThemes: autoThemes, themes: editor.store, shelf: shelf,
+                    updater: updater, showWelcome: showWelcome
+                )
+                .frame(
+                    minWidth: Self.generalMinSize.width,
+                    idealWidth: Self.generalIdealSize.width,
+                    minHeight: Self.generalMinSize.height,
+                    idealHeight: Self.generalIdealSize.height
+                )
+                .onAppear(perform: loginItem.refresh)
+            }
         }
         .tint(NotchyStyle.accent)
         .onDisappear { editor.flush() }
     }
 
-    private static let themesSize = CGSize(width: 900, height: 640)
-    private static let generalSize = CGSize(width: 560, height: 640)
+    private static let themesMinSize = CGSize(width: 760, height: 540)
+    private static let themesIdealSize = CGSize(width: 920, height: 640)
+    private static let generalMinSize = CGSize(width: 520, height: 540)
+    private static let generalIdealSize = CGSize(width: 560, height: 640)
 
     private func showWelcome() {
         onboarding.restart()

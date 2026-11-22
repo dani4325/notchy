@@ -1,3 +1,4 @@
+import ImageIO
 import SwiftUI
 
 struct IslandSurface: View {
@@ -9,15 +10,18 @@ struct IslandSurface: View {
         let shape = model.shape
         let size = model.currentSize
         let stem = model.stemHeight
+        let bodySize = CGSize(width: size.width, height: max(size.height - stem, 0))
 
         ZStack(alignment: .top) {
             Color.black
             if model.isExpanded {
                 IslandBody(
-                    appearance: appearance, layout: model.layout,
+                    appearance: appearance,
+                    layout: model.layout,
+                    size: bodySize,
                     marks: model.legibilityMarks.map { LegibilityMark(needs: $0.needs, rect: $0.rect.offsetBy(dx: 0, dy: -stem)) }
                 )
-                    .frame(width: size.width, height: max(size.height - stem, 0))
+                    .frame(width: bodySize.width, height: bodySize.height)
                     .padding(.top, stem)
                     .transition(.opacity)
             }
@@ -40,35 +44,34 @@ struct IslandSurface: View {
 struct IslandBody: View {
     let appearance: ThemeAppearance
     let layout: IslandLayout
+    let size: CGSize
     var marks: [LegibilityMark] = []
 
     var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .top) {
-                if let source = appearance.background, let settings = appearance.theme.background {
-                    BackgroundMediaView(source: source, crop: settings.media.crop, size: proxy.size)
-                    LegibilityScrim(
-                        appearance: appearance, layout: layout, crop: settings.media.crop,
-                        minimum: settings.legibility, size: proxy.size, marks: marks
-                    )
-                } else {
-                    LinearGradient(colors: [.black, appearance.panel], startPoint: .top, endPoint: .bottom)
-                }
-                if let decoration = appearance.theme.decoration {
-                    ThemeDecorationView(decoration: decoration, layout: layout, appearance: appearance)
-                        .frame(width: proxy.size.width, height: proxy.size.height)
-                        .clipped()
-                }
-                EllipticalGradient(
-                    colors: [.black, .black.opacity(0.6), .black.opacity(0)],
-                    center: .top,
-                    startRadiusFraction: 0,
-                    endRadiusFraction: 0.5
+        ZStack(alignment: .top) {
+            if let source = appearance.background, let settings = appearance.theme.background {
+                BackgroundMediaView(source: source, crop: settings.media.crop, size: size)
+                LegibilityScrim(
+                    appearance: appearance, layout: layout, crop: settings.media.crop,
+                    minimum: settings.legibility, size: size, marks: marks
                 )
-                .frame(width: layout.topBlendWidth, height: min(2 * layout.topBlendHeight, proxy.size.height))
+            } else {
+                LinearGradient(colors: [.black, appearance.panel], startPoint: .top, endPoint: .bottom)
             }
-            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+            if let decoration = appearance.theme.decoration {
+                ThemeDecorationView(decoration: decoration, layout: layout, appearance: appearance)
+                    .frame(width: size.width, height: size.height)
+                    .clipped()
+            }
+            EllipticalGradient(
+                colors: [.black, .black.opacity(0.6), .black.opacity(0)],
+                center: .top,
+                startRadiusFraction: 0,
+                endRadiusFraction: 0.5
+            )
+            .frame(width: layout.topBlendWidth, height: min(2 * layout.topBlendHeight, size.height))
         }
+        .frame(width: size.width, height: size.height, alignment: .top)
     }
 }
 
@@ -111,12 +114,30 @@ struct CroppedImageView: View {
 
 @MainActor
 enum MediaImageCache {
-    private static let cache = NSCache<NSURL, NSImage>()
+    static let defaultMaxPixelSize = 1600
+    private static let cache = NSCache<NSString, NSImage>()
 
-    static func image(at url: URL) -> NSImage? {
-        if let cached = cache.object(forKey: url as NSURL) { return cached }
-        guard let image = NSImage(contentsOf: url) else { return nil }
-        cache.setObject(image, forKey: url as NSURL)
+    static func image(at url: URL, maxPixelSize: Int = defaultMaxPixelSize) -> NSImage? {
+        let key = "\(url.absoluteString)#\(maxPixelSize)" as NSString
+        if let cached = cache.object(forKey: key) { return cached }
+        guard let image = loadImage(at: url, maxPixelSize: maxPixelSize) else { return nil }
+        cache.setObject(image, forKey: key)
         return image
+    }
+
+    private static func loadImage(at url: URL, maxPixelSize: Int) -> NSImage? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else {
+            return NSImage(contentsOf: url)
+        }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            return NSImage(contentsOf: url)
+        }
+        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
     }
 }

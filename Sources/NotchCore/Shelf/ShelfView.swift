@@ -74,17 +74,19 @@ struct ShelfView: View {
     }
 
     private var tileRow: some View {
-        HStack(spacing: layout.textSpacing * 2) {
-            ForEach(shelf.items) { item in
-                if let url = shelf.resolvedURL(for: item) {
-                    ShelfTile(url: url, name: item.name, width: tileWidth, iconSide: iconSide, layout: layout)
-                        .contextMenu {
-                            Button("Compartir por AirDrop") { Self.airDrop([url]) }
-                            Button("Mostrar en Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
-                            Divider()
-                            Button("Quitar de la estantería") { shelf.remove(item.id) }
-                        }
-                }
+        let resolved: [(item: ShelfItem, url: URL)] = shelf.items.compactMap { item in
+            guard let url = shelf.resolvedURL(for: item) else { return nil }
+            return (item, url)
+        }
+        return HStack(spacing: layout.textSpacing * 2) {
+            ForEach(resolved, id: \.item.id) { entry in
+                ShelfTile(url: entry.url, name: entry.item.name, width: tileWidth, iconSide: iconSide, layout: layout)
+                    .contextMenu {
+                        Button("Compartir por AirDrop") { Self.airDrop([entry.url]) }
+                        Button("Mostrar en Finder") { NSWorkspace.shared.activateFileViewerSelecting([entry.url]) }
+                        Divider()
+                        Button("Quitar de la estantería") { shelf.remove(entry.item.id) }
+                    }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -125,7 +127,7 @@ private struct ShelfTile: View {
         .padding(.vertical, layout.textSpacing)
         .background(appearance.text.opacity(0.06), in: RoundedRectangle(cornerRadius: layout.artworkCorner * 0.6, style: .continuous))
         .contentShape(Rectangle())
-        .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
+        .draggable(url)
         .help(name)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(name)
@@ -151,13 +153,17 @@ struct PageToggleButton: View {
             .font(.system(size: layout.labelSize * 1.1, weight: .semibold))
             .padding(.horizontal, layout.unit * 0.18)
             .frame(height: layout.unit * 0.48)
-            .background(appearance.text.opacity(0.1), in: Capsule())
-            .foregroundStyle(appearance.text.opacity(0.85))
+            .background(chip, in: Capsule())
+            .foregroundStyle(appearance.text.opacity(appearance.background == nil ? 0.85 : 1))
             .frame(minWidth: TransportButtonStyle.minimumTarget, minHeight: TransportButtonStyle.minimumTarget)
             .contentShape(Rectangle())
             .padding(.vertical, (layout.unit * 0.48 - TransportButtonStyle.minimumTarget) / 2)
             }
             .buttonStyle(.plain)
         .accessibilityLabel(page == .shelf ? Text("Volver a la música") : Text("Abrir la estantería"))
+    }
+
+    private var chip: Color {
+        appearance.background == nil ? appearance.text.opacity(0.1) : appearance.scrimColor.opacity(IconChip.opacity)
     }
 }

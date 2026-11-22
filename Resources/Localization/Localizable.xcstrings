@@ -337,6 +337,22 @@
         }
       }
     },
+    "Alas junto al notch": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wings beside the notch"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alas junto al notch"
+          }
+        }
+      }
+    },
     "Alas y acompañante": {
       "localizations": {
         "en": {
@@ -717,6 +733,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Buscar actualizaciones…"
+          }
+        }
+      }
+    },
+    "Buscar temas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search themes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar temas"
           }
         }
       }
@@ -3713,6 +3745,22 @@
         }
       }
     },
+    "Tema activo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active theme"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tema activo"
+          }
+        }
+      }
+    },
     "Tema exportado.": {
       "localizations": {
         "en": {
@@ -3805,6 +3853,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Temas automáticos"
+          }
+        }
+      }
+    },
+    "Temas y ajustes…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Themes & Settings…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temas y ajustes…"
           }
         }
       }

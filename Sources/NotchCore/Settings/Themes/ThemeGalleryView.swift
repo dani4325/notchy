@@ -9,7 +9,7 @@ struct ThemeGalleryView: View {
                 get: { editor.draft?.id as String? },
                 set: { if let id = $0 { editor.select(themeID: id) } }
             )) {
-                ForEach(editor.store.themes) { theme in
+                ForEach(editor.filteredThemes) { theme in
                     ThemeCard(
                         theme: theme,
                         appearance: ThemeAppearance.resolve(theme, in: editor.store),
@@ -31,6 +31,7 @@ struct ThemeGalleryView: View {
                 }
             }
             .listStyle(.sidebar)
+            .searchable(text: Bindable(editor).searchQuery, placement: .sidebar, prompt: Text("Buscar temas"))
             .onDeleteCommand {
                 if let id = editor.draft?.id { editor.delete(themeID: id) }
             }
@@ -46,14 +47,25 @@ struct ThemeGalleryView: View {
                 .padding(10)
             }
             Divider()
-            HStack {
+            HStack(spacing: 12) {
                 Button(action: editor.createTheme) {
                     Label("Nuevo", systemImage: "plus")
                 }
+                .keyboardShortcut("n", modifiers: .command)
+                Button {
+                    if let id = editor.draft?.id { editor.duplicate(themeID: id) }
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                }
+                .accessibilityLabel("Duplicar")
+                .help("Duplicar")
+                .disabled(editor.draft == nil)
+                .keyboardShortcut("d", modifiers: .command)
                 Spacer()
                 Button(action: editor.importTheme) {
                     Label("Importar…", systemImage: "square.and.arrow.down")
                 }
+                .keyboardShortcut("i", modifiers: .command)
             }
             .buttonStyle(.borderless)
             .padding(10)
@@ -103,8 +115,8 @@ private struct ThemeCard: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
             HStack(spacing: 3) {
-                ForEach([appearance.accent, appearance.secondary, appearance.text], id: \.self) { color in
-                    Circle().fill(color).frame(width: 7, height: 7)
+                ForEach(PaletteSwatchRole.allCases, id: \.self) { role in
+                    Circle().fill(appearance.color(for: role)).frame(width: 7, height: 7)
                 }
             }
             .padding(5)

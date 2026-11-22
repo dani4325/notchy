@@ -5,10 +5,10 @@ struct ThemesSettingsView: View {
     let nowPlaying: NowPlayingStore
 
     var body: some View {
-        HStack(spacing: 0) {
+        NavigationSplitView {
             ThemeGalleryView(editor: editor)
-                .frame(width: 236)
-            Divider()
+                .navigationSplitViewColumnWidth(min: 210, ideal: 244, max: 320)
+        } detail: {
             if let draft = editor.draft {
                 VStack(spacing: 0) {
                     ThemePreviewView(editor: editor, theme: draft, nowPlaying: nowPlaying)
@@ -19,5 +19,6 @@ struct ThemesSettingsView: View {
                 ContentUnavailableView("Elige un tema", systemImage: "paintpalette")
             }
         }
+        .navigationSplitViewStyle(.balanced)
     }
 }

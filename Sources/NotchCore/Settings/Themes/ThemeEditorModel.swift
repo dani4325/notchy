@@ -8,6 +8,7 @@ import UniformTypeIdentifiers
 @Observable
 public final class ThemeEditorModel {
     public private(set) var draft: Theme?
+    public var searchQuery = ""
     public private(set) var undoableDeletion: Theme?
     @ObservationIgnored private var trashedFolder: URL?
     public private(set) var message: String?
@@ -43,6 +44,14 @@ public final class ThemeEditorModel {
 
     public var isEditingActiveTheme: Bool {
         draft?.id == store.activeThemeID
+    }
+
+    public var filteredThemes: [Theme] {
+        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return store.themes }
+        return store.themes.filter {
+            $0.name.localizedStandardContains(query)
+        }
     }
 
     public func select(themeID: String) {
