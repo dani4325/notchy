@@ -109,36 +109,43 @@ enum GIFTranscoder {
         to input: AVAssetWriterInput,
         adaptor: AVAssetWriterInputPixelBufferAdaptor
     ) async throws -> Double {
-        let box = SendableWriter(input: input, adaptor: adaptor)
+        let feed = FrameFeed(input: input, adaptor: adaptor, prepared: prepared)
         return try await withCheckedThrowingContinuation { continuation in
-            var index = 0
-            var time = 0.0
-            var finished = false
-            box.input.requestMediaDataWhenReady(on: encodingQueue) {
-                while !finished, box.input.isReadyForMoreMediaData {
-                    if index >= prepared.frames.count {
-                        finished = true
-                        continuation.resume(returning: time)
+            feed.input.requestMediaDataWhenReady(on: encodingQueue) {
+                while !feed.finished, feed.input.isReadyForMoreMediaData {
+                    if feed.index >= feed.prepared.frames.count {
+                        feed.finished = true
+                        continuation.resume(returning: feed.time)
                         return
                     }
-                    guard let pool = box.adaptor.pixelBufferPool,
-                          let buffer = draw(prepared.frames[index], size: prepared.size, pool: pool),
-                          box.adaptor.append(buffer, withPresentationTime: CMTime(seconds: time, preferredTimescale: 600))
+                    guard let pool = feed.adaptor.pixelBufferPool,
+                          let buffer = draw(feed.prepared.frames[feed.index], size: feed.prepared.size, pool: pool),
+                          feed.adaptor.append(buffer, withPresentationTime: CMTime(seconds: feed.time, preferredTimescale: 600))
                     else {
-                        finished = true
+                        feed.finished = true
                         continuation.resume(throwing: TranscodeError.encodingFailed)
                         return
                     }
-                    time += prepared.delays[index]
-                    index += 1
+                    feed.time += feed.prepared.delays[feed.index]
+                    feed.index += 1
                 }
             }
         }
     }
 
-    private struct SendableWriter: @unchecked Sendable {
+    private final class FrameFeed: @unchecked Sendable {
         let input: AVAssetWriterInput
         let adaptor: AVAssetWriterInputPixelBufferAdaptor
+        let prepared: PreparedGIF
+        var index = 0
+        var time = 0.0
+        var finished = false
+
+        init(input: AVAssetWriterInput, adaptor: AVAssetWriterInputPixelBufferAdaptor, prepared: PreparedGIF) {
+            self.input = input
+            self.adaptor = adaptor
+            self.prepared = prepared
+        }
     }
 
     private static func evenSize(width: Int, height: Int) -> (width: Int, height: Int) {
