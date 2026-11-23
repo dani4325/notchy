@@ -18,6 +18,7 @@ final class SystemAudioTap: @unchecked Sendable {
     var onLevels: (@Sendable ([Float], Bool) -> Void)?
 
     private let queue = DispatchQueue(label: "com.danirubio.notchy.visualizer", qos: .userInteractive)
+    private let lifecycleLock = NSLock()
     private var tapID = AudioObjectID(kAudioObjectUnknown)
     private var aggregateID = AudioObjectID(kAudioObjectUnknown)
     private var procID: AudioDeviceIOProcID?
@@ -25,7 +26,13 @@ final class SystemAudioTap: @unchecked Sendable {
     private var samples: [Float] = []
     private var lastPublish: UInt64 = 0
 
+    deinit {
+        stop()
+    }
+
     func start() throws {
+        lifecycleLock.lock()
+        defer { lifecycleLock.unlock() }
         let description = CATapDescription(stereoGlobalTapButExcludeProcesses: [])
         description.uuid = UUID()
         description.isPrivate = true
@@ -35,7 +42,12 @@ final class SystemAudioTap: @unchecked Sendable {
         var status = AudioHardwareCreateProcessTap(description, &tap)
         guard status == noErr else { throw TapError.tapCreation(status) }
         tapID = tap
-        analyzer = SpectrumAnalyzer(bandCount: Self.bandCount, sampleRate: sampleRate(of: tap))
+        let rate = sampleRate(of: tap)
+        queue.sync {
+            analyzer = SpectrumAnalyzer(bandCount: Self.bandCount, sampleRate: rate)
+            samples = []
+            lastPublish = 0
+        }
 
         let aggregate: [String: Any] = [
             kAudioAggregateDeviceNameKey: "Notchy Visualizer",
@@ -51,7 +63,7 @@ final class SystemAudioTap: @unchecked Sendable {
         var device = AudioObjectID(kAudioObjectUnknown)
         status = AudioHardwareCreateAggregateDevice(aggregate as CFDictionary, &device)
         guard status == noErr else {
-            stop()
+            tearDownLocked()
             throw TapError.aggregateCreation(status)
         }
         aggregateID = device
@@ -60,17 +72,23 @@ final class SystemAudioTap: @unchecked Sendable {
             self?.consume(input)
         }
         guard status == noErr else {
-            stop()
+            tearDownLocked()
             throw TapError.ioProc(status)
         }
         status = AudioDeviceStart(device, procID)
         guard status == noErr else {
-            stop()
+            tearDownLocked()
             throw TapError.start(status)
         }
     }
 
     func stop() {
+        lifecycleLock.lock()
+        defer { lifecycleLock.unlock() }
+        tearDownLocked()
+    }
+
+    private func tearDownLocked() {
         if aggregateID != kAudioObjectUnknown {
             if let procID {
                 AudioDeviceStop(aggregateID, procID)
@@ -84,7 +102,10 @@ final class SystemAudioTap: @unchecked Sendable {
         procID = nil
         aggregateID = AudioObjectID(kAudioObjectUnknown)
         tapID = AudioObjectID(kAudioObjectUnknown)
-        samples = []
+        queue.sync {
+            samples = []
+            lastPublish = 0
+        }
     }
 
     private func sampleRate(of tap: AudioObjectID) -> Double {
@@ -108,13 +129,13 @@ final class SystemAudioTap: @unchecked Sendable {
         let frames = Int(first.mDataByteSize) / MemoryLayout<Float32>.size / channels
         let pointer = data.assumingMemoryBound(to: Float32.self)
 
-        var mono = [Float](repeating: 0, count: frames)
+        samples.reserveCapacity(samples.count + frames)
+        let invChannels = 1 / Float(channels)
         for frame in 0..<frames {
             var sum: Float = 0
             for channel in 0..<channels { sum += pointer[frame * channels + channel] }
-            mono[frame] = sum / Float(channels)
+            samples.append(sum * invChannels)
         }
-        samples.append(contentsOf: mono)
         if samples.count > SpectrumAnalyzer.frameSize * 2 {
             samples.removeFirst(samples.count - SpectrumAnalyzer.frameSize)
         }

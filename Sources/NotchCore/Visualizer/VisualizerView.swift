@@ -27,8 +27,13 @@ struct VisualizerView: View {
                 SpectrumBars(levels: SimulatedSpectrum.levels(at: 3.3, bandCount: SystemAudioTap.bandCount), color: appearance.accentBarColor, height: height)
             }
         }
-        .onAppear { if !reduceMotion { visualizer?.acquire() } }
-        .onDisappear { if !reduceMotion { visualizer?.release() } }
+        .task(id: reduceMotion) {
+            guard !reduceMotion, let visualizer else { return }
+            visualizer.acquire()
+            defer { visualizer.release() }
+            let hold = AsyncStream<Void> { _ in }
+            for await _ in hold {}
+        }
         .accessibilityHidden(true)
     }
 }

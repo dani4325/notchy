@@ -9,11 +9,12 @@ struct SpectrumBars: NSViewRepresentable {
 
     func makeNSView(context: Context) -> SpectrumBarsView {
         let view = SpectrumBarsView()
-        if let source { view.observe(source) }
+        view.observe(source)
         return view
     }
 
     func updateNSView(_ view: SpectrumBarsView, context: Context) {
+        view.observe(source)
         view.color = color
         view.animated = !context.environment.accessibilityReduceMotion
         view.update(levels: source?.levels ?? levels)
@@ -49,14 +50,19 @@ final class SpectrumBarsView: NSView {
 
     required init?(coder: NSCoder) { nil }
 
-    func observe(_ visualizer: AudioVisualizer) {
+    func observe(_ visualizer: AudioVisualizer?) {
+        guard source !== visualizer else { return }
+        stopObserving()
         source = visualizer
-        subscription = visualizer.observeLevels { [weak self] in self?.update(levels: $0) }
+        if let visualizer {
+            subscription = visualizer.observeLevels { [weak self] in self?.update(levels: $0) }
+        }
     }
 
     func stopObserving() {
         if let subscription { source?.stopObservingLevels(subscription) }
         subscription = nil
+        source = nil
     }
 
     func update(levels newLevels: [Float]) {
@@ -73,9 +79,9 @@ final class SpectrumBarsView: NSView {
         } else {
             CATransaction.setDisableActions(true)
         }
-        for (bar, level) in zip(bars, levels) {
+        for (index, (bar, level)) in zip(bars, levels).enumerated() {
             bar.backgroundColor = color.cgColor
-            bar.frame = frame(for: bar, level: level)
+            bar.frame = frame(at: index, for: bar, level: level)
         }
         CATransaction.commit()
     }
@@ -84,18 +90,17 @@ final class SpectrumBarsView: NSView {
         super.layout()
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        for (bar, level) in zip(bars, levels) {
-            bar.frame = frame(for: bar, level: level)
+        for (index, (bar, level)) in zip(bars, levels).enumerated() {
+            bar.frame = frame(at: index, for: bar, level: level)
         }
         CATransaction.commit()
     }
 
-    private func frame(for bar: CALayer, level: Float) -> CGRect {
+    private func frame(at index: Int, for bar: CALayer, level: Float) -> CGRect {
         let side = bounds.height
-        let index = CGFloat(bars.firstIndex { $0 === bar } ?? 0)
         let width = side * Self.barRatio
         let height = max(side * CGFloat(level), side * Self.minimumLevel)
         bar.cornerRadius = width / 2
-        return CGRect(x: index * (width + side * Self.gapRatio), y: 0, width: width, height: height)
+        return CGRect(x: CGFloat(index) * (width + side * Self.gapRatio), y: 0, width: width, height: height)
     }
 }
