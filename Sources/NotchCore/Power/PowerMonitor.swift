@@ -71,11 +71,18 @@ public final class PowerMonitor {
     private static let sourceChangedKey = "com.apple.system.powersources.source"
     private static let lowBatteryKey = "com.apple.system.powersources.lowbattery"
 
-    private var fineGrainedSource: CFRunLoopSource?
-    private var notifyTokens: [Int32] = []
+    private nonisolated(unsafe) var fineGrainedSource: CFRunLoopSource?
+    private nonisolated(unsafe) var notifyTokens: [Int32] = []
     private var last: PowerSnapshot?
 
     public init() {}
+
+    deinit {
+        notifyTokens.forEach { notify_cancel($0) }
+        if let source = fineGrainedSource {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .defaultMode)
+        }
+    }
 
     public func start() {
         last = Self.read()

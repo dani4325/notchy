@@ -10,12 +10,22 @@ public final class MediaKeyTap {
 
     var onKey: ((MediaKey) -> Bool)?
 
-    private var tap: CFMachPort?
-    private var source: CFRunLoopSource?
+    private nonisolated(unsafe) var tap: CFMachPort?
+    private nonisolated(unsafe) var source: CFRunLoopSource?
 
     public var isActive: Bool { tap != nil }
 
     public init() {}
+
+    deinit {
+        if let tap {
+            CGEvent.tapEnable(tap: tap, enable: false)
+            CFMachPortInvalidate(tap)
+        }
+        if let source {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
+        }
+    }
 
     public func start() {
         guard tap == nil, AXIsProcessTrusted() else { return }

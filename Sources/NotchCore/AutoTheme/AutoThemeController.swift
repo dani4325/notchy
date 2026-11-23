@@ -86,13 +86,17 @@ public final class AutoThemeController {
         panel.allowedContentTypes = [.application]
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
         panel.message = String(localized: "Elige la app que cambiará el tema cuando esté en primer plano")
-        guard panel.runModal() == .OK, let url = panel.url,
-              let bundleID = Bundle(url: url)?.bundleIdentifier
-        else { return }
-        let name = FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
-        change { rules in
-            guard !rules.apps.contains(where: { $0.bundleID == bundleID }) else { return }
-            rules.apps.append(AppRule(bundleID: bundleID, appName: name, themeID: store.activeThemeID))
+        panel.begin { [weak self] response in
+            MainActor.assumeIsolated {
+                guard response == .OK, let url = panel.url,
+                      let bundleID = Bundle(url: url)?.bundleIdentifier
+                else { return }
+                let name = FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
+                self?.change { rules in
+                    guard let self, !rules.apps.contains(where: { $0.bundleID == bundleID }) else { return }
+                    rules.apps.append(AppRule(bundleID: bundleID, appName: name, themeID: self.store.activeThemeID))
+                }
+            }
         }
     }
 

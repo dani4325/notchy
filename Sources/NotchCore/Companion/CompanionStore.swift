@@ -80,8 +80,12 @@ public final class CompanionStore {
         panel.allowedContentTypes = [.image, .movie]
         panel.allowsMultipleSelection = false
         panel.message = String(localized: "Elige una imagen, un GIF o un vídeo para acompañar al notch")
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        Task { await importConvertingGIFs(from: url) }
+        panel.begin { [weak self] response in
+            MainActor.assumeIsolated {
+                guard response == .OK, let url = panel.url, let self else { return }
+                Task { await self.importConvertingGIFs(from: url) }
+            }
+        }
     }
 
     func importConvertingGIFs(from url: URL) async {

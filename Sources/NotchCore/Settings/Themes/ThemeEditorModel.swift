@@ -217,9 +217,13 @@ public final class ThemeEditorModel {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image, .movie]
         panel.message = String(localized: "Elige una imagen, un GIF o un vídeo para el fondo del panel")
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        flush()
-        Task { await applyBackground(from: url, themeID: themeID) }
+        panel.begin { [weak self] response in
+            MainActor.assumeIsolated {
+                guard response == .OK, let url = panel.url, let self else { return }
+                self.flush()
+                Task { await self.applyBackground(from: url, themeID: themeID) }
+            }
+        }
     }
 
     func applyBackground(from original: URL, themeID: String) async {
@@ -296,18 +300,22 @@ public final class ThemeEditorModel {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [Self.archiveType]
         panel.nameFieldStringValue = "\(theme.name).\(ThemeArchive.fileExtension)"
-        guard panel.runModal() == .OK, let url = panel.url,
-              let (payload, media) = try? store.exportPayload(themeID: themeID)
-        else { return }
-        Task { [weak self] in
-            do {
-                try await Task.detached(priority: .userInitiated) {
-                    try ThemeStore.writeArchive(theme: payload, mediaURL: media, to: url)
-                }.value
-                self?.inform(String(localized: "Tema exportado."))
-            } catch {
-                Self.logger.error("export failed: \(String(describing: error), privacy: .public)")
-                self?.fail(String(localized: "No se ha podido exportar el tema."))
+        panel.begin { [weak self] response in
+            MainActor.assumeIsolated {
+                guard response == .OK, let url = panel.url, let self,
+                      let (payload, media) = try? self.store.exportPayload(themeID: themeID)
+                else { return }
+                Task { [weak self] in
+                    do {
+                        try await Task.detached(priority: .userInitiated) {
+                            try ThemeStore.writeArchive(theme: payload, mediaURL: media, to: url)
+                        }.value
+                        self?.inform(String(localized: "Tema exportado."))
+                    } catch {
+                        Self.logger.error("export failed: \(String(describing: error), privacy: .public)")
+                        self?.fail(String(localized: "No se ha podido exportar el tema."))
+                    }
+                }
             }
         }
     }
@@ -316,8 +324,12 @@ public final class ThemeEditorModel {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [Self.archiveType]
         panel.message = String(localized: "Elige un archivo .\(ThemeArchive.fileExtension)")
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        Task { await importTheme(from: url) }
+        panel.begin { [weak self] response in
+            MainActor.assumeIsolated {
+                guard response == .OK, let url = panel.url, let self else { return }
+                Task { await self.importTheme(from: url) }
+            }
+        }
     }
 
     @discardableResult

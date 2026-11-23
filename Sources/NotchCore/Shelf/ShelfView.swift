@@ -80,7 +80,12 @@ struct ShelfView: View {
         }
         return HStack(spacing: layout.textSpacing * 2) {
             ForEach(resolved, id: \.item.id) { entry in
-                ShelfTile(url: entry.url, name: entry.item.name, width: tileWidth, iconSide: iconSide, layout: layout)
+                ShelfTile(
+                    url: entry.url, name: entry.item.name, width: tileWidth, iconSide: iconSide, layout: layout,
+                    onAirDrop: { Self.airDrop([entry.url]) },
+                    onReveal: { NSWorkspace.shared.activateFileViewerSelecting([entry.url]) },
+                    onRemove: { shelf.remove(entry.item.id) }
+                )
                     .contextMenu {
                         Button("Compartir por AirDrop") { Self.airDrop([entry.url]) }
                         Button("Mostrar en Finder") { NSWorkspace.shared.activateFileViewerSelecting([entry.url]) }
@@ -104,6 +109,9 @@ private struct ShelfTile: View {
     let width: CGFloat
     let iconSide: CGFloat
     let layout: IslandLayout
+    let onAirDrop: () -> Void
+    let onReveal: () -> Void
+    let onRemove: () -> Void
 
     @Environment(\.themeAppearance) private var appearance
 
@@ -131,6 +139,9 @@ private struct ShelfTile: View {
         .help(name)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(name)
+        .accessibilityAction(named: "Mostrar en Finder", onReveal)
+        .accessibilityAction(named: "Compartir por AirDrop", onAirDrop)
+        .accessibilityAction(named: "Quitar de la estantería", onRemove)
     }
 }
 

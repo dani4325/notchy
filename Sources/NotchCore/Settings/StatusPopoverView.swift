@@ -152,9 +152,7 @@ private struct PopoverToggleRow: View {
     @Binding var isOn: Bool
 
     var body: some View {
-        HStack(spacing: 8) {
-            Text(title)
-            Spacer(minLength: 8)
+        LabeledContent(title) {
             Toggle(title, isOn: $isOn)
                 .labelsHidden()
                 .toggleStyle(.switch)
