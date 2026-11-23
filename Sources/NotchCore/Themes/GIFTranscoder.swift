@@ -48,29 +48,19 @@ enum GIFTranscoder {
     private static let encodingQueue = DispatchQueue(label: "com.danirubio.notchy.gif-transcoder", qos: .userInitiated)
 
     static func transcode(_ gif: URL) async throws -> URL {
-        try await withCheckedThrowingContinuation { continuation in
-            encodingQueue.async { continuation.resume(with: Result { try encode(gif) }) }
-        }
-    }
+        let prepared = try await Task.detached(priority: .userInitiated) {
+            try prepare(gif)
+        }.value
 
-    private static func encode(_ gif: URL) throws -> URL {
-        guard let source = CGImageSourceCreateWithURL(gif as CFURL, nil), CGImageSourceGetCount(source) > 0,
-              let first = CGImageSourceCreateImageAtIndex(source, 0, nil)
-        else { throw TranscodeError.unreadable }
-        let count = CGImageSourceGetCount(source)
-        let size = evenSize(width: first.width, height: first.height)
-        let frames = (0..<count).compactMap { CGImageSourceCreateImageAtIndex(source, $0, nil) }
-        guard frames.count == count else { throw TranscodeError.unreadable }
-        let transparent = frames.contains(where: hasTransparency)
         let output = FileManager.default.temporaryDirectory
             .appendingPathComponent("notchy-\(UUID().uuidString)")
-            .appendingPathExtension(transparent ? "mov" : "mp4")
+            .appendingPathExtension(prepared.transparent ? "mov" : "mp4")
 
-        let writer = try AVAssetWriter(outputURL: output, fileType: transparent ? .mov : .mp4)
+        let writer = try AVAssetWriter(outputURL: output, fileType: prepared.transparent ? .mov : .mp4)
         let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
-            AVVideoCodecKey: transparent ? AVVideoCodecType.hevcWithAlpha : AVVideoCodecType.h264,
-            AVVideoWidthKey: size.width,
-            AVVideoHeightKey: size.height,
+            AVVideoCodecKey: prepared.transparent ? AVVideoCodecType.hevcWithAlpha : AVVideoCodecType.h264,
+            AVVideoWidthKey: prepared.size.width,
+            AVVideoHeightKey: prepared.size.height,
             AVVideoColorPropertiesKey: [
                 AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
                 AVVideoTransferFunctionKey: AVVideoTransferFunction_IEC_sRGB,
@@ -79,28 +69,76 @@ enum GIFTranscoder {
         ])
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-            kCVPixelBufferWidthKey as String: size.width,
-            kCVPixelBufferHeightKey as String: size.height,
+            kCVPixelBufferWidthKey as String: prepared.size.width,
+            kCVPixelBufferHeightKey as String: prepared.size.height,
         ])
         writer.add(input)
         guard writer.startWriting() else { throw TranscodeError.encodingFailed }
         writer.startSession(atSourceTime: .zero)
 
-        var time = 0.0
-        for (index, frame) in frames.enumerated() {
-            while !input.isReadyForMoreMediaData { usleep(1000) }
-            guard let pool = adaptor.pixelBufferPool, let buffer = draw(frame, size: size, pool: pool),
-                  adaptor.append(buffer, withPresentationTime: CMTime(seconds: time, preferredTimescale: 600))
-            else { throw TranscodeError.encodingFailed }
-            time += delay(of: source, at: index)
-        }
+        let totalDuration = try await writeFrames(prepared, to: input, adaptor: adaptor)
         input.markAsFinished()
-        writer.endSession(atSourceTime: CMTime(seconds: time, preferredTimescale: 600))
-        let done = DispatchSemaphore(value: 0)
-        writer.finishWriting { done.signal() }
-        done.wait()
+        writer.endSession(atSourceTime: CMTime(seconds: totalDuration, preferredTimescale: 600))
+        await writer.finishWriting()
         guard writer.status == .completed else { throw TranscodeError.encodingFailed }
         return output
+    }
+
+    private struct PreparedGIF: @unchecked Sendable {
+        let frames: [CGImage]
+        let delays: [Double]
+        let size: (width: Int, height: Int)
+        let transparent: Bool
+    }
+
+    private static func prepare(_ gif: URL) throws -> PreparedGIF {
+        guard let source = CGImageSourceCreateWithURL(gif as CFURL, nil), CGImageSourceGetCount(source) > 0,
+              let first = CGImageSourceCreateImageAtIndex(source, 0, nil)
+        else { throw TranscodeError.unreadable }
+        let count = CGImageSourceGetCount(source)
+        let size = evenSize(width: first.width, height: first.height)
+        let frames = (0..<count).compactMap { CGImageSourceCreateImageAtIndex(source, $0, nil) }
+        guard frames.count == count else { throw TranscodeError.unreadable }
+        let delays = (0..<count).map { delay(of: source, at: $0) }
+        let transparent = frames.contains(where: hasTransparency)
+        return PreparedGIF(frames: frames, delays: delays, size: size, transparent: transparent)
+    }
+
+    private static func writeFrames(
+        _ prepared: PreparedGIF,
+        to input: AVAssetWriterInput,
+        adaptor: AVAssetWriterInputPixelBufferAdaptor
+    ) async throws -> Double {
+        let box = SendableWriter(input: input, adaptor: adaptor)
+        return try await withCheckedThrowingContinuation { continuation in
+            var index = 0
+            var time = 0.0
+            var finished = false
+            box.input.requestMediaDataWhenReady(on: encodingQueue) {
+                while !finished, box.input.isReadyForMoreMediaData {
+                    if index >= prepared.frames.count {
+                        finished = true
+                        continuation.resume(returning: time)
+                        return
+                    }
+                    guard let pool = box.adaptor.pixelBufferPool,
+                          let buffer = draw(prepared.frames[index], size: prepared.size, pool: pool),
+                          box.adaptor.append(buffer, withPresentationTime: CMTime(seconds: time, preferredTimescale: 600))
+                    else {
+                        finished = true
+                        continuation.resume(throwing: TranscodeError.encodingFailed)
+                        return
+                    }
+                    time += prepared.delays[index]
+                    index += 1
+                }
+            }
+        }
+    }
+
+    private struct SendableWriter: @unchecked Sendable {
+        let input: AVAssetWriterInput
+        let adaptor: AVAssetWriterInputPixelBufferAdaptor
     }
 
     private static func evenSize(width: Int, height: Int) -> (width: Int, height: Int) {

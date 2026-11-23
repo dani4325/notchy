@@ -187,9 +187,19 @@ final class MediaContainerView: NSView {
             if active {
                 startVideo(source.url)
             } else {
-                player?.pause()
+                stopVideo()
             }
         }
+    }
+
+    private func stopVideo() {
+        player?.pause()
+        looper?.disableLooping()
+        looper = nil
+        player = nil
+        playerView?.removeFromSuperview()
+        playerView = nil
+        imageView?.isHidden = false
     }
 
     private func pause(_ layer: CALayer) {

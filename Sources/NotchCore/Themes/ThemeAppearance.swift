@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-public struct ThemeAppearance: Sendable {
+public struct ThemeAppearance: Equatable, Sendable {
     public let theme: Theme
     public let background: MediaSource?
     let measurement: BackgroundMeasurement?
@@ -99,8 +99,10 @@ public struct ThemeAppearance: Sendable {
         font(size: size, weight: .medium).monospacedDigit()
     }
 
+    private static let availableFontFamilies: Set<String> = Set(NSFontManager.shared.availableFontFamilies)
+
     private func font(size: CGFloat, weight: Font.Weight) -> Font {
-        if let family = theme.typography.family, NSFontManager.shared.availableMembers(ofFontFamily: family) != nil {
+        if let family = theme.typography.family, Self.availableFontFamilies.contains(family) {
             return Font.custom(family, size: size).weight(weight)
         }
         return .system(size: size, weight: weight, design: theme.typography.design.fontDesign)

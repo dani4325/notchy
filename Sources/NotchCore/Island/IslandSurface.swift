@@ -83,11 +83,17 @@ struct BackgroundMediaView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        if source.kind == .image, let image = MediaImageCache.image(at: source.url) {
-            CroppedImageView(image: image, crop: crop, size: size)
-        } else {
-            MediaView(source: source, crop: crop, isActive: !reduceMotion)
-                .frame(width: size.width, height: size.height)
+        Group {
+            if source.kind == .image, let image = MediaImageCache.cachedImage(at: source.url) {
+                CroppedImageView(image: image, crop: crop, size: size)
+            } else {
+                MediaView(source: source, crop: crop, isActive: !reduceMotion)
+                    .frame(width: size.width, height: size.height)
+            }
+        }
+        .task(id: source.url) {
+            guard source.kind == .image else { return }
+            _ = await MediaImageCache.load(at: source.url)
         }
     }
 }
@@ -115,29 +121,53 @@ struct CroppedImageView: View {
 @MainActor
 enum MediaImageCache {
     static let defaultMaxPixelSize = 1600
-    private static let cache = NSCache<NSString, NSImage>()
+    private static let cache: NSCache<NSString, NSImage> = {
+        let cache = NSCache<NSString, NSImage>()
+        cache.countLimit = 24
+        cache.totalCostLimit = 64 * 1024 * 1024
+        return cache
+    }()
 
-    static func image(at url: URL, maxPixelSize: Int = defaultMaxPixelSize) -> NSImage? {
-        let key = "\(url.absoluteString)#\(maxPixelSize)" as NSString
+    static func cachedImage(at url: URL, maxPixelSize: Int = defaultMaxPixelSize) -> NSImage? {
+        cache.object(forKey: cacheKey(for: url, maxPixelSize: maxPixelSize))
+    }
+
+    static func load(at url: URL, maxPixelSize: Int = defaultMaxPixelSize) async -> NSImage? {
+        let key = cacheKey(for: url, maxPixelSize: maxPixelSize)
         if let cached = cache.object(forKey: key) { return cached }
-        guard let image = loadImage(at: url, maxPixelSize: maxPixelSize) else { return nil }
-        cache.setObject(image, forKey: key)
+        let cgImage = await Task.detached(priority: .userInitiated) {
+            decodeCGImage(at: url, maxPixelSize: maxPixelSize)
+        }.value
+        guard let cgImage else { return nil }
+        let image = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        cache.setObject(image, forKey: key, cost: cgImage.bytesPerRow * cgImage.height)
         return image
     }
 
-    private static func loadImage(at url: URL, maxPixelSize: Int) -> NSImage? {
-        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else {
+    static func image(at url: URL, maxPixelSize: Int = defaultMaxPixelSize) -> NSImage? {
+        let key = cacheKey(for: url, maxPixelSize: maxPixelSize)
+        if let cached = cache.object(forKey: key) { return cached }
+        guard let cgImage = decodeCGImage(at: url, maxPixelSize: maxPixelSize) else {
             return NSImage(contentsOf: url)
         }
+        let image = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        cache.setObject(image, forKey: key, cost: cgImage.bytesPerRow * cgImage.height)
+        return image
+    }
+
+    private static func cacheKey(for url: URL, maxPixelSize: Int) -> NSString {
+        let stamp = (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate?.timeIntervalSinceReferenceDate) ?? 0
+        return "\(url.absoluteString)#\(maxPixelSize)#\(stamp)" as NSString
+    }
+
+    private nonisolated static func decodeCGImage(at url: URL, maxPixelSize: Int) -> CGImage? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
             kCGImageSourceShouldCacheImmediately: true,
             kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
         ]
-        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
-            return NSImage(contentsOf: url)
-        }
-        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
     }
 }

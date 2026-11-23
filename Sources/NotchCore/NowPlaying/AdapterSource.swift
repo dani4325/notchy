@@ -82,15 +82,18 @@ final class AdapterSource: NowPlayingSource {
     }
 
     func send(_ command: MediaCommand) {
-        let sender = Process()
-        sender.executableURL = Self.perl
-        sender.arguments = paths.arguments(["send", String(command.adapterID)])
-        sender.standardOutput = FileHandle.nullDevice
-        sender.standardError = FileHandle.nullDevice
-        do {
-            try sender.run()
-        } catch {
-            Self.logger.error("send failed: \(error.localizedDescription, privacy: .public)")
+        let args = paths.arguments(["send", String(command.adapterID)])
+        Task.detached(priority: .userInitiated) {
+            let sender = Process()
+            sender.executableURL = Self.perl
+            sender.arguments = args
+            sender.standardOutput = FileHandle.nullDevice
+            sender.standardError = FileHandle.nullDevice
+            do {
+                try sender.run()
+            } catch {
+                Self.logger.error("send failed: \(error.localizedDescription, privacy: .public)")
+            }
         }
     }
 
