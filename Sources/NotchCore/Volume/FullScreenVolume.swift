@@ -21,7 +21,9 @@ struct ScreenWindow: Equatable {
 
 enum FullScreenClassifier {
     static let menuBarWindowKey = "Menubar"
+    static let menuBarLayer = Int(CGWindowLevelForKey(.mainMenuWindow))
     private static let tolerance: CGFloat = 1
+    private static let maxMenuBarHeight: CGFloat = 44
 
     static func isFullScreen(windows: [ScreenWindow], frontmostPID: pid_t, screen: CGRect, notchHeight: CGFloat) -> Bool {
         let fills = windows.filter { window in
@@ -32,8 +34,14 @@ enum FullScreenClassifier {
         }
         guard !fills.isEmpty else { return false }
         if fills.contains(where: { $0.frame.minY <= screen.minY + tolerance }) { return true }
+        let menuBarCeiling = max(notchHeight, maxMenuBarHeight) + tolerance
         let menuBarVisible = windows.contains { window in
-            window.name == menuBarWindowKey && window.frame.minY <= screen.minY + tolerance && window.frame.intersects(screen)
+            let isMenuBar = window.name == menuBarWindowKey
+                || (window.layer == menuBarLayer
+                    && window.frame.width >= screen.width - tolerance
+                    && window.frame.height > 0
+                    && window.frame.height <= menuBarCeiling)
+            return isMenuBar && window.frame.minY <= screen.minY + tolerance && window.frame.intersects(screen)
         }
         return !menuBarVisible
     }
@@ -42,9 +50,7 @@ enum FullScreenClassifier {
 @MainActor
 enum FullScreenDetector {
     static func isActive() -> Bool {
-        guard let screen = NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }),
-              let displayID = screen.displayID,
-              let frontmost = NSWorkspace.shared.frontmostApplication,
+        guard let frontmost = NSWorkspace.shared.frontmostApplication,
               let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]
         else { return false }
         let windows = info.compactMap { entry -> ScreenWindow? in
@@ -59,9 +65,16 @@ enum FullScreenDetector {
                 frame: frame
             )
         }
-        return FullScreenClassifier.isFullScreen(
-            windows: windows, frontmostPID: frontmost.processIdentifier,
-            screen: CGDisplayBounds(displayID), notchHeight: screen.safeAreaInsets.top
-        )
+        let frontmostPID = frontmost.processIdentifier
+        return NSScreen.screens.contains { screen in
+            guard let displayID = screen.displayID else { return false }
+            let topInset = screen.safeAreaInsets.top > 0
+                ? screen.safeAreaInsets.top
+                : max(screen.frame.maxY - screen.visibleFrame.maxY, 0)
+            return FullScreenClassifier.isFullScreen(
+                windows: windows, frontmostPID: frontmostPID,
+                screen: CGDisplayBounds(displayID), notchHeight: topInset
+            )
+        }
     }
 }

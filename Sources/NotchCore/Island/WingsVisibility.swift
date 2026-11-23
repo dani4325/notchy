@@ -12,7 +12,6 @@ public final class WingsVisibility {
     @ObservationIgnored private var hideTimer: Task<Void, Never>?
     @ObservationIgnored private var defaultsObserver: NSObjectProtocol?
     @ObservationIgnored private var isRunning = false
-    @ObservationIgnored private var menusCollide = false
 
     public init(nowPlaying: NowPlayingStore) {
         self.nowPlaying = nowPlaying
@@ -34,14 +33,6 @@ public final class WingsVisibility {
         hideTimer?.cancel()
         defaultsObserver.map(NotificationCenter.default.removeObserver)
         defaultsObserver = nil
-    }
-
-    var allowsCompactActivity: Bool { !menusCollide }
-
-    func setMenusCollide(_ collide: Bool) {
-        guard collide != menusCollide else { return }
-        menusCollide = collide
-        evaluate()
     }
 
     private func preferencesChanged() {
@@ -69,7 +60,7 @@ public final class WingsVisibility {
         phase = WingsPhase.next(
             after: phase, isPlaying: nowPlaying.isPlaying, hasMedia: nowPlaying.info != nil, now: now
         )
-        let visible = WingsPolicy.isVisible(mode: mode, phase: phase, now: now, menusCollide: menusCollide)
+        let visible = WingsPolicy.isVisible(mode: mode, phase: phase, now: now, menusCollide: false)
         if visible != isVisible {
             isVisible = visible
         }

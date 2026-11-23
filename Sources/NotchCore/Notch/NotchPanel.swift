@@ -17,7 +17,7 @@ final class NotchPanel: NSPanel {
         hidesOnDeactivate = false
         level = .mainMenu + 3
         appearance = NSAppearance(named: .darkAqua)
-        collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
     }
 
     override var canBecomeKey: Bool { false }

@@ -61,9 +61,6 @@ struct IslandView: View {
         .modifier(NotchBounce(nudge: volumeNudge, isEnabled: !policy.reduceMotion))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.themeAppearance, appearance)
-        .task(id: ArtworkRequest(revision: nowPlaying.artworkRevision, isNeeded: themes.activeTheme.usesArtwork)) {
-            await themes.artworkBackdrop.prepare(artwork: themes.activeTheme.usesArtwork ? nowPlaying.info?.artworkData : nil)
-        }
     }
 
     private var volumeNudge: VolumeNudge? {
@@ -118,9 +115,4 @@ struct IslandView: View {
             removal: .opacity.animation(.easeOut(duration: 0.12))
         )
     }
-}
-
-private struct ArtworkRequest: Equatable {
-    let revision: Int
-    let isNeeded: Bool
 }

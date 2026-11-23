@@ -71,4 +71,11 @@ struct FullScreenClassifierTests {
 
         #expect(FullScreenClassifier.isFullScreen(windows: [small], frontmostPID: pid, screen: screen, notchHeight: notch) == false)
     }
+
+    @Test func unnamedMenuBarLayerStillPreventsMaximisedFalsePositive() {
+        let unnamedMenuBar = window(CGRect(x: 0, y: 0, width: 1710, height: notch), owner: 1, layer: FullScreenClassifier.menuBarLayer, name: "")
+        let maximised = window(CGRect(x: 0, y: notch, width: 1710, height: 1112 - notch))
+
+        #expect(FullScreenClassifier.isFullScreen(windows: [unnamedMenuBar, maximised], frontmostPID: pid, screen: screen, notchHeight: notch) == false)
+    }
 }

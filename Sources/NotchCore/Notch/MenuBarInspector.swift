@@ -8,12 +8,12 @@ final class MenuBarInspector {
     private static let settleDelay: Duration = .milliseconds(1200)
     private nonisolated static let messagingTimeout: Float = 0.5
 
-    var onCollisionChange: ((Bool) -> Void)?
-    var wingZones: () -> [CGRect] = { [] }
+    var onCollisionChange: ((Set<CGDirectDisplayID>) -> Void)?
+    var wingZonesByDisplay: () -> [CGDirectDisplayID: [CGRect]] = { [:] }
 
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     private var settleTask: Task<Void, Never>?
-    private var lastResult = false
+    private var lastResult: Set<CGDirectDisplayID> = []
     private var generation = 0
 
     func start() {
@@ -45,21 +45,23 @@ final class MenuBarInspector {
               let app = NSWorkspace.shared.frontmostApplication,
               let primaryHeight = NSScreen.screens.first?.frame.maxY
         else {
-            report(false)
+            report([])
             return
         }
         let pid = app.processIdentifier
-        let zones = wingZones()
+        let zonesByDisplay = wingZonesByDisplay()
         generation += 1
         let request = generation
         Task.detached(priority: .utility) {
             let items = Self.menuItemFrames(pid: pid).map {
                 MenuCollision.cocoaFrame(fromAccessibility: $0, primaryScreenHeight: primaryHeight)
             }
-            let collides = MenuCollision.collides(menuItems: items, wingZones: zones)
+            let colliding = Set(zonesByDisplay.compactMap { displayID, zones in
+                MenuCollision.collides(menuItems: items, wingZones: zones) ? displayID : nil
+            })
             await MainActor.run { [weak self] in
                 guard let self, request == self.generation else { return }
-                self.report(collides)
+                self.report(colliding)
             }
         }
     }
@@ -74,10 +76,10 @@ final class MenuBarInspector {
         }
     }
 
-    private func report(_ collides: Bool) {
-        guard collides != lastResult else { return }
-        lastResult = collides
-        onCollisionChange?(collides)
+    private func report(_ colliding: Set<CGDirectDisplayID>) {
+        guard colliding != lastResult else { return }
+        lastResult = colliding
+        onCollisionChange?(colliding)
     }
 
     private nonisolated static func menuItemFrames(pid: pid_t) -> [CGRect] {

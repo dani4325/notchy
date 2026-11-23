@@ -1,4 +1,5 @@
 import AppKit
+import Observation
 import SwiftUI
 
 @MainActor
@@ -14,6 +15,11 @@ public final class NotchWindowController {
     private let shelf: ShelfStore
     private let menuInspector = MenuBarInspector()
     private var wakeObserver: NSObjectProtocol?
+    private var spaceObserver: NSObjectProtocol?
+    private var collidingDisplays: Set<CGDirectDisplayID> = []
+    private var artworkTask: Task<Void, Never>?
+    private var lastArtworkRequest: (revision: Int, isNeeded: Bool)?
+    private var isStarted = false
     private var nudgeCount = 0
     public var onVolumeStep: ((MediaKeyKind) -> Void)?
 
@@ -29,15 +35,22 @@ public final class NotchWindowController {
     }
 
     public func start() {
+        isStarted = true
         let workspace = NSWorkspace.shared.notificationCenter
         wakeObserver = workspace.addObserver(forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.rebuild() }
         }
-        menuInspector.wingZones = { [weak self] in
-            self?.islands.values.flatMap(\.wingZones) ?? []
+        spaceObserver = workspace.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.islands.values.forEach { $0.bringToFront() }
+                self?.menuInspector.inspect()
+            }
         }
-        menuInspector.onCollisionChange = { [weak self] collide in
-            self?.wings.setMenusCollide(collide)
+        menuInspector.wingZonesByDisplay = { [weak self] in
+            self?.islands.mapValues(\.wingZones) ?? [:]
+        }
+        menuInspector.onCollisionChange = { [weak self] colliding in
+            self?.applyMenuCollisions(colliding)
         }
         let center = NotificationCenter.default
         observers = [
@@ -56,16 +69,24 @@ public final class NotchWindowController {
                 MainActor.assumeIsolated { self?.preferencesChanged() }
             },
         ]
+        observeArtworkBackdrop()
         rebuild()
         menuInspector.start()
     }
 
     public func stop() {
+        isStarted = false
+        artworkTask?.cancel()
+        artworkTask = nil
+        lastArtworkRequest = nil
         wakeObserver.map(NSWorkspace.shared.notificationCenter.removeObserver)
         wakeObserver = nil
+        spaceObserver.map(NSWorkspace.shared.notificationCenter.removeObserver)
+        spaceObserver = nil
         menuInspector.stop()
         observers.forEach(NotificationCenter.default.removeObserver)
         observers = []
+        collidingDisplays = []
         islands.values.forEach { $0.close() }
         islands = [:]
     }
@@ -86,6 +107,34 @@ public final class NotchWindowController {
             return VolumeNudge(direction: direction, limit: limit, count: nudgeCount)
         }
         islands.values.forEach { $0.show(.volume(reading, nudge)) }
+    }
+
+    private func applyMenuCollisions(_ colliding: Set<CGDirectDisplayID>) {
+        collidingDisplays = colliding
+        for (id, island) in islands {
+            island.setMenusCollide(colliding.contains(id))
+        }
+    }
+
+    private func observeArtworkBackdrop() {
+        let request = (revision: nowPlaying.artworkRevision, isNeeded: themes.activeTheme.usesArtwork)
+        if lastArtworkRequest.map({ $0.revision != request.revision || $0.isNeeded != request.isNeeded }) ?? true {
+            lastArtworkRequest = request
+            let data = request.isNeeded ? nowPlaying.info?.artworkData : nil
+            artworkTask?.cancel()
+            artworkTask = Task { [themes] in
+                await themes.artworkBackdrop.prepare(artwork: data)
+            }
+        }
+        withObservationTracking {
+            _ = nowPlaying.artworkRevision
+            _ = themes.activeTheme.usesArtwork
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, self.isStarted else { return }
+                self.observeArtworkBackdrop()
+            }
+        }
     }
 
     private func preferencesChanged() {
@@ -114,13 +163,15 @@ public final class NotchWindowController {
                     screenFrame: placement.screenFrame, stripHeight: placement.stripHeight
                 )
             } else {
-                islands[placement.displayID] = IslandPanelController(
+                let island = IslandPanelController(
                     collapsedFrame: placement.collapsedFrame, kind: placement.kind,
                     screenFrame: placement.screenFrame, stripHeight: placement.stripHeight,
                     nowPlaying: nowPlaying, companion: companion, wings: wings, themes: themes,
                     visualizer: visualizer, shelf: shelf,
                     stepVolume: { [weak self] kind in self?.onVolumeStep?(kind) }
                 )
+                island.setMenusCollide(collidingDisplays.contains(placement.displayID))
+                islands[placement.displayID] = island
             }
         }
         menuInspector.inspect()

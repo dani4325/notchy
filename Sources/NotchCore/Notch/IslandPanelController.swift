@@ -19,6 +19,7 @@ final class IslandPanelController {
     private var collapsedFrame: CGRect
     private var screenFrame: CGRect
     private var isHovering = false
+    private var menusCollide = false
     private var pendingHover: Task<Void, Never>?
     private var pendingResize: Task<Void, Never>?
     private var isClosed = false
@@ -80,6 +81,18 @@ final class IslandPanelController {
         NotchGeometry.wingZones(collapsed: collapsedFrame, wing: model.compactWing)
     }
 
+    func bringToFront() {
+        panel.orderFrontRegardless()
+    }
+
+    func setMenusCollide(_ collide: Bool) {
+        guard collide != menusCollide else { return }
+        menusCollide = collide
+        if !isHovering {
+            transition(to: restingState, animated: true)
+        }
+    }
+
     func update(collapsedFrame: CGRect, kind: IslandKind, screenFrame: CGRect, stripHeight: CGFloat) {
         cancelPending()
         self.collapsedFrame = collapsedFrame
@@ -121,7 +134,7 @@ final class IslandPanelController {
 
     private func showVolume(_ activity: IslandActivity) {
         var presentation = volumePresentation ?? VolumePresentation(
-            allowsCompact: model.kind == .notch && wings.allowsCompactActivity && !isHovering
+            allowsCompact: model.kind == .notch && !menusCollide && !isHovering
         )
         let wait = presentation.press()
         volumePresentation = presentation
@@ -201,7 +214,7 @@ final class IslandPanelController {
     }
 
     private var restingState: IslandState {
-        wings.isVisible ? .compact : .collapsed
+        wings.isVisible && !menusCollide ? .compact : .collapsed
     }
 
     private func observeWings() {
